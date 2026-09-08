@@ -39,10 +39,10 @@ ctx.verify_mode = ssl.CERT_NONE
 
 def consultar_directemar(est):
     try:
-        # Usamos corsproxy.io como alternativa para saltar el bloqueo institucional
-        url_proxy = f"https://corsproxy.io/?{urllib.parse.quote(est['url'])}"
-        req = urllib.request.Request(url_proxy, headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=12, context=ctx) as response:
+        # Forzamos HTTPS directamente para evitar bloqueos de red y pasarelas intermedias
+        url_segura = est["url"].replace("http://", "https://")
+        req = urllib.request.Request(url_segura, headers=HEADERS)
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
             html = response.read().decode('utf-8', errors='ignore')
             match = re.search(r'page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})', html, re.IGNORECASE)
             if match:
