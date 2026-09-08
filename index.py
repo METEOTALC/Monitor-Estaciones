@@ -48,7 +48,7 @@ def consultar_directemar(est):
                 fecha_estacion_utc = datetime.strptime(fecha_str_utc, "%d-%m-%Y %H:%M").replace(tzinfo=utc_tz) 
                 fecha_estacion_chile = fecha_estacion_utc.astimezone(chile_tz)
 
-                fecha_str = fecha_estacion_chile.strftime("%d-%m-%Y %H:%M)
+                fecha_str = fecha_estacion_chile.strftime("%d-%m-%Y %H:%M")
                 dif_min = int((datatime.now(chile_tz) - fecha_estacion_chile).total_seconds() / 60)
                 
                 if dif_min <= TOLERANCIA_MINUTOS:
