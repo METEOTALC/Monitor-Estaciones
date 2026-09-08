@@ -160,7 +160,7 @@ def generar_html(resultados_directemar, hay_alerta):
 <body class="{alerta_class}">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
+    <div class="subtitle">Última verificación: {datetime.now(chile_tz).strftime('%d-%m-%Y %H:%M:%S')} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
     {alerta_banner}
     <div class="summary">Estaciones Operativas: {operativas} de {len(resultados_directemar)} | Total Accesos: {total_estaciones}</div>
 
@@ -191,7 +191,7 @@ def generar_html(resultados_directemar, hay_alerta):
     print("✓ Archivo 'index.html' generado correctamente.")
 
 def ejecutar_monitoreo():
-    print(f"\n--- [{datetime.now().strftime('%H:%M:%S')}] Verificando mapa litoral ---")
+    print(f"\n--- [{datetime.now(chile_tz).strftime('%H:%M:%S')}] Verificando...")
     resultados_directemar = []
     hubo_fallas = False
     
