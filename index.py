@@ -1,3 +1,4 @@
+from zoneinfo import ZoneInfo
 import time
 import re
 import urllib.request
@@ -40,9 +41,15 @@ def consultar_directemar(est):
             html = response.read().decode('utf-8', errors='ignore')
             match = re.search(r'page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})', html, re.IGNORECASE)
             if match:
-                fecha_str = match.group(1)
-                fecha_estacion = datetime.strptime(fecha_str, "%d-%m-%Y %H:%M")
-                dif_min = int((datetime.now() - fecha_estacion).total_seconds() / 60)
+                utc_z = ZoneInfo("UTC")
+                chile_tz = ZoneInfo("America/Santiago")
+                
+                fecha_str_utc = match.group(1)
+                fecha_estacion_utc = datetime.strptime(fecha_str_utc, "%d-%m-%Y %H:%M").replace(tzinfo=utc_tz) 
+                fecha_estacion_chile = fecha_estacion_utc.astimezone(chile_tz)
+
+                fecha_str = fecha_estacion_chile.strftime("%d-%m-%Y %H:%M)
+                dif_min = int((datatime.now(chile_tz) - fecha_estacion_chile).total_seconds() / 60)
                 
                 if dif_min <= TOLERANCIA_MINUTOS:
                     return True, "OPERATIVA", fecha_str
