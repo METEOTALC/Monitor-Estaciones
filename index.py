@@ -5,6 +5,8 @@ import urllib.request
 import ssl
 from datetime import datetime
 
+chile_tz = ZoneInfo("America/Santiago")
+
 # ==========================================
 # CONFIGURACIÓN DE ESTACIONES
 # ==========================================
