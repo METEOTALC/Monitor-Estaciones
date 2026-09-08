@@ -43,7 +43,7 @@
 <body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 08-09-2026 16:25:31 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 08-09-2026 16:38:26 (Tolerancia: 12 min)</div>
     <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
     <div class="summary">Estaciones Operativas: 0 de 8 | Total Accesos: 10</div>
 
@@ -63,8 +63,8 @@
         <a href="http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm" target="_blank" class="card-link">
             <div class="card error">
                 <strong>Capitanía de Puerto Lirquén-7406</strong>
-                <div class="status">🔴 SIN DATOS VÁLIDOS</div>
-                <div class="time">Último reporte: N/D</div>
+                <div class="status">🔴 SIN CONEXIÓN</div>
+                <div class="time">Último reporte: Error de red</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
@@ -167,7 +167,7 @@
             fillColor: 'red',
             fillOpacity: 0.8,
             radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén-7406</b><br>Estado: SIN DATOS VÁLIDOS<br>Reporte: N/D<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén-7406</b><br>Estado: SIN CONEXIÓN<br>Reporte: Error de red<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'red',
