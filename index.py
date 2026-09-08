@@ -2,6 +2,7 @@ from zoneinfo import ZoneInfo
 import time
 import re
 import urllib.request
+import urllib.parse
 import ssl
 from datetime import datetime
 
@@ -38,8 +39,10 @@ ctx.verify_mode = ssl.CERT_NONE
 
 def consultar_directemar(est):
     try:
-        req = urllib.request.Request(est["url"], headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
+        # Enrutamos a través del proxy intermediario para evitar bloqueos de red en la nube
+        url_proxy = f"https://api.allorigins.win/raw?url={urllib.parse.quote(est['url'])}"
+        req = urllib.request.Request(url_proxy, headers=HEADERS)
+        with urllib.request.urlopen(req, timeout=12, context=ctx) as response:
             html = response.read().decode('utf-8', errors='ignore')
             match = re.search(r'page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})', html, re.IGNORECASE)
             if match:
@@ -47,7 +50,7 @@ def consultar_directemar(est):
                 chile_tz = ZoneInfo("America/Santiago")
                 
                 fecha_str_utc = match.group(1)
-                fecha_estacion_utc = datetime.strptime(fecha_str_utc, "%d-%m-%Y %H:%M").replace(tzinfo=utc_tz) 
+                fecha_estacion_utc = datetime.strptime(fecha_str_utc, "%d-%m-%Y %H:%M").replace(tzinfo=utc_z) 
                 fecha_estacion_chile = fecha_estacion_utc.astimezone(chile_tz)
 
                 fecha_str = fecha_estacion_chile.strftime("%d-%m-%Y %H:%M")
