@@ -27,7 +27,7 @@ ESTACIONES_FAROS = [
     {"nombre": "Faro Punta Hualpén", "url": "https://www.wunderground.com/dashboard/pws/IHUALP1", "lat": -36.745, "lon": -73.185}
 ]
 
-TOLERANCIA_MINUTOS = 12
+TOLERANCIA_MINUTOS = 60
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -39,21 +39,16 @@ ctx.verify_mode = ssl.CERT_NONE
 
 def consultar_directemar(est):
     try:
-        # Forzamos HTTPS directamente para evitar bloqueos de red y pasarelas intermedias
-        url_segura = est["url"].replace("http://", "https://")
-        req = urllib.request.Request(url_segura, headers=HEADERS)
+        req = urllib.request.Request(est['url'], headers=HEADERS)
         with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
             html = response.read().decode('utf-8', errors='ignore')
             match = re.search(r'page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})', html, re.IGNORECASE)
             if match:
-                utc_z = ZoneInfo("UTC")
                 chile_tz = ZoneInfo("America/Santiago")
+                fecha_str = match.group(1)
                 
-                fecha_str_utc = match.group(1)
-                fecha_estacion_utc = datetime.strptime(fecha_str_utc, "%d-%m-%Y %H:%M").replace(tzinfo=utc_z) 
-                fecha_estacion_chile = fecha_estacion_utc.astimezone(chile_tz)
-
-                fecha_str = fecha_estacion_chile.strftime("%d-%m-%Y %H:%M")
+                # Tomamos la hora directamente como hora local de Chile
+                fecha_estacion_chile = datetime.strptime(fecha_str, "%d-%m-%Y %H:%M").replace(tzinfo=chile_tz)
                 dif_min = int((datetime.now(chile_tz) - fecha_estacion_chile).total_seconds() / 60)
                 
                 if dif_min <= TOLERANCIA_MINUTOS:
