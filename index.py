@@ -39,8 +39,8 @@ ctx.verify_mode = ssl.CERT_NONE
 
 def consultar_directemar(est):
     try:
-        # Enrutamos a través del proxy intermediario para evitar bloqueos de red en la nube
-        url_proxy = f"https://api.allorigins.win/raw?url={urllib.parse.quote(est['url'])}"
+        # Usamos corsproxy.io como alternativa para saltar el bloqueo institucional
+        url_proxy = f"https://corsproxy.io/?{urllib.parse.quote(est['url'])}"
         req = urllib.request.Request(url_proxy, headers=HEADERS)
         with urllib.request.urlopen(req, timeout=12, context=ctx) as response:
             html = response.read().decode('utf-8', errors='ignore')
