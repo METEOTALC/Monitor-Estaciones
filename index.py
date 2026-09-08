@@ -191,6 +191,7 @@ def generar_html(resultados_directemar, hay_alerta):
     print("✓ Archivo 'index.html' generado correctamente.")
 
 def ejecutar_monitoreo():
+    chile_tz = ZoneInfo("Ameica/Santiago")
     print(f"\n--- [{datetime.now(chile_tz).strftime('%H:%M:%S')}] Verificando...")
     resultados_directemar = []
     hubo_fallas = False
