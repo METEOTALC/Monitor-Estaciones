@@ -3,7 +3,7 @@ name: Actualizar Estaciones Met
 on:
   schedule:
     # Se ejecutará automáticamente cada 15 minutos
-    - cron: '*/10 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch: # Permite ejecutarlo manualmente desde la web de GitHub cuando quieras
 
 jobs:
