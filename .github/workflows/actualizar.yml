@@ -5,7 +5,7 @@ on:
     types: [actualizar_estaciones]
   workflow_dispatch:
 
-  jobs:
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
