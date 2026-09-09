@@ -43,9 +43,9 @@
 <body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 09-09-2026 07:10:26 (Tolerancia: 60 min)</div>
+    <div class="subtitle">Última verificación: 09-09-2026 07:15:23 (Tolerancia: 60 min)</div>
     <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
-    <div class="summary">Estaciones Operativas: 6 de 8 | Total Accesos: 10</div>
+    <div class="summary">Estaciones Operativas: 7 de 8 | Total Accesos: 10</div>
 
     <div id="map"></div>
 
@@ -97,10 +97,10 @@
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm" target="_blank" class="card-link">
-            <div class="card error">
+            <div class="card ok">
                 <strong>Capitanía de Puerto Lebu-7800</strong>
-                <div class="status">🔴 DESACTUALIZADA (290 min)</div>
-                <div class="time">Último reporte: 09-09-2026 2:20</div>
+                <div class="status">🟢 OPERATIVA</div>
+                <div class="time">Último reporte: 09-09-2026 7:13</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
@@ -191,11 +191,11 @@
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Lota-7373</b><br>Estado: OPERATIVA<br>Reporte: 09-09-2026 7:10<br><a href='http://web.directemar.cl/met/jturno/estaciones/lota/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.606, -73.65], {
-            color: 'red',
-            fillColor: 'red',
+            color: 'green',
+            fillColor: 'green',
             fillOpacity: 0.8,
             radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu-7800</b><br>Estado: DESACTUALIZADA (290 min)<br>Reporte: 09-09-2026 2:20<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu-7800</b><br>Estado: OPERATIVA<br>Reporte: 09-09-2026 7:13<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-38.788, -73.397], {
             color: 'green',
