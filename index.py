@@ -113,30 +113,38 @@ def consultar_directemar(est):
     with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
       html = response.read().decode("utf-8", errors="ignore")
 
-      # Extracción de fecha de actualización
+      # Extraer fecha de actualización
       match = re.search(
           r"page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})",
           html,
           re.IGNORECASE,
       )
 
+      # Convertir HTML a texto plano eliminando etiquetas para buscar datos con precisión
+      texto_plano = re.sub(r"<[^>]+>", " ", html)
+      texto_plano = re.sub(r"\s+", " ", texto_plano)
+
       temp, hum, viento = "--", "--", "--"
 
-      # Extracción robusta de datos meteorológicos del HTML de Directemar
+      # Búsqueda flexible en texto plano
       temp_match = re.search(
-          r"(?:temperatura|temp)[^<\d]*([\d,\.]+)\s*°?C?", html, re.IGNORECASE
+          r"(?:Temperatura|Temp)[^\d\-]*([\-]?\d+[\.,]?\d*)",
+          texto_plano,
+          re.IGNORECASE,
       )
       if temp_match:
         temp = f"{temp_match.group(1).replace(',', '.')}°C"
 
       hum_match = re.search(
-          r"(?:humedad|hr)[^<\d]*([\d,\.]+)\s*%", html, re.IGNORECASE
+          r"(?:Humedad|HR)[^\d]*(\d+[\.,]?\d*)", texto_plano, re.IGNORECASE
       )
       if hum_match:
         hum = f"{hum_match.group(1)}%"
 
       viento_match = re.search(
-          r"(?:viento|vel)[^<\d]*([\d,\.]+)", html, re.IGNORECASE
+          r"(?:Viento|Velocidad)[^\d]*(\d+[\.,]?\d*)",
+          texto_plano,
+          re.IGNORECASE,
       )
       if viento_match:
         viento = f"{viento_match.group(1)} nud"
@@ -160,11 +168,12 @@ def consultar_directemar(est):
               viento,
           )
     return False, "SIN DATOS VÁLIDOS", "N/D", "--", "--", "--"
-  except Exception:
+  except Exception as e:
+    print(f"Error Directemar {est['nombre']}: {e}")
     return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
 
 
-def consultar_weatherlink_v2(station_id):
+def consultar_weatherlink_v2(station_id, nombre_faro):
   try:
     t = str(int(time.time()))
     url_path = f"/v2/current/{station_id}"
@@ -196,7 +205,6 @@ def consultar_weatherlink_v2(station_id):
                   )
                   and temp_c == "--"
               ):
-                # Conversión si viene en Fahrenheit (> 50) o directo en Celsius
                 temp_c = (
                     round((val - 32) * 5 / 9, 1) if val > 50 else round(val, 1)
                 )
@@ -215,6 +223,7 @@ def consultar_weatherlink_v2(station_id):
                 viento = val
 
       if temp_c == "--" and hum == "--" and viento == "--":
+        print(f"WeatherLink [{nombre_faro}]: JSON recibido sin métricas válidas.")
         return False, "--", "--", "--"
 
       return (
@@ -223,8 +232,11 @@ def consultar_weatherlink_v2(station_id):
           f"{hum}%" if hum != "--" else "--",
           f"{viento} nud" if viento != "--" else "--",
       )
+  except urllib.error.HTTPError as e:
+    print(f"Error HTTP WeatherLink [{nombre_faro}]: {e.code} - {e.reason}")
+    return False, "--", "--", "--"
   except Exception as e:
-    print(f"Error API WeatherLink ID {station_id}: {e}")
+    print(f"Excepción WeatherLink [{nombre_faro}]: {e}")
     return False, "--", "--", "--"
 
 
@@ -374,7 +386,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ Archivo 'index.html' generado correctamente con datos y hora local.")
+  print("✓ Archivo 'index.html' generado exitosamente.")
 
 
 def ejecutar_monitoreo():
@@ -409,7 +421,9 @@ def ejecutar_monitoreo():
     })
 
   for faro in ESTACIONES_FAROS:
-    ok, temp, hum, viento = consultar_weatherlink_v2(faro["station_id"])
+    ok, temp, hum, viento = consultar_weatherlink_v2(
+        faro["station_id"], faro["nombre"]
+    )
     simbolo = "✓" if ok else "X"
     print(f"[{simbolo}] {faro['nombre']} (WL): Temp {temp}, Hum {hum}")
     if not ok:
@@ -438,7 +452,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Extracción de datos meteorológicos y corrección faros [skip ci]",
+            "Extracción texto plano y depuración WeatherLink [skip ci]",
         ],
         check=True,
     )
