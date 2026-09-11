@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 import hmac
 import json
@@ -103,6 +103,11 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
 
+def obtener_hora_chile():
+  # Ajusta la hora UTC del servidor restando 3 horas para obtener la hora local de Chile
+  return datetime.utcnow() - timedelta(hours=3)
+
+
 def consultar_directemar(est):
   try:
     req = urllib.request.Request(est["url"], headers=HEADERS)
@@ -122,7 +127,7 @@ def consultar_directemar(est):
         fecha_str = match.group(1)
         fecha_estacion = datetime.strptime(fecha_str, "%d-%m-%Y %H:%M")
         dif_min = int(
-            abs((datetime.now() - fecha_estacion).total_seconds()) / 60
+            abs((obtener_hora_chile() - fecha_estacion).total_seconds()) / 60
         )
 
         if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
@@ -149,33 +154,26 @@ def consultar_weatherlink_v2(station_id):
     url = f"https://api.weatherlink.com{url_path}?api-key={WL_API_KEY}&t={t}&api-signature={signature}"
 
     req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
+    with urllib.request.urlopen(url=url, timeout=8, context=ctx) as response:
       resultado = json.loads(response.read().decode("utf-8"))
 
       temp_c, hum, viento = "--", "--", "--"
 
-      # Extracción profunda recorriendo todos los campos posibles de la API v2
+      # Barrido flexible sobre todos los sensores y claves del JSON
       for sensor in resultado.get("sensors", []):
         for dat in sensor.get("data", []):
-          # Buscar temperatura (puede venir como 'temp', 'temp_out' o 'temp_in')
-          for k in ["temp", "temp_out", "temp_in"]:
-            if k in dat and dat[k] is not None and temp_c == "--":
-              temp_f = dat[k]
-              temp_c = round((temp_f - 32) * 5 / 9, 1)
-
-          # Buscar humedad
-          for k in ["hum", "hum_out", "hum_in"]:
-            if k in dat and dat[k] is not None and hum == "--":
-              hum = dat[k]
-
-          # Buscar viento (velocidad)
-          for k in [
-              "wind_speed_last",
-              "wind_speed_avg_last_10_min",
-              "wind_speed",
-          ]:
-            if k in dat and dat[k] is not None and viento == "--":
-              viento = dat[k]
+          for key, val in dat.items():
+            if val is not None:
+              if any(k in key.lower() for k in ["temp"]) and temp_c == "--":
+                # Si viene en Fahrenheit (estándar Davis), convertir a Celsius
+                temp_c = round((val - 32) * 5 / 9, 1)
+              elif any(k in key.lower() for k in ["hum"]) and hum == "--":
+                hum = val
+              elif (
+                  any(k in key.lower() for k in ["wind_speed", "wind_last"])
+                  and viento == "--"
+              ):
+                viento = val
 
       if temp_c == "--" and hum == "--":
         return False, "--", "--", "--"
@@ -263,6 +261,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
       if hay_alerta
       else ""
   )
+  hora_actual_chile = obtener_hora_chile().strftime("%d-%m-%Y %H:%M:%S")
 
   html = f"""<!DOCTYPE html>
 <html lang="es">
@@ -308,7 +307,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 <body class="{alerta_class}">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
+    <div class="subtitle">Última verificación: {hora_actual_chile} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
     {alerta_banner}
     <div class="summary">Estaciones Operativas: {operativas} de {total_estaciones}</div>
 
@@ -341,8 +340,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
 def ejecutar_monitoreo():
   print(
-      f"\n--- [{datetime.now().strftime('%H:%M:%S')}] Verificando mapa litoral"
-      " ---"
+      f"\n--- [{obtener_hora_chile().strftime('%H:%M:%S')}] Verificando mapa"
+      " litoral ---"
   )
   resultados_directemar = []
   resultados_faros = []
