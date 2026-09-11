@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
+import hashlib
+import hmac
 import json
+import re
 import ssl
 import subprocess
 import time
@@ -101,7 +104,6 @@ ctx.verify_mode = ssl.CERT_NONE
 
 
 def obtener_hora_chile():
-  # Ajuste estricto UTC menos 3 horas para la hora local de Chile
   return datetime.utcnow() - timedelta(hours=3)
 
 
@@ -110,15 +112,34 @@ def consultar_directemar(est):
     req = urllib.request.Request(est["url"], headers=HEADERS)
     with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
       html = response.read().decode("utf-8", errors="ignore")
+
+      # Extracción de fecha de actualización
       match = re.search(
           r"page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})",
           html,
           re.IGNORECASE,
       )
 
-      temp = "--"
-      hum = "--"
-      viento = "--"
+      temp, hum, viento = "--", "--", "--"
+
+      # Extracción robusta de datos meteorológicos del HTML de Directemar
+      temp_match = re.search(
+          r"(?:temperatura|temp)[^<\d]*([\d,\.]+)\s*°?C?", html, re.IGNORECASE
+      )
+      if temp_match:
+        temp = f"{temp_match.group(1).replace(',', '.')}°C"
+
+      hum_match = re.search(
+          r"(?:humedad|hr)[^<\d]*([\d,\.]+)\s*%", html, re.IGNORECASE
+      )
+      if hum_match:
+        hum = f"{hum_match.group(1)}%"
+
+      viento_match = re.search(
+          r"(?:viento|vel)[^<\d]*([\d,\.]+)", html, re.IGNORECASE
+      )
+      if viento_match:
+        viento = f"{viento_match.group(1)} nud"
 
       if match:
         fecha_str = match.group(1)
@@ -130,7 +151,14 @@ def consultar_directemar(est):
         if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
           return True, "OPERATIVA", fecha_str, temp, hum, viento
         else:
-          return False, f"DESACTUALIZADA ({dif_min} min)", fecha_str, temp, hum, viento
+          return (
+              False,
+              f"DESACTUALIZADA ({dif_min} min)",
+              fecha_str,
+              temp,
+              hum,
+              viento,
+          )
     return False, "SIN DATOS VÁLIDOS", "N/D", "--", "--", "--"
   except Exception:
     return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
@@ -138,31 +166,50 @@ def consultar_directemar(est):
 
 def consultar_weatherlink_v2(station_id):
   try:
-    # Autenticación simplificada oficial WeatherLink v2 (API Key en URL, Secret en Header)
-    url = f"https://api.weatherlink.com/v2/current/{station_id}?api-key={WL_API_KEY}"
-    headers_wl = {**HEADERS, "X-Api-Secret": WL_API_SECRET}
+    t = str(int(time.time()))
+    url_path = f"/v2/current/{station_id}"
+    string_to_sign = f"api-key{WL_API_KEY}t{t}{url_path}"
 
-    req = urllib.request.Request(url, headers=headers_wl)
+    signature = hmac.new(
+        WL_API_SECRET.encode("utf-8"),
+        string_to_sign.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    url = f"https://api.weatherlink.com{url_path}?api-key={WL_API_KEY}&t={t}&api-signature={signature}"
+
+    req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
       resultado = json.loads(response.read().decode("utf-8"))
 
       temp_c, hum, viento = "--", "--", "--"
 
-      # Extracción flexible de parámetros meteorológicos del JSON
       for sensor in resultado.get("sensors", []):
         for dat in sensor.get("data", []):
           for key, val in dat.items():
             if val is not None:
               k_lower = key.lower()
-              if any(k in k_lower for k in ["temp"]) and temp_c == "--":
-                # Conversión de Fahrenheit a Celsius si aplica
+              if (
+                  any(
+                      k in k_lower
+                      for k in ["temp", "temp_out", "out_temp", "temp_air"]
+                  )
+                  and temp_c == "--"
+              ):
+                # Conversión si viene en Fahrenheit (> 50) o directo en Celsius
                 temp_c = (
                     round((val - 32) * 5 / 9, 1) if val > 50 else round(val, 1)
                 )
-              elif any(k in k_lower for k in ["hum"]) and hum == "--":
+              elif (
+                  any(k in k_lower for k in ["hum", "out_hum", "humidity"])
+                  and hum == "--"
+              ):
                 hum = val
               elif (
-                  any(k in k_lower for k in ["wind_speed", "wind_last"])
+                  any(
+                      k in k_lower
+                      for k in ["wind_speed", "wind_last", "wind_speed_last"]
+                  )
                   and viento == "--"
               ):
                 viento = val
@@ -196,7 +243,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
             fillColor: '{color}',
             fillOpacity: 0.8,
             radius: 9
-        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Hum: {r['hum']} | Viento: {r['viento']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   for faro in resultados_faros:
@@ -327,7 +374,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ Archivo 'index.html' generado correctamente con hora de Chile.")
+  print("✓ Archivo 'index.html' generado correctamente con datos y hora local.")
 
 
 def ejecutar_monitoreo():
@@ -339,11 +386,13 @@ def ejecutar_monitoreo():
   resultados_faros = []
   hubo_fallas = False
 
-  # Consultar Directemar
   for est in ESTACIONES_DIRECTEMAR:
     ok, estado, ultimo, temp, hum, viento = consultar_directemar(est)
     simbolo = "✓" if ok else "X"
-    print(f"[{simbolo}] {est['nombre']}: {estado} ({ultimo})")
+    print(
+        f"[{simbolo}] {est['nombre']}: {estado} | Temp: {temp}, Hum: {hum},"
+        f" Viento: {viento}"
+    )
     if not ok:
       hubo_fallas = True
     resultados_directemar.append({
@@ -359,7 +408,6 @@ def ejecutar_monitoreo():
         "viento": viento,
     })
 
-  # Consultar Faros mediante WeatherLink API v2
   for faro in ESTACIONES_FAROS:
     ok, temp, hum, viento = consultar_weatherlink_v2(faro["station_id"])
     simbolo = "✓" if ok else "X"
@@ -390,8 +438,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Corrección de autenticación WeatherLink v2 y hora local [skip"
-            " ci]",
+            "Extracción de datos meteorológicos y corrección faros [skip ci]",
         ],
         check=True,
     )
