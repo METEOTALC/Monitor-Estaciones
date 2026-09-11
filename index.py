@@ -1,72 +1,185 @@
-from zoneinfo import ZoneInfo
-import time
-import re
-import urllib.request
-import urllib.parse
-import ssl
 from datetime import datetime
+import hashlib
+import hmac
+import json
+import re
+import ssl
+import subprocess
+import time
+import urllib.request
 
-chile_tz = ZoneInfo("America/Santiago")
+# ==========================================
+# CONFIGURACIÓN DE CREDENCIALES WEATHERLINK V2
+# ==========================================
+WL_API_KEY = "pa73dvpxib2q7ki1ixnzvx0ti0atyrpk"
+WL_API_SECRET = "yzpyohbu6cnqxmunczgffa2fx80bjdal"
 
 # ==========================================
 # CONFIGURACIÓN DE ESTACIONES
 # ==========================================
 ESTACIONES_DIRECTEMAR = [
-    {"nombre": "Capitanía de Puerto Constitución-7700", "url": "http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm", "lat": -35.333, "lon": -72.416},
-    {"nombre": "Capitanía de Puerto Lirquén-7406", "url": "http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm", "lat": -36.716, "lon": -72.933},
-    {"nombre": "Gobernación Marítima de Talcahuano", "url": "http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm", "lat": -36.712, "lon": -73.115},
-    {"nombre": "Capitanía de Puerto Coronel-7313", "url": "http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm", "lat": -37.020, "lon": -73.150},
-    {"nombre": "Capitanía de Puerto Lota-7373", "url": "http://web.directemar.cl/met/jturno/estaciones/lota/index.htm", "lat": -37.090, "lon": -73.150},
-    {"nombre": "Capitanía de Puerto Lebu-7800", "url": "http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm", "lat": -37.606, "lon": -73.650},
-    {"nombre": "Capitanía de Puerto Carahue", "url": "http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm", "lat": -38.788, "lon": -73.397},
-    {"nombre": "Capitanía de Puerto Corral-1960", "url": "http://web.directemar.cl/met/jturno/estaciones/corral/index.htm", "lat": -39.883, "lon": -73.433}
+    {
+        "nombre": "Capitanía de Puerto Constitución-7700",
+        "url": (
+            "http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm"
+        ),
+        "lat": -35.333,
+        "lon": -72.416,
+    },
+    {
+        "nombre": "Capitanía de Puerto Lirquén-7406",
+        "url": "http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm",
+        "lat": -36.716,
+        "lon": -72.933,
+    },
+    {
+        "nombre": "Gobernación Marítima de Talcahuano",
+        "url": (
+            "http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm"
+        ),
+        "lat": -36.712,
+        "lon": -73.115,
+    },
+    {
+        "nombre": "Capitanía de Puerto Coronel-7313",
+        "url": "http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm",
+        "lat": -37.020,
+        "lon": -73.150,
+    },
+    {
+        "nombre": "Capitanía de Puerto Lota-7373",
+        "url": "http://web.directemar.cl/met/jturno/estaciones/lota/index.htm",
+        "lat": -37.090,
+        "lon": -73.150,
+    },
+    {
+        "nombre": "Capitanía de Puerto Lebu-7800",
+        "url": "http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm",
+        "lat": -37.606,
+        "lon": -73.650,
+    },
+    {
+        "nombre": "Capitanía de Puerto Carahue",
+        "url": "http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm",
+        "lat": -38.788,
+        "lon": -73.397,
+    },
+    {
+        "nombre": "Capitanía de Puerto Corral-1960",
+        "url": "http://web.directemar.cl/met/jturno/estaciones/corral/index.htm",
+        "lat": -39.883,
+        "lon": -73.433,
+    },
 ]
 
 ESTACIONES_FAROS = [
-    {"nombre": "Faro Isla Quiriquina", "url": "https://www.wunderground.com/dashboard/pws/ITALCA20", "lat": -36.625, "lon": -73.033},
-    {"nombre": "Faro Punta Hualpén", "url": "https://www.wunderground.com/dashboard/pws/IHUALP1", "lat": -36.745, "lon": -73.185}
+    {
+        "nombre": "Faro Isla Quiriquina",
+        "url": "https://www.wunderground.com/dashboard/pws/ITALCA20",
+        "station_id": "178202",
+        "lat": -36.625,
+        "lon": -73.033,
+    },
+    {
+        "nombre": "Faro Punta Hualpén",
+        "url": "https://www.wunderground.com/dashboard/pws/IHUALP1",
+        "station_id": "236994",
+        "lat": -36.745,
+        "lon": -73.185,
+    },
 ]
 
-TOLERANCIA_MINUTOS = 60
+TOLERANCIA_MINUTOS = 12
 
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
+        " like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
 }
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
-def consultar_directemar(est):
-    try:
-        req = urllib.request.Request(est['url'], headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-            html = response.read().decode('utf-8', errors='ignore')
-            match = re.search(r'page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})', html, re.IGNORECASE)
-            if match:
-                chile_tz = ZoneInfo("America/Santiago")
-                fecha_str = match.group(1)
-                
-                # Tomamos la hora directamente como hora local de Chile
-                fecha_estacion_chile = datetime.strptime(fecha_str, "%d-%m-%Y %H:%M").replace(tzinfo=chile_tz)
-                dif_min = int((datetime.now(chile_tz) - fecha_estacion_chile).total_seconds() / 60)
-                
-                if dif_min <= TOLERANCIA_MINUTOS:
-                    return True, "OPERATIVA", fecha_str
-                else:
-                    return False, f"DESACTUALIZADA ({dif_min} min)", fecha_str
-        return False, "SIN DATOS VÁLIDOS", "N/D"
-    except Exception:
-        return False, "SIN CONEXIÓN", "Error de red"
 
-def generar_html(resultados_directemar, hay_alerta):
-    total_estaciones = len(resultados_directemar) + len(ESTACIONES_FAROS)
-    operativas = sum(1 for r in resultados_directemar if r["ok"])
-    
-    markers_js = ""
-    for r in resultados_directemar:
-        color = "green" if r["ok"] else "red"
-        markers_js += f"""
+def consultar_directemar(est):
+  try:
+    req = urllib.request.Request(est["url"], headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
+      html = response.read().decode("utf-8", errors="ignore")
+      match = re.search(
+          r"page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})",
+          html,
+          re.IGNORECASE,
+      )
+
+      temp = "--"
+      hum = "--"
+      viento = "--"
+
+      if match:
+        fecha_str = match.group(1)
+        fecha_estacion = datetime.strptime(fecha_str, "%d-%m-%Y %H:%M")
+        dif_min = int(
+            (datetime.now() - fecha_estacion).total_seconds() / 60
+        )
+
+        if dif_min <= TOLERANCIA_MINUTOS:
+          return True, "OPERATIVA", fecha_str, temp, hum, viento
+        else:
+          return False, f"DESACTUALIZADA ({dif_min} min)", fecha_str, temp, hum, viento
+    return False, "SIN DATOS VÁLIDOS", "N/D", "--", "--", "--"
+  except Exception:
+    return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
+
+
+def consultar_weatherlink_v2(station_id):
+  try:
+    t = str(int(time.time()))
+    url_path = f"/v2/current/{station_id}"
+    data_to_sign = f"api-key{WL_API_KEY}t{t}{url_path}"
+
+    signature = hmac.new(
+        WL_API_SECRET.encode("utf-8"),
+        data_to_sign.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    url = f"https://api.weatherlink.com{url_path}?api-key={WL_API_KEY}&t={t}&api-signature={signature}"
+
+    req = urllib.request.Request(url, headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
+      resultado = json.loads(response.read().decode("utf-8"))
+      datos_sensor = resultado["sensors"][0]["data"][0]
+      temp_f = datos_sensor.get("temp")
+      temp_c = (
+          round((temp_f - 32) * 5 / 9, 1) if temp_f is not None else "--"
+      )
+      hum = datos_sensor.get("hum", "--")
+      viento = datos_sensor.get("wind_speed_last", "--")
+
+      return (
+          True,
+          f"{temp_c}°C" if temp_c != "--" else "--",
+          f"{hum}%" if hum != "--" else "--",
+          f"{viento} nud" if viento != "--" else "--",
+      )
+  except Exception as e:
+    print(f"Error API WeatherLink para ID {station_id}: {e}")
+    return False, "--", "--", "--"
+
+
+def generar_html(resultados_directemar, resultados_faros, hay_alerta):
+  total_estaciones = len(resultados_directemar) + len(resultados_faros)
+  operativas = sum(1 for r in resultados_directemar if r["ok"]) + sum(
+      1 for f in resultados_faros if f["ok"]
+  )
+
+  markers_js = ""
+  for r in resultados_directemar:
+    color = "green" if r["ok"] else "red"
+    markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}',
             fillColor: '{color}',
@@ -75,52 +188,65 @@ def generar_html(resultados_directemar, hay_alerta):
         }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
-    for faro in ESTACIONES_FAROS:
-        markers_js += f"""
+  for faro in resultados_faros:
+    color = "blue" if faro["ok"] else "orange"
+    markers_js += f"""
         L.circleMarker([{faro['lat']}, {faro['lon']}], {{
-            color: 'blue',
-            fillColor: '#3498db',
+            color: '{color}',
+            fillColor: '{color}',
             fillOpacity: 0.8,
             radius: 8
-        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Acceso Directo PWS<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Temp: {faro['temp']}<br>Hum: {faro['hum']}<br>Viento: {faro['viento']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
-    cards_html = ""
-    for r in resultados_directemar:
-        clase = "ok" if r["ok"] else "error"
-        icono = "🟢" if r["ok"] else "🔴"
-        cards_html += f"""
+  cards_html = ""
+  for r in resultados_directemar:
+    clase = "ok" if r["ok"] else "error"
+    icono = "🟢" if r["ok"] else "🔴"
+    cards_html += f"""
         <a href="{r['url']}" target="_blank" class="card-link">
             <div class="card {clase}">
                 <strong>{r['nombre']}</strong>
                 <div class="status">{icono} {r['estado']}</div>
+                <div class="weather-info">
+                    <span>🌡️ {r['temp']}</span> | <span>💧 {r['hum']}</span> | <span>🌬️ {r['viento']}</span>
+                </div>
                 <div class="time">Último reporte: {r['ultimo']}</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
         """
 
-    for faro in ESTACIONES_FAROS:
-        cards_html += f"""
+  for faro in resultados_faros:
+    clase = "warning" if faro["ok"] else "error"
+    cards_html += f"""
         <a href="{faro['url']}" target="_blank" class="card-link">
-            <div class="card warning">
+            <div class="card {clase}">
                 <strong>{faro['nombre']}</strong>
-                <div class="status">🔵 ACCESO PWS</div>
-                <div class="time">Revisión manual</div>
+                <div class="status">🔵 WEATHERLINK V2</div>
+                <div class="weather-info">
+                    <span>🌡️ {faro['temp']}</span> | <span>💧 {faro['hum']}</span> | <span>🌬️ {faro['viento']}</span>
+                </div>
+                <div class="time">Datos en línea (API)</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
         """
 
-    alerta_class = "alerta-activa" if hay_alerta else ""
-    alerta_banner = '<div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>' if hay_alerta else ''
+  alerta_class = "alerta-activa" if hay_alerta else ""
+  alerta_banner = (
+      '<div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O'
+      " DESACTUALIZADAS! ⚠️</div>"
+      if hay_alerta
+      else ""
+  )
 
-    html = f"""<!DOCTYPE html>
+  html = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="refresh" content="30">
-    <title>Mapa Estaciones Automaticas - Constitución a Corral</title>
+    <title>Monitor de Estaciones Automáticas - Constitución a Corral</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {{ font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 15px; margin: 0; }}
@@ -151,6 +277,7 @@ def generar_html(resultados_directemar, hay_alerta):
         .ok .status {{ color: #27ae60; }}
         .error .status {{ color: #c0392b; }}
         .warning .status {{ color: #2980b9; }}
+        .weather-info {{ font-size: 0.9em; color: #34495e; margin-top: 6px; font-weight: bold; background: #f8f9fa; padding: 4px; border-radius: 4px; }}
         .time {{ font-size: 0.8em; color: #7f8c8d; margin-top: 4px; }}
         .click-text {{ font-size: 0.7em; color: #95a5a6; margin-top: 6px; font-style: italic; text-align: right; }}
 
@@ -160,9 +287,9 @@ def generar_html(resultados_directemar, hay_alerta):
 <body class="{alerta_class}">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: {datetime.now(chile_tz).strftime('%d-%m-%Y %H:%M:%S')} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
+    <div class="subtitle">Última verificación: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
     {alerta_banner}
-    <div class="summary">Estaciones Operativas: {operativas} de {len(resultados_directemar)} | Total Accesos: {total_estaciones}</div>
+    <div class="summary">Estaciones Operativas: {operativas} de {total_estaciones}</div>
 
     <div id="map"></div>
 
@@ -186,35 +313,80 @@ def generar_html(resultados_directemar, hay_alerta):
 </body>
 </html>"""
 
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html)
-    print("✓ Archivo 'index.html' generado correctamente.")
+  with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html)
+  print("✓ Archivo 'index.html' generado correctamente.")
+
 
 def ejecutar_monitoreo():
-    chile_tz = ZoneInfo("America/Santiago")
-    print(f"\n--- [{datetime.now(chile_tz).strftime('%H:%M:%S')}] Verificando...")
-    resultados_directemar = []
-    hubo_fallas = False
-    
-    for est in ESTACIONES_DIRECTEMAR:
-        ok, estado, ultimo = consultar_directemar(est)
-        simbolo = "✓" if ok else "X"
-        print(f"[{simbolo}] {est['nombre']}: {estado} ({ultimo})")
-        
-        if not ok:
-            hubo_fallas = True
+  print(
+      f"\n--- [{datetime.now().strftime('%H:%M:%S')}] Verificando mapa litoral"
+      " ---"
+  )
+  resultados_directemar = []
+  resultados_faros = []
+  hubo_fallas = False
 
-        resultados_directemar.append({
-            "nombre": est["nombre"], 
-            "url": est["url"], 
-            "lat": est["lat"],
-            "lon": est["lon"],
-            "ok": ok, 
-            "estado": estado, 
-            "ultimo": ultimo
-        })
+  # Consultar Directemar
+  for est in ESTACIONES_DIRECTEMAR:
+    ok, estado, ultimo, temp, hum, viento = consultar_directemar(est)
+    simbolo = "✓" if ok else "X"
+    print(f"[{simbolo}] {est['nombre']}: {estado} ({ultimo})")
+    if not ok:
+      hubo_fallas = True
+    resultados_directemar.append({
+        "nombre": est["nombre"],
+        "url": est["url"],
+        "lat": est["lat"],
+        "lon": est["lon"],
+        "ok": ok,
+        "estado": estado,
+        "ultimo": ultimo,
+        "temp": temp,
+        "hum": hum,
+        "viento": viento,
+    })
 
-    generar_html(resultados_directemar, hubo_fallas)
+  # Consultar Faros mediante WeatherLink API v2
+  for faro in ESTACIONES_FAROS:
+    ok, temp, hum, viento = consultar_weatherlink_v2(faro["station_id"])
+    simbolo = "✓" if ok else "X"
+    print(f"[{simbolo}] {faro['nombre']} (WL): Temp {temp}, Hum {hum}")
+    if not ok:
+      hubo_fallas = True
+    resultados_faros.append({
+        "nombre": faro["nombre"],
+        "url": faro["url"],
+        "lat": faro["lat"],
+        "lon": faro["lon"],
+        "ok": ok,
+        "temp": temp,
+        "hum": hum,
+        "viento": viento,
+    })
+
+  generar_html(resultados_directemar, resultados_faros, hubo_fallas)
+  subir_a_github()
+
+
+def subir_a_github():
+  try:
+    print("Subiendo cambios a GitHub...")
+    subprocess.run(["git", "add", "index.html"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "commit",
+            "-m",
+            "Actualización automática de clima desde API WeatherLink [skip ci]",
+        ],
+        check=True,
+    )
+    subprocess.run(["git", "push"], check=True)
+    print("¡Cambios subidos a GitHub con éxito!")
+  except subprocess.CalledProcessError as e:
+    print(f"Error al sincronizar con Git: {e}")
+
 
 if __name__ == "__main__":
-    ejecutar_monitoreo()
+  ejecutar_monitoreo()
