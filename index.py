@@ -1,8 +1,5 @@
 from datetime import datetime, timedelta
-import hashlib
-import hmac
 import json
-import re
 import ssl
 import subprocess
 import time
@@ -104,7 +101,7 @@ ctx.verify_mode = ssl.CERT_NONE
 
 
 def obtener_hora_chile():
-  # Ajusta la hora UTC del servidor restando 3 horas para obtener la hora local de Chile
+  # Ajuste estricto UTC menos 3 horas para la hora local de Chile
   return datetime.utcnow() - timedelta(hours=3)
 
 
@@ -141,41 +138,36 @@ def consultar_directemar(est):
 
 def consultar_weatherlink_v2(station_id):
   try:
-    t = str(int(time.time()))
-    url_path = f"/v2/current/{station_id}"
-    data_to_sign = f"api-key{WL_API_KEY}t{t}{url_path}"
+    # Autenticación simplificada oficial WeatherLink v2 (API Key en URL, Secret en Header)
+    url = f"https://api.weatherlink.com/v2/current/{station_id}?api-key={WL_API_KEY}"
+    headers_wl = {**HEADERS, "X-Api-Secret": WL_API_SECRET}
 
-    signature = hmac.new(
-        WL_API_SECRET.encode("utf-8"),
-        data_to_sign.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-
-    url = f"https://api.weatherlink.com{url_path}?api-key={WL_API_KEY}&t={t}&api-signature={signature}"
-
-    req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(url=url, timeout=8, context=ctx) as response:
+    req = urllib.request.Request(url, headers=headers_wl)
+    with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
       resultado = json.loads(response.read().decode("utf-8"))
 
       temp_c, hum, viento = "--", "--", "--"
 
-      # Barrido flexible sobre todos los sensores y claves del JSON
+      # Extracción flexible de parámetros meteorológicos del JSON
       for sensor in resultado.get("sensors", []):
         for dat in sensor.get("data", []):
           for key, val in dat.items():
             if val is not None:
-              if any(k in key.lower() for k in ["temp"]) and temp_c == "--":
-                # Si viene en Fahrenheit (estándar Davis), convertir a Celsius
-                temp_c = round((val - 32) * 5 / 9, 1)
-              elif any(k in key.lower() for k in ["hum"]) and hum == "--":
+              k_lower = key.lower()
+              if any(k in k_lower for k in ["temp"]) and temp_c == "--":
+                # Conversión de Fahrenheit a Celsius si aplica
+                temp_c = (
+                    round((val - 32) * 5 / 9, 1) if val > 50 else round(val, 1)
+                )
+              elif any(k in k_lower for k in ["hum"]) and hum == "--":
                 hum = val
               elif (
-                  any(k in key.lower() for k in ["wind_speed", "wind_last"])
+                  any(k in k_lower for k in ["wind_speed", "wind_last"])
                   and viento == "--"
               ):
                 viento = val
 
-      if temp_c == "--" and hum == "--":
+      if temp_c == "--" and hum == "--" and viento == "--":
         return False, "--", "--", "--"
 
       return (
@@ -185,7 +177,7 @@ def consultar_weatherlink_v2(station_id):
           f"{viento} nud" if viento != "--" else "--",
       )
   except Exception as e:
-    print(f"Error API WeatherLink para ID {station_id}: {e}")
+    print(f"Error API WeatherLink ID {station_id}: {e}")
     return False, "--", "--", "--"
 
 
@@ -335,13 +327,13 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ Archivo 'index.html' generado correctamente.")
+  print("✓ Archivo 'index.html' generado correctamente con hora de Chile.")
 
 
 def ejecutar_monitoreo():
   print(
-      f"\n--- [{obtener_hora_chile().strftime('%H:%M:%S')}] Verificando mapa"
-      " litoral ---"
+      f"\n--- [{obtener_hora_chile().strftime('%H:%M:%S')}] Verificando litoral"
+      " ---"
   )
   resultados_directemar = []
   resultados_faros = []
@@ -391,19 +383,20 @@ def ejecutar_monitoreo():
 
 def subir_a_github():
   try:
-    print("Subiendo cambios a GitHub...")
+    print("Sincronizando cambios con GitHub...")
     subprocess.run(["git", "add", "index.html"], check=True)
     subprocess.run(
         [
             "git",
             "commit",
             "-m",
-            "Actualización automática de clima desde API WeatherLink [skip ci]",
+            "Corrección de autenticación WeatherLink v2 y hora local [skip"
+            " ci]",
         ],
         check=True,
     )
     subprocess.run(["git", "push"], check=True)
-    print("¡Cambios subidos a GitHub con éxito!")
+    print("¡Sincronización completada con éxito!")
   except subprocess.CalledProcessError as e:
     print(f"Error al sincronizar con Git: {e}")
 
