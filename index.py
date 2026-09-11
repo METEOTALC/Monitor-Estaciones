@@ -125,7 +125,6 @@ def consultar_directemar(est):
             abs((datetime.now() - fecha_estacion).total_seconds()) / 60
         )
 
-        # Tolerancia normal o margen automático para evitar falsas alertas por desfase UTC (~180 min)
         if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
           return True, "OPERATIVA", fecha_str, temp, hum, viento
         else:
@@ -155,20 +154,31 @@ def consultar_weatherlink_v2(station_id):
 
       temp_c, hum, viento = "--", "--", "--"
 
-      # Búsqueda inteligente en los sensores devueltos por la API v2
+      # Extracción profunda recorriendo todos los campos posibles de la API v2
       for sensor in resultado.get("sensors", []):
         for dat in sensor.get("data", []):
-          if "temp" in dat and dat["temp"] is not None and temp_c == "--":
-            temp_f = dat["temp"]
-            temp_c = round((temp_f - 32) * 5 / 9, 1)
-          if "hum" in dat and dat["hum"] is not None and hum == "--":
-            hum = dat["hum"]
-          if (
-              "wind_speed_last" in dat
-              and dat["wind_speed_last"] is not None
-              and viento == "--"
-          ):
-            viento = dat["wind_speed_last"]
+          # Buscar temperatura (puede venir como 'temp', 'temp_out' o 'temp_in')
+          for k in ["temp", "temp_out", "temp_in"]:
+            if k in dat and dat[k] is not None and temp_c == "--":
+              temp_f = dat[k]
+              temp_c = round((temp_f - 32) * 5 / 9, 1)
+
+          # Buscar humedad
+          for k in ["hum", "hum_out", "hum_in"]:
+            if k in dat and dat[k] is not None and hum == "--":
+              hum = dat[k]
+
+          # Buscar viento (velocidad)
+          for k in [
+              "wind_speed_last",
+              "wind_speed_avg_last_10_min",
+              "wind_speed",
+          ]:
+            if k in dat and dat[k] is not None and viento == "--":
+              viento = dat[k]
+
+      if temp_c == "--" and hum == "--":
+        return False, "--", "--", "--"
 
       return (
           True,
@@ -200,7 +210,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         """
 
   for faro in resultados_faros:
-    color = "blue" if faro["ok"] else "orange"
+    color = "green" if faro["ok"] else "red"
     markers_js += f"""
         L.circleMarker([{faro['lat']}, {faro['lon']}], {{
             color: '{color}',
@@ -229,16 +239,18 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         """
 
   for faro in resultados_faros:
-    clase = "warning" if faro["ok"] else "error"
+    clase = "ok" if faro["ok"] else "error"
+    icono = "🟢" if faro["ok"] else "🔴"
+    estado_txt = "OPERATIVA" if faro["ok"] else "SIN CONEXIÓN"
     cards_html += f"""
         <a href="{faro['url']}" target="_blank" class="card-link">
             <div class="card {clase}">
                 <strong>{faro['nombre']}</strong>
-                <div class="status">🔵 WEATHERLINK V2</div>
+                <div class="status">{icono} {estado_txt}</div>
                 <div class="weather-info">
                     <span>🌡️ {faro['temp']}</span> | <span>💧 {faro['hum']}</span> | <span>🌬️ {faro['viento']}</span>
                 </div>
-                <div class="time">Datos en línea (API)</div>
+                <div class="time">Fuente: WeatherLink API v2</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
@@ -283,11 +295,9 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .card:hover {{ transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }}
         .card.ok {{ border-left-color: #2ecc71; }}
         .card.error {{ border-left-color: #e74c3c; }}
-        .card.warning {{ border-left-color: #3498db; }}
         .status {{ font-weight: bold; margin-top: 4px; font-size: 13px; }}
         .ok .status {{ color: #27ae60; }}
         .error .status {{ color: #c0392b; }}
-        .warning .status {{ color: #2980b9; }}
         .weather-info {{ font-size: 0.9em; color: #34495e; margin-top: 6px; font-weight: bold; background: #f8f9fa; padding: 4px; border-radius: 4px; }}
         .time {{ font-size: 0.8em; color: #7f8c8d; margin-top: 4px; }}
         .click-text {{ font-size: 0.7em; color: #95a5a6; margin-top: 6px; font-style: italic; text-align: right; }}
