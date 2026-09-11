@@ -29,11 +29,9 @@
         .card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .card.ok { border-left-color: #2ecc71; }
         .card.error { border-left-color: #e74c3c; }
-        .card.warning { border-left-color: #3498db; }
         .status { font-weight: bold; margin-top: 4px; font-size: 13px; }
         .ok .status { color: #27ae60; }
         .error .status { color: #c0392b; }
-        .warning .status { color: #2980b9; }
         .weather-info { font-size: 0.9em; color: #34495e; margin-top: 6px; font-weight: bold; background: #f8f9fa; padding: 4px; border-radius: 4px; }
         .time { font-size: 0.8em; color: #7f8c8d; margin-top: 4px; }
         .click-text { font-size: 0.7em; color: #95a5a6; margin-top: 6px; font-style: italic; text-align: right; }
@@ -44,7 +42,7 @@
 <body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 11-09-2026 17:55:22 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 11-09-2026 17:58:18 (Tolerancia: 12 min)</div>
     <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
     <div class="summary">Estaciones Operativas: 7 de 10</div>
 
@@ -151,11 +149,11 @@
         <a href="https://www.wunderground.com/dashboard/pws/ITALCA20" target="_blank" class="card-link">
             <div class="card error">
                 <strong>Faro Isla Quiriquina</strong>
-                <div class="status">🔵 WEATHERLINK V2</div>
+                <div class="status">🔴 SIN CONEXIÓN</div>
                 <div class="weather-info">
                     <span>🌡️ --</span> | <span>💧 --</span> | <span>🌬️ --</span>
                 </div>
-                <div class="time">Datos en línea (API)</div>
+                <div class="time">Fuente: WeatherLink API v2</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
@@ -163,11 +161,11 @@
         <a href="https://www.wunderground.com/dashboard/pws/IHUALP1" target="_blank" class="card-link">
             <div class="card error">
                 <strong>Faro Punta Hualpén</strong>
-                <div class="status">🔵 WEATHERLINK V2</div>
+                <div class="status">🔴 SIN CONEXIÓN</div>
                 <div class="weather-info">
                     <span>🌡️ --</span> | <span>💧 --</span> | <span>🌬️ --</span>
                 </div>
-                <div class="time">Datos en línea (API)</div>
+                <div class="time">Fuente: WeatherLink API v2</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
@@ -243,15 +241,15 @@
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral-1960</b><br>Estado: OPERATIVA<br>Reporte: 11-09-2026 14:50<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.625, -73.033], {
-            color: 'orange',
-            fillColor: 'orange',
+            color: 'red',
+            fillColor: 'red',
             fillOpacity: 0.8,
             radius: 8
         }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Temp: --<br>Hum: --<br>Viento: --<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
-            color: 'orange',
-            fillColor: 'orange',
+            color: 'red',
+            fillColor: 'red',
             fillOpacity: 0.8,
             radius: 8
         }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Temp: --<br>Hum: --<br>Viento: --<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
