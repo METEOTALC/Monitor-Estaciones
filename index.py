@@ -120,13 +120,13 @@ def consultar_directemar(est):
           re.IGNORECASE,
       )
 
-      # Convertir HTML a texto plano eliminando etiquetas para buscar datos con precisión
+      # Convertir HTML a texto plano
       texto_plano = re.sub(r"<[^>]+>", " ", html)
       texto_plano = re.sub(r"\s+", " ", texto_plano)
 
       temp, hum, viento = "--", "--", "--"
 
-      # Búsqueda flexible en texto plano
+      # Extracción de Temperatura
       temp_match = re.search(
           r"(?:Temperatura|Temp)[^\d\-]*([\-]?\d+[\.,]?\d*)",
           texto_plano,
@@ -135,19 +135,21 @@ def consultar_directemar(est):
       if temp_match:
         temp = f"{temp_match.group(1).replace(',', '.')}°C"
 
+      # Extracción de Humedad
       hum_match = re.search(
           r"(?:Humedad|HR)[^\d]*(\d+[\.,]?\d*)", texto_plano, re.IGNORECASE
       )
       if hum_match:
         hum = f"{hum_match.group(1)}%"
 
+      # Extraccion de Viento (Búsqueda optimizada para capturar velocidad en nudos)
       viento_match = re.search(
-          r"(?:Viento|Velocidad)[^\d]*(\d+[\.,]?\d*)",
+          r"(?:Viento|Velocidad|Vel|Nudos|Nd|Nud)[^\d]*(\d+[\.,]?\d*)",
           texto_plano,
           re.IGNORECASE,
       )
       if viento_match:
-        viento = f"{viento_match.group(1)} nud"
+        viento = f"{viento_match.group(1).replace(',', '.')} nud"
 
       if match:
         fecha_str = match.group(1)
@@ -198,40 +200,71 @@ def consultar_weatherlink_v2(station_id, nombre_faro):
           for key, val in dat.items():
             if val is not None:
               k_lower = key.lower()
+              # Temperatura
               if (
                   any(
                       k in k_lower
-                      for k in ["temp", "temp_out", "out_temp", "temp_air"]
+                      for k in [
+                          "temp",
+                          "out_temp",
+                          "temp_out",
+                          "temp_air",
+                          "the_temp",
+                      ]
                   )
                   and temp_c == "--"
               ):
-                temp_c = (
-                    round((val - 32) * 5 / 9, 1) if val > 50 else round(val, 1)
-                )
-              elif (
-                  any(k in k_lower for k in ["hum", "out_hum", "humidity"])
-                  and hum == "--"
-              ):
-                hum = val
+                try:
+                  val_f = float(val)
+                  temp_c = (
+                      round((val_f - 32) * 5 / 9, 1)
+                      if val_f > 50
+                      else round(val_f, 1)
+                  )
+                except:
+                  pass
+              # Humedad
               elif (
                   any(
                       k in k_lower
-                      for k in ["wind_speed", "wind_last", "wind_speed_last"]
+                      for k in ["hum", "out_hum", "humidity", "moisture"]
+                  )
+                  and hum == "--"
+              ):
+                try:
+                  hum = round(float(val), 1)
+                except:
+                  pass
+              # Viento
+              elif (
+                  any(
+                      k in k_lower
+                      for k in [
+                          "wind_speed",
+                          "wind_last",
+                          "wind_speed_last",
+                          "wind_avg",
+                      ]
                   )
                   and viento == "--"
               ):
-                viento = val
+                try:
+                  viento = round(float(val), 1)
+                except:
+                  pass
 
-      if temp_c == "--" and hum == "--" and viento == "--":
-        print(f"WeatherLink [{nombre_faro}]: JSON recibido sin métricas válidas.")
+      # Si conecta y trae al menos un dato, se considera operativa
+      if temp_c != "--" or hum != "--" or viento != "--":
+        return (
+            True,
+            f"{temp_c}°C" if temp_c != "--" else "--",
+            f"{hum}%" if hum != "--" else "--",
+            f"{viento} nud" if viento != "--" else "--",
+        )
+      else:
+        print(f"WeatherLink [{nombre_faro}]: Conectó pero sin métricas.")
         return False, "--", "--", "--"
 
-      return (
-          True,
-          f"{temp_c}°C" if temp_c != "--" else "--",
-          f"{hum}%" if hum != "--" else "--",
-          f"{viento} nud" if viento != "--" else "--",
-      )
   except urllib.error.HTTPError as e:
     print(f"Error HTTP WeatherLink [{nombre_faro}]: {e.code} - {e.reason}")
     return False, "--", "--", "--"
@@ -425,7 +458,10 @@ def ejecutar_monitoreo():
         faro["station_id"], faro["nombre"]
     )
     simbolo = "✓" if ok else "X"
-    print(f"[{simbolo}] {faro['nombre']} (WL): Temp {temp}, Hum {hum}")
+    print(
+        f"[{simbolo}] {faro['nombre']} (WL): Temp {temp}, Hum {hum}, Viento"
+        f" {viento}"
+    )
     if not ok:
       hubo_fallas = True
     resultados_faros.append({
@@ -452,7 +488,10 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Extracción texto plano y depuración WeatherLink [skip ci]",
+            (
+                "Corrección final de viento y datos WeatherLink para faros"
+                " [skip ci]"
+            ),
         ],
         check=True,
     )
