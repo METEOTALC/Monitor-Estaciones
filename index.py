@@ -120,13 +120,12 @@ def consultar_directemar(est):
           re.IGNORECASE,
       )
 
-      # Convertir HTML a texto plano
       texto_plano = re.sub(r"<[^>]+>", " ", html)
       texto_plano = re.sub(r"\s+", " ", texto_plano)
 
       temp, hum, viento = "--", "--", "--"
 
-      # Extracción de Temperatura
+      # Temperatura
       temp_match = re.search(
           r"(?:Temperatura|Temp)[^\d\-]*([\-]?\d+[\.,]?\d*)",
           texto_plano,
@@ -135,21 +134,21 @@ def consultar_directemar(est):
       if temp_match:
         temp = f"{temp_match.group(1).replace(',', '.')}°C"
 
-      # Extracción de Humedad
+      # Humedad
       hum_match = re.search(
           r"(?:Humedad|HR)[^\d]*(\d+[\.,]?\d*)", texto_plano, re.IGNORECASE
       )
       if hum_match:
         hum = f"{hum_match.group(1)}%"
 
-      # Extraccion de Viento (Búsqueda optimizada para capturar velocidad en nudos)
+      # Viento (Búsqueda más específica para evitar valores genéricos)
       viento_match = re.search(
-          r"(?:Viento|Velocidad|Vel|Nudos|Nd|Nud)[^\d]*(\d+[\.,]?\d*)",
+          r"(?:Viento|Velocidad|Vel\.?)[^\d]*(\d+[\.,]?\d*)",
           texto_plano,
           re.IGNORECASE,
       )
       if viento_match:
-        viento = f"{viento_match.group(1).replace(',', '.')} nud"
+        viento = f"{viento_match.group(1).replace(',', '.')} kt"
 
       if match:
         fecha_str = match.group(1)
@@ -200,7 +199,6 @@ def consultar_weatherlink_v2(station_id, nombre_faro):
           for key, val in dat.items():
             if val is not None:
               k_lower = key.lower()
-              # Temperatura
               if (
                   any(
                       k in k_lower
@@ -223,7 +221,6 @@ def consultar_weatherlink_v2(station_id, nombre_faro):
                   )
                 except:
                   pass
-              # Humedad
               elif (
                   any(
                       k in k_lower
@@ -235,7 +232,6 @@ def consultar_weatherlink_v2(station_id, nombre_faro):
                   hum = round(float(val), 1)
                 except:
                   pass
-              # Viento
               elif (
                   any(
                       k in k_lower
@@ -253,21 +249,16 @@ def consultar_weatherlink_v2(station_id, nombre_faro):
                 except:
                   pass
 
-      # Si conecta y trae al menos un dato, se considera operativa
       if temp_c != "--" or hum != "--" or viento != "--":
         return (
             True,
             f"{temp_c}°C" if temp_c != "--" else "--",
             f"{hum}%" if hum != "--" else "--",
-            f"{viento} nud" if viento != "--" else "--",
+            f"{viento} kt" if viento != "--" else "--",
         )
       else:
-        print(f"WeatherLink [{nombre_faro}]: Conectó pero sin métricas.")
         return False, "--", "--", "--"
 
-  except urllib.error.HTTPError as e:
-    print(f"Error HTTP WeatherLink [{nombre_faro}]: {e.code} - {e.reason}")
-    return False, "--", "--", "--"
   except Exception as e:
     print(f"Excepción WeatherLink [{nombre_faro}]: {e}")
     return False, "--", "--", "--"
@@ -419,7 +410,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ Archivo 'index.html' generado exitosamente.")
+  print("✓ Archivo 'index.html' generado exitosamente con unidades en kt.")
 
 
 def ejecutar_monitoreo():
@@ -489,7 +480,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección final de viento y datos WeatherLink para faros"
+                "Actualización de unidades a kt y mejora de lectura de viento"
                 " [skip ci]"
             ),
         ],
