@@ -122,10 +122,11 @@ def consultar_directemar(est):
         fecha_str = match.group(1)
         fecha_estacion = datetime.strptime(fecha_str, "%d-%m-%Y %H:%M")
         dif_min = int(
-            (datetime.now() - fecha_estacion).total_seconds() / 60
+            abs((datetime.now() - fecha_estacion).total_seconds()) / 60
         )
 
-        if dif_min <= TOLERANCIA_MINUTOS:
+        # Tolerancia normal o margen automático para evitar falsas alertas por desfase UTC (~180 min)
+        if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
           return True, "OPERATIVA", fecha_str, temp, hum, viento
         else:
           return False, f"DESACTUALIZADA ({dif_min} min)", fecha_str, temp, hum, viento
@@ -151,13 +152,23 @@ def consultar_weatherlink_v2(station_id):
     req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
       resultado = json.loads(response.read().decode("utf-8"))
-      datos_sensor = resultado["sensors"][0]["data"][0]
-      temp_f = datos_sensor.get("temp")
-      temp_c = (
-          round((temp_f - 32) * 5 / 9, 1) if temp_f is not None else "--"
-      )
-      hum = datos_sensor.get("hum", "--")
-      viento = datos_sensor.get("wind_speed_last", "--")
+
+      temp_c, hum, viento = "--", "--", "--"
+
+      # Búsqueda inteligente en los sensores devueltos por la API v2
+      for sensor in resultado.get("sensors", []):
+        for dat in sensor.get("data", []):
+          if "temp" in dat and dat["temp"] is not None and temp_c == "--":
+            temp_f = dat["temp"]
+            temp_c = round((temp_f - 32) * 5 / 9, 1)
+          if "hum" in dat and dat["hum"] is not None and hum == "--":
+            hum = dat["hum"]
+          if (
+              "wind_speed_last" in dat
+              and dat["wind_speed_last"] is not None
+              and viento == "--"
+          ):
+            viento = dat["wind_speed_last"]
 
       return (
           True,
