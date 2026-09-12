@@ -135,9 +135,9 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # Temperatura
+      # Temperatura (Corregido para aceptar tanto '°' como 'º' y variantes de etiqueta)
       temp_match = re.search(
-          r"(?:Temperatura|Temp\.?)\s*[:|]?\s*([\-]?\d+(?:[.,]\d+)?)\s*°?\s*C",
+          r"(?:Temperatura|Temp\.?)\s*[:|]?\s*([\-]?\d+(?:[.,]\d+)?)\s*[°º]?\s*C",
           texto_plano,
           re.IGNORECASE,
       )
@@ -146,7 +146,7 @@ def consultar_directemar(est):
         if val is not None:
           temp = f"{val:.1f}°C"
 
-      # Humedad (Estricta con el símbolo %)
+      # Humedad
       hum_match = re.search(
           r"(?:Humidity|Humedad)\s*(?:Relativa)?\s*\|?\s*(\d+(?:[.,]\d+)?)\s*%",
           texto_plano,
@@ -206,7 +206,6 @@ def consultar_directemar(est):
 
 def consultar_wunderground_pws(station_id, nombre_faro):
   try:
-    # Codificar correctamente el '+' de la API Key para que no se interprete como espacio en URL
     api_key_segura = WU_API_KEY.replace("+", "%2B")
     url = f"https://api.weather.com/v2/pws/observations/current?stationId={station_id}&format=json&units=m&apiKey={api_key_segura}"
 
@@ -221,7 +220,6 @@ def consultar_wunderground_pws(station_id, nombre_faro):
       obs = observations[0]
       metric = obs.get("metric", {})
 
-      # Fecha de observación
       obs_utc = obs.get("obsTimeUtc")
       fecha_obs = None
       if obs_utc:
@@ -232,20 +230,17 @@ def consultar_wunderground_pws(station_id, nombre_faro):
         except Exception:
           pass
 
-      # Temperatura
       temp = metric.get("temp")
       temp_num = convertir_numero(temp)
       temp_str = f"{temp_num:.1f}°C" if temp_num is not None else "--"
 
-      # Humedad (nivel superior del JSON)
       hum = obs.get("humidity")
       hum_num = convertir_numero(hum)
       hum_str = f"{hum_num:.1f}%" if hum_num is not None else "--"
 
-      # Viento (la clave correcta en la API v2 es 'windspeed' en minúsculas)
       wind = metric.get("windspeed")
       if wind is None:
-        wind = metric.get("windSpeed")  # Fallback
+        wind = metric.get("windSpeed")
 
       wind_num = convertir_numero(wind)
       if wind_num is not None:
@@ -254,7 +249,6 @@ def consultar_wunderground_pws(station_id, nombre_faro):
       else:
         viento_str = "--"
 
-      # Tolerancia de tiempo
       ahora = obtener_hora_chile()
       if fecha_obs:
         diferencia = abs((ahora - fecha_obs).total_seconds() / 60)
@@ -477,7 +471,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización de datos meteorológicos y faros WU [skip ci]"
+                "Corrección de lectura de temperatura en estaciones Directemar"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
