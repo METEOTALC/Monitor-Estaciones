@@ -127,7 +127,6 @@ def consultar_directemar(est):
     with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
       html = response.read().decode("utf-8", errors="ignore")
 
-      # Limpieza agresiva de códigos HTML que Directemar suele mezclar
       texto_plano = re.sub(r"<[^>]+>", " ", html)
       texto_plano = (
           texto_plano.replace("\xa5", " ")
@@ -140,14 +139,13 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # 1. Temperatura (Búsqueda ultra flexible a prueba de fallos)
+      # 1. Temperatura (Español o Inglés)
       temp_match = re.search(
-          r"(?:Temperatura|Temp)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:[°º]\s*[cC]|C\b)?",
+          r"(?:Temperatura|Temperature|Temp)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:[°º]\s*[cC]|C\b)?",
           texto_plano,
           re.IGNORECASE,
       )
       if not temp_match:
-        # Respaldo: busca cualquier número pegado a un °C
         temp_match = re.search(
             r"([\-]?\d+(?:[.,]\d+)?)\s*[°º]\s*[cC]",
             texto_plano,
@@ -159,23 +157,28 @@ def consultar_directemar(est):
         if val is not None:
           temp = f"{val:.1f}°C"
 
-      # 2. Humedad (Búsqueda ultra flexible a prueba de fallos)
+      # 2. Humedad (Español o Inglés, con el % obligatorio para evitar errores)
       hum_match = re.search(
-          r"(?:Humedad|Hum|HR)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
+          r"(?:Humedad|Humidity|Hum|HR)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
           texto_plano,
           re.IGNORECASE,
       )
-      if not hum_match:
-        # Respaldo: busca el primer porcentaje válido (0-100) en el texto
+      if hum_match:
+        val = convertir_numero(hum_match.group(1))
+        if val is not None and 0 <= val <= 100:
+          hum = f"{val:.1f}%"
+      
+      if hum == "--":
+        # Respaldo de humedad buscando el primer porcentaje válido
         for m in re.findall(r"(\d+(?:[.,]\d+)?)\s*%", texto_plano):
           val = convertir_numero(m)
           if val is not None and 0 <= val <= 100:
             hum = f"{val:.1f}%"
             break
 
-      # 3. Viento promedio (Estable y funcionando, intacto)
+      # 3. Viento (Español o Inglés)
       viento_match = re.search(
-          r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt)", texto_plano, re.IGNORECASE
+          r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)", texto_plano, re.IGNORECASE
       )
       if viento_match:
         val = convertir_numero(viento_match.group(1))
@@ -485,7 +488,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección final ultra-flexible para Temp y Humedad [skip ci]"
+                "Corrección final ultra-flexible para Temp y Humedad en inglés y español [skip ci]"
             ),
         ],
         capture_output=True,
