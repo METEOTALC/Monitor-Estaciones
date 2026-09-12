@@ -226,9 +226,6 @@ def consultar_directemar(est):
 
 def consultar_wunderground_web(est):
   try:
-    # Consultamos primero la API oficial pidiendo unidades imperiales (fahrenheit convertido o analizando los decimales nativos)
-    # o bien usando la API v2 con formato json. La API en unidades imperiales (units=e) a veces reporta la temperatura
-    # con mayor precisión decimal interna antes del redondeo métrico.
     api_url = (
         f"https://api.weather.com/v2/pws/observations/current"
         f"?stationId={est['id']}&format=json&units=e&apiKey=e1f10a1e78da46f5b10a1e78da96f525"
@@ -241,7 +238,6 @@ def consultar_wunderground_web(est):
 
       temp_f = imperial.get("temp")
       if temp_f is not None:
-        # Convertimos Fahrenheit a Celsius con decimales precisos: (F - 32) * 5/9
         temp_c = (temp_f - 32.0) * 5.0 / 9.0
         temp = f"{temp_c:.1f}°C"
       else:
@@ -252,7 +248,6 @@ def consultar_wunderground_web(est):
 
       viento_mph = imperial.get("windSpeed")
       if viento_mph is not None:
-        # 1 nudo = 1.15078 mph -> v_kt = v_mph / 1.15078 (o mph a km/h / 1.852)
         viento_kt = viento_mph / 1.15077945
         viento = f"{viento_kt:.1f} kt"
       else:
@@ -267,7 +262,6 @@ def consultar_wunderground_web(est):
         " respaldo..."
     )
 
-  # Respaldo con unidades métricas si falla la imperial
   try:
     api_url_m = (
         f"https://api.weather.com/v2/pws/observations/current"
@@ -386,49 +380,49 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     <title>Monitor de Estaciones Automáticas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b1120; color: #f8fafc; padding: 15px; margin: 0; }}
-        h1 {{ text-align: center; color: #f1f5f9; margin-bottom: 0; font-size: 22px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }}
-        .subtitle-line2 {{ text-align: center; color: #38bdf8; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
-        .subtitle {{ text-align: center; color: #94a3b8; margin-bottom: 12px; font-size: 12px; }}
-        .summary {{ text-align: center; font-weight: bold; margin-bottom: 15px; color: #e2e8f0; font-size: 14px; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 20px; max-width: 300px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }}
-        @keyframes parpadeo {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.6; }} 100% {{ opacity: 1; }} }}
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #1e293b; padding: 15px; margin: 0; }}
+        h1 {{ text-align: center; color: #0f2942; margin-bottom: 0; font-size: 22px; line-height: 1.2; font-weight: 700; }}
+        .subtitle-line2 {{ text-align: center; color: #1e40af; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
+        .subtitle {{ text-align: center; color: #64748b; margin-bottom: 12px; font-size: 12px; }}
+        .summary {{ text-align: center; font-weight: bold; margin-bottom: 15px; color: #0f2942; font-size: 14px; background: #ffffff; padding: 6px 16px; border-radius: 20px; max-width: 280px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #cbd5e1; }}
+        @keyframes parpadeo {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} 100% {{ opacity: 1; }} }}
         body.alerta-activa {{ animation: parpadeo 1.5s infinite; }}
-        .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }}
-        #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }}
+        .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
+        #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
         .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }}
         .card-link {{ text-decoration: none; color: inherit; display: block; }}
         
         .card {{ 
             border-radius: 16px; 
             padding: 16px; 
-            background: linear-gradient(135deg, #0b1120 0%, #17253b 60%, #1e3a8a 100%); 
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(256, 256, 256, 0.15); 
-            border: 1px solid rgba(56, 189, 248, 0.2); 
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%); 
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8); 
+            border: 1px solid #cbd5e1; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }}
         .card:hover {{ 
             transform: translateY(-4px); 
-            box-shadow: 0 20px 35px -10px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(256, 256, 256, 0.25); 
-            border-color: rgba(56, 189, 248, 0.5);
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1d4ed8 100%);
+            box-shadow: 0 12px 25px rgba(30, 64, 175, 0.12); 
+            border-color: #94a3b8;
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
         }}
-        .card.ok {{ border-left: 5px solid #22c55e; }}
-        .card.error {{ border-left: 5px solid #ef4444; }}
+        .card.ok {{ border-left: 6px solid #16a34a; }}
+        .card.error {{ border-left: 6px solid #dc2626; }}
         
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }}
-        .station-name {{ font-weight: bold; font-size: 15px; color: #f8fafc; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }}
+        .station-name {{ font-weight: bold; font-size: 15px; color: #0f2942; line-height: 1.2; }}
         .status-badge {{ font-size: 12px; }}
         
         .weather-main {{ margin: 10px 0; }}
-        .temp-val {{ font-size: 26px; font-weight: 700; color: #38bdf8; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }}
+        .temp-val {{ font-size: 26px; font-weight: 700; color: #1d4ed8; }}
         
-        .weather-info {{ font-size: 0.95em; color: #cbd5e1; margin-top: 8px; background: rgba(11, 17, 32, 0.6); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid rgba(255,255,255,0.06); }}
-        .time {{ font-size: 0.75em; color: #94a3b8; margin-top: 8px; }}
-        .click-text {{ font-size: 0.7em; color: #38bdf8; margin-top: 4px; font-style: italic; text-align: right; opacity: 0.8; }}
+        .weather-info {{ font-size: 0.95em; color: #334155; margin-top: 8px; background: rgba(255, 255, 255, 0.7); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid #e2e8f0; }}
+        .time {{ font-size: 0.75em; color: #64748b; margin-top: 8px; }}
+        .click-text {{ font-size: 0.7em; color: #2563eb; margin-top: 4px; font-style: italic; text-align: right; opacity: 0.9; }}
         
-        .footer-dev {{ background: linear-gradient(135deg, #1e40af, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4); border: 1px solid rgba(255,255,255,0.1); }}
+        .footer-dev {{ background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }}
     </style>
 </head>
 <body class="{alerta_class}">
@@ -458,8 +452,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
   print(
-      "✓ index.html actualizado correctamente con conversión imperial para"
-      " decimales precisos."
+      "✓ index.html actualizado con diseño institucional luminoso y tarjetas"
+      " con degradado claro."
   )
 
 
@@ -530,8 +524,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Cálculo de temperatura con decimales desde API imperial WU"
-                " [skip ci]"
+                "Actualización a diseño institucional luminoso y tarjetas con"
+                " degradado claro [skip ci]"
             ),
         ],
         capture_output=True,
