@@ -61,12 +61,12 @@
         .footer-dev { background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }
     </style>
 </head>
-<body class="">
+<body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 12-09-2026 19:10:20 (Tolerancia: 12 min)</div>
-    
-    <div class="summary">Estaciones Operativas: 10 de 10</div>
+    <div class="subtitle">Última verificación: 12-09-2026 19:15:22 (Tolerancia: 12 min)</div>
+    <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
+    <div class="summary">Estaciones Operativas: 9 de 10</div>
     <div id="map"></div>
     <div class="grid">
         
@@ -111,10 +111,10 @@
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Gobernación Marítima de Talcahuano</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 <div class="weather-row">
                     <span class="temp-val">🌡️ 15.4°C</span>
@@ -244,7 +244,7 @@
                     </div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-12 19:10:14</span>
+                    <span class="time">Reporte: 2026-09-12 19:15:19</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -264,7 +264,7 @@
                     </div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-12 19:10:00</span>
+                    <span class="time">Reporte: 2026-09-12 19:15:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -290,8 +290,8 @@
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén-7406</b><br>Estado: OPERATIVA<br>Temp: 16.6°C | Hum: 60.0% | Viento: 8.6 kt<br>Reporte: 12-09-2026 19:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 15.4°C | Hum: 65.0% | Viento: 7.0 kt<br>Reporte: 12-09-2026 19:00:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 15.4°C | Hum: 65.0% | Viento: 7.0 kt<br>Reporte: 12-09-2026 19:00:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -315,11 +315,11 @@
         
         L.circleMarker([-36.625, -73.033], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 16.7°C | Hum: 51.0% | Viento: 9.6 kt<br>Reporte: 2026-09-12 19:10:14<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 16.7°C | Hum: 51.0% | Viento: 9.6 kt<br>Reporte: 2026-09-12 19:15:19<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 16.7°C | Hum: 52.0% | Viento: 10.4 kt<br>Reporte: 2026-09-12 19:10:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 16.7°C | Hum: 52.0% | Viento: 10.4 kt<br>Reporte: 2026-09-12 19:15:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
     </script>
 </body>
