@@ -426,11 +426,12 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        .weather-row {{ display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }}
-        .temp-val {{ font-size: 22px; font-weight: 700; color: #0f172a; }}
+        /* FILA DE CLIMA CON BLOQUEO CONTRA SALTOS DE LÍNEA */
+        .weather-row {{ display: flex; justify-content: space-between; align-items: center; margin: 6px 0; flex-wrap: nowrap; gap: 8px; }}
+        .temp-val {{ font-size: 20px; font-weight: 700; color: #0f172a; white-space: nowrap; }}
         
-        .info-group {{ display: flex; gap: 10px; }}
-        .info-item {{ font-size: 0.9em; color: #1e293b; background: rgba(255, 255, 255, 0.6); padding: 3px 8px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.8); }}
+        .info-group {{ display: flex; gap: 6px; flex-shrink: 0; }}
+        .info-item {{ font-size: 0.85em; color: #1e293b; background: rgba(255, 255, 255, 0.6); padding: 2px 6px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.8); white-space: nowrap; }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }}
         .time {{ font-size: 0.7em; color: #334155; }}
@@ -466,8 +467,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
   print(
-      "✓ index.html actualizado con tarjetas uniformes en altura mediante"
-      " Flexbox."
+      "✓ index.html actualizado: temperatura asegurada junto al ícono sin"
+      " saltos de línea."
   )
 
 
@@ -538,8 +539,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Diseño uniforme: tarjetas con altura estirada mediante flexbox"
-                " [skip ci]"
+                "Ajuste visual: temperatura y termómetro fijados en una sola"
+                " línea [skip ci]"
             ),
         ],
         capture_output=True,
