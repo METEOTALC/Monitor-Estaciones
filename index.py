@@ -241,56 +241,72 @@ def consultar_wunderground_web(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # Búsqueda genérica de temperatura en la página de WU
+      # 1. Temperatura precisa desde la tarjeta superior (ej. "16.5 °C")
       temp_match = re.search(
-          r"(?:Temp|Temperature)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*[°º]\s*[cC]",
-          texto_plano,
-          re.IGNORECASE,
+          r"([\-]?\d+(?:[.,]\d+)?)\s*[°º]\s*([cC])", texto_plano
       )
-      if not temp_match:
-        temp_match = re.search(
-            r"([\-]?\d+(?:[.,]\d+)?)\s*[°º]\s*[cC]",
-            texto_plano,
-            re.IGNORECASE,
-        )
       if temp_match:
         val = convertir_numero(temp_match.group(1))
-        if val is not None:
+        if val is not None and -10 <= val <= 50:  # Rango lógico de temperatura
           temp = f"{val:.1f}°C"
 
-      # Búsqueda de humedad
+      # 2. Humedad precisa desde la tarjeta superior (ej. "Humidity 41 %" o "41 %")
       hum_match = re.search(
           r"(?:Humidity|Humedad)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
           texto_plano,
           re.IGNORECASE,
       )
-      if hum_match:
+      if not hum_match:
+        # Busca cualquier porcentaje válido que esté cerca de la sección de condiciones
+        for m in re.findall(r"(\d+(?:[.,]\d+)?)\s*%", texto_plano):
+          val = convertir_numero(m)
+          if val is not None and 10 <= val <= 100:
+            hum = f"{val:.1f}%"
+            break
+      else:
         val = convertir_numero(hum_match.group(1))
-        if val is not None and 0 <= val <= 100:
+        if val is not None:
           hum = f"{val:.1f}%"
 
-      # Búsqueda de velocidad de viento promedio o general en WU
+      # 3. Viento preciso desde la tarjeta superior (ej. "WIND & GUST 3.2 / 27.4 km/h" o "kts")
       viento_match = re.search(
-          r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|mph|km/h)?",
+          r"WIND\s*(?:&|AND)\s*GUST\s*([\d\.,]+)\s*/\s*([\d\.,]+)\s*(km/h|mph|kts|kt|knots)?",
           texto_plano,
           re.IGNORECASE,
       )
-      if not viento_match:
-        viento_match = re.search(
-            r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|mph|km/h)?",
+      if viento_match:
+        val_viento = convertir_numero(viento_match.group(1))
+        unidad = (viento_match.group(3) or "km/h").lower()
+
+        if val_viento is not None:
+          # Convertir a nudos (kt) según la unidad en la que venga en la página
+          if "mph" in unidad:
+            viento_kt = val_viento / 1.15078
+          elif "km" in unidad:
+            viento_kt = val_viento / 1.852
+          else:
+            viento_kt = val_viento  # Ya viene en nudos
+
+          viento = f"{viento_kt:.1f} kt"
+      else:
+        # Búsqueda secundaria de viento en caso de formato alternativo
+        viento_alt = re.search(
+            r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(kts|kt|knots|mph|km/h)?",
             texto_plano,
             re.IGNORECASE,
         )
+        if viento_alt:
+          val_v = convertir_numero(viento_alt.group(1))
+          un_alt = (viento_alt.group(2) or "km/h").lower()
+          if val_v is not None:
+            if "mph" in un_alt:
+              vk = val_v / 1.15078
+            elif "km" in un_alt:
+              vk = val_v / 1.852
+            else:
+              vk = val_v
+            viento = f"{vk:.1f} kt"
 
-      if viento_match:
-        val = convertir_numero(viento_match.group(1))
-        if val is not None:
-          # Si WU muestra en mph o km/h por defecto en la web, se puede ajustar,
-          # pero si está en nudos (kt) lo toma directo:
-          viento = f"{val:.1f} kt"
-
-      # Como es una página dinámica con JS, si conectó y trajo contenido HTML válido,
-      # la damos por operativa para que aparezca en verde en tu monitor.
       return True, "OPERATIVA", temp, hum, viento, "Reciente (Web)"
 
   except Exception as e:
@@ -494,8 +510,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección de faros Quiriquina y Hualpén usando web scraping"
-                " [skip ci]"
+                "Extracción precisa de temperatura, humedad y viento desde la"
+                " tarjeta superior de WU [skip ci]"
             ),
         ],
         capture_output=True,
