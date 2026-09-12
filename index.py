@@ -175,7 +175,7 @@ def consultar_directemar(est):
             r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
             texto_plano,
             re.IGNORECASE,
-        )
+      )
       if not viento_match:
         viento_match = re.search(
             r"Viento[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
@@ -233,15 +233,31 @@ def consultar_wunderground_web(est):
 
         temp, hum, viento, ultimo = "--", "--", "--", "Reciente (Web)"
 
+        # Búsqueda prioritaria de temperatura con decimales en bloques de detalle o historial recientes
         temp_match = re.search(
-            r'"temp"\s*:\s*\{\s*"metric"\s*:\s*([0-9\.]+)', html
+            r"(?:dewpoint|temp|temperature)[^>]*?([0-9]+\.[0-9]+)\s*°?\s*C",
+            html,
+            re.IGNORECASE,
         )
         if not temp_match:
-          temp_match = re.search(r'"temp"\s*:\s*([0-9\.]+)', html)
+          # Buscar específicamente valores con punto flotante en el JSON interno o etiquetas de resumen
+          temp_match = re.search(
+              r'"metric"\s*:\s*\{\s*"temp"\s*:\s*([0-9]+\.[0-9]+)', html
+          )
 
         if temp_match:
           val = float(temp_match.group(1))
-          temp = f"{val:.1f}°C"  # Forzado con decimal
+          temp = f"{val:.1f}°C"
+        else:
+          # Respaldo a entero si no encuentra el decimal exacto en el HTML renderizado
+          temp_match_int = re.search(
+              r'"temp"\s*:\s*\{\s*"metric"\s*:\s*([0-9\.]+)', html
+          )
+          if not temp_match_int:
+            temp_match_int = re.search(r'"temp"\s*:\s*([0-9\.]+)', html)
+          if temp_match_int:
+            val = float(temp_match_int.group(1))
+            temp = f"{val:.1f}°C"
 
         hum_match = re.search(
             r'"humidity"\s*:\s*([0-9]+(?:\.[0-9]+)?)', html
@@ -282,9 +298,7 @@ def consultar_wunderground_web(est):
       metric = obs["metric"]
 
       temp_val = metric.get("temp")
-      temp = (
-          f"{temp_val:.1f}°C" if temp_val is not None else "--"
-      )  # Forzado con decimal
+      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
 
       hum_val = obs.get("humidity")
       hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
@@ -389,7 +403,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     <title>Monitor de Estaciones Automáticas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 15px; margin: 0; }}
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b1120; color: #f8fafc; padding: 15px; margin: 0; }}
         h1 {{ text-align: center; color: #f1f5f9; margin-bottom: 0; font-size: 22px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }}
         .subtitle-line2 {{ text-align: center; color: #38bdf8; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
         .subtitle {{ text-align: center; color: #94a3b8; margin-bottom: 12px; font-size: 12px; }}
@@ -404,18 +418,18 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .card {{ 
             border-radius: 16px; 
             padding: 16px; 
-            background: linear-gradient(135deg, #1e293b 0%, #090d16 100%); 
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
+            background: linear-gradient(145deg, #1e293b 0%, #091122 60%, #030712 100%); 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(256, 256, 256, 0.1); 
+            border: 1px solid rgba(56, 189, 248, 0.18); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }}
         .card:hover {{ 
             transform: translateY(-4px); 
-            box-shadow: 0 20px 30px -10px rgba(56, 189, 248, 0.25); 
-            border-color: rgba(56, 189, 248, 0.5);
-            background: linear-gradient(135deg, #24344d 0%, #0f172a 100%);
+            box-shadow: 0 20px 35px -10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(256, 256, 256, 0.2); 
+            border-color: rgba(56, 189, 248, 0.6);
+            background: linear-gradient(145deg, #283854 0%, #0d172e 60%, #060a17 100%);
         }}
         .card.ok {{ border-left: 5px solid #22c55e; }}
         .card.error {{ border-left: 5px solid #ef4444; }}
@@ -425,9 +439,9 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .status-badge {{ font-size: 12px; }}
         
         .weather-main {{ margin: 10px 0; }}
-        .temp-val {{ font-size: 26px; font-weight: 700; color: #38bdf8; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }}
+        .temp-val {{ font-size: 26px; font-weight: 700; color: #38bdf8; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }}
         
-        .weather-info {{ font-size: 0.95em; color: #cbd5e1; margin-top: 8px; background: rgba(255, 255, 255, 0.03); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid rgba(255,255,255,0.04); }}
+        .weather-info {{ font-size: 0.95em; color: #cbd5e1; margin-top: 8px; background: rgba(15, 23, 42, 0.6); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid rgba(255,255,255,0.06); }}
         .time {{ font-size: 0.75em; color: #94a3b8; margin-top: 8px; }}
         .click-text {{ font-size: 0.7em; color: #38bdf8; margin-top: 4px; font-style: italic; text-align: right; opacity: 0.8; }}
         
@@ -530,8 +544,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Decimales forzados en faros y degradé suave en tarjetas [skip"
-                " ci]"
+                "Extracción de decimales detallados para faros y mejora de"
+                " degradé [skip ci]"
             ),
         ],
         capture_output=True,
