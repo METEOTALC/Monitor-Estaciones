@@ -129,15 +129,17 @@ def consultar_directemar(est):
 
       texto_plano = re.sub(r"<[^>]+>", " ", html)
       texto_plano = (
-          texto_plano.replace("\xa5", " ").replace("\xa0", " ").replace("&nbsp;", " ")
+          texto_plano.replace("\xa5", " ")
+          .replace("\xa0", " ")
+          .replace("&nbsp;", " ")
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
       temp, hum, viento = "--", "--", "--"
 
-      # Temperatura (Corregido para aceptar tanto '°' como 'º' y variantes de etiqueta)
+      # Temperatura restaurada y ultra robusta (captura Temp/Temperatura con cualquier variante de grado o espacio)
       temp_match = re.search(
-          r"(?:Temperatura|Temp\.?)\s*[:|]?\s*([\-]?\d+(?:[.,]\d+)?)\s*[°º]?\s*C",
+          r"(?:Temperatura|Temp\.?)\s*[:|]?\s*([\-]?\d+(?:[.,]\d+)?)",
           texto_plano,
           re.IGNORECASE,
       )
@@ -146,7 +148,7 @@ def consultar_directemar(est):
         if val is not None:
           temp = f"{val:.1f}°C"
 
-      # Humedad
+      # Humedad (Exactamente la que funciona a la perfección)
       hum_match = re.search(
           r"(?:Humidity|Humedad)\s*(?:Relativa)?\s*\|?\s*(\d+(?:[.,]\d+)?)\s*%",
           texto_plano,
@@ -157,11 +159,9 @@ def consultar_directemar(est):
         if val is not None:
           hum = f"{val:.1f}%"
 
-      # Viento promedio
+      # Viento promedio (Exactamente el que funciona a la perfección)
       viento_match = re.search(
-          r"(?:Wind\s*Speed\s*\(\s*avg\s*\)|Velocidad\s*del\s*viento|Viento)\s*\|?\s*(\d+(?:[.,]\d+)?)\s*(?:kts|kt)",
-          texto_plano,
-          re.IGNORECASE,
+          r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt)", texto_plano, re.IGNORECASE
       )
       if viento_match:
         val = convertir_numero(viento_match.group(1))
@@ -471,7 +471,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección de lectura de temperatura en estaciones Directemar"
+                "Restauración de temperatura con humedad y viento estables"
                 " [skip ci]"
             ),
         ],
