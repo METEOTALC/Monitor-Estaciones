@@ -120,6 +120,7 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
+      # 1. Temperatura (Tu lógica exacta que funciona)
       temp_match = re.search(
           r"(?:Temperatura|Temp\.?)[^\d\-]*([\-]?\d+[\.,]?\d*)",
           texto_plano,
@@ -128,19 +129,33 @@ def consultar_directemar(est):
       if temp_match:
         temp = f"{temp_match.group(1).replace(',', '.')}°C"
 
+      # 2. Humedad (Lógica robusta restaurada)
       hum_match = re.search(
-          r"(?:Humedad|HR)[^\d]*(\d+[\.,]?\d*)", texto_plano, re.IGNORECASE
-      )
-      if hum_match:
-        hum = f"{hum_match.group(1)}%"
-
-      viento_match = re.search(
-          r"(?:Viento|Velocidad|Vel\.?|Intensidad)[^\d]{0,15}(\d+[\.,]?\d*)",
+          r"(?:Humedad|HR|Humidity)[^\d]*(\d+(?:[.,]\d+)?)\s*%?",
           texto_plano,
           re.IGNORECASE,
       )
+      if hum_match:
+        val_hum = float(hum_match.group(1).replace(",", "."))
+        if 0 <= val_hum <= 100:
+          hum = f"{val_hum:.1f}%"
+
+      # 3. Viento (Lógica robusta separando ráfagas y buscando unidades en nudos)
+      partes_viento = re.split(r"racha|gust", texto_plano, flags=re.IGNORECASE)
+      viento_match = re.search(
+          r"(?:Viento|Wind|Velocidad|Vel\.?|Intensidad)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt)?",
+          partes_viento[0],
+          re.IGNORECASE,
+      )
+      if not viento_match:
+        viento_match = re.search(
+            r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt)",
+            partes_viento[0],
+            re.IGNORECASE,
+        )
       if viento_match:
-        viento = f"{viento_match.group(1).replace(',', '.')} kt"
+        val_viento = float(viento_match.group(1).replace(",", "."))
+        viento = f"{val_viento:.1f} kt"
 
       if match:
         fecha_str = match.group(1)
@@ -345,7 +360,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ Archivo 'index.html' actualizado con el script funcional.")
+  print("✓ Archivo 'index.html' actualizado correctamente.")
 
 
 def ejecutar_monitoreo():
@@ -415,8 +430,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Restauración de expresiones regulares funcionales para"
-                " temperatura [skip ci]"
+                "Corrección de expresiones regulares para temperatura, humedad"
+                " y viento [skip ci]"
             ),
         ],
         check=True,
