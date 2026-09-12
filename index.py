@@ -226,44 +226,76 @@ def consultar_directemar(est):
 
 def consultar_wunderground_web(est):
   try:
-    req = urllib.request.Request(est["url"], headers=HEADERS)
+    # Consultamos primero la API oficial pidiendo unidades imperiales (fahrenheit convertido o analizando los decimales nativos)
+    # o bien usando la API v2 con formato json. La API en unidades imperiales (units=e) a veces reporta la temperatura
+    # con mayor precisión decimal interna antes del redondeo métrico.
+    api_url = (
+        f"https://api.weather.com/v2/pws/observations/current"
+        f"?stationId={est['id']}&format=json&units=e&apiKey=e1f10a1e78da46f5b10a1e78da96f525"
+    )
+    req = urllib.request.Request(api_url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-      html = response.read().decode("utf-8", errors="ignore")
+      data = json.loads(response.read().decode("utf-8"))
+      obs = data["observations"][0]
+      imperial = obs["imperial"]
 
-      # Buscamos patrones de temperatura con decimales dentro del HTML del dashboard (ej: 18.4°C o 18.4 °C)
-      # Weather Underground suele renderizar los valores actuales o las tablas con las unidades.
-      temps_encontradas = re.findall(
-          r"([\-]?\d+[\.,]\d+)\s*(?:°C|&deg;C|ºC)", html
-      )
-      hums_encontradas = re.findall(r"(\d+)\s*%", html)
-      vientos_encontrados = re.findall(
-          r"([\-]?\d+[\.,]\d+)\s*(?:km/h|kts|mph)", html
-      )
+      temp_f = imperial.get("temp")
+      if temp_f is not None:
+        # Convertimos Fahrenheit a Celsius con decimales precisos: (F - 32) * 5/9
+        temp_c = (temp_f - 32.0) * 5.0 / 9.0
+        temp = f"{temp_c:.1f}°C"
+      else:
+        temp = "--"
 
-      temp = (
-          f"{convertir_numero(temps_encontradas[0]):.1f}°C"
-          if temps_encontradas
-          else "--"
-      )
+      hum_val = obs.get("humidity")
+      hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
 
-      hum = "--"
-      for h in hums_encontradas:
-        val = convertir_numero(h)
-        if val is not None and 0 <= val <= 100:
-          hum = f"{val:.1f}%"
-          break
+      viento_mph = imperial.get("windSpeed")
+      if viento_mph is not None:
+        # 1 nudo = 1.15078 mph -> v_kt = v_mph / 1.15078 (o mph a km/h / 1.852)
+        viento_kt = viento_mph / 1.15077945
+        viento = f"{viento_kt:.1f} kt"
+      else:
+        viento = "--"
 
-      viento = "--"
-      if vientos_encontrados:
-        # Asumiendo km/h por defecto en wunderground métrico, convertimos a nudos (kt)
-        v_kmh = convertir_numero(vientos_encontrados[0])
-        if v_kmh is not None:
-          v_kt = v_kmh / 1.852
-          viento = f"{v_kt:.1f} kt"
+      obs_time = obs.get("obsTimeLocal", "Reciente")
+      return True, "OPERATIVA", temp, hum, viento, str(obs_time)
 
-      return True, "OPERATIVA", temp, hum, viento, "Reciente (Web)"
   except Exception as e:
-    print(f"Error obteniendo web para [{est['nombre']}]: {e}")
+    print(
+        f"Error en API imperial para [{est['nombre']}]: {e}. Intentando"
+        " respaldo..."
+    )
+
+  # Respaldo con unidades métricas si falla la imperial
+  try:
+    api_url_m = (
+        f"https://api.weather.com/v2/pws/observations/current"
+        f"?stationId={est['id']}&format=json&units=m&apiKey=e1f10a1e78da46f5b10a1e78da96f525"
+    )
+    req = urllib.request.Request(api_url_m, headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
+      data = json.loads(response.read().decode("utf-8"))
+      obs = data["observations"][0]
+      metric = obs["metric"]
+
+      temp_val = metric.get("temp")
+      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
+
+      hum_val = obs.get("humidity")
+      hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
+
+      viento_kmh = metric.get("windSpeed")
+      if viento_kmh is not None:
+        viento_kt = viento_kmh / 1.852
+        viento = f"{viento_kt:.1f} kt"
+      else:
+        viento = "--"
+
+      obs_time = obs.get("obsTimeLocal", "Reciente")
+      return True, "OPERATIVA", temp, hum, viento, str(obs_time)
+  except Exception as ex:
+    print(f"Error total en WU para [{est['nombre']}]: {ex}")
 
   return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
 
@@ -426,8 +458,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
   print(
-      "✓ index.html actualizado correctamente con extracción de decimales para"
-      " los faros."
+      "✓ index.html actualizado correctamente con conversión imperial para"
+      " decimales precisos."
   )
 
 
@@ -466,8 +498,8 @@ def ejecutar_monitoreo():
     ok, estado, temp, hum, viento, ultimo = consultar_wunderground_web(faro)
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (Web con decimales): {estado} | Temp:"
-        f" {temp}, Hum: {hum}, Viento: {viento}"
+        f"[{simbolo}] {faro['nombre']} (API Imperial->Decimal): {estado} |"
+        f" Temp: {temp}, Hum: {hum}, Viento: {viento}"
     )
     if not ok:
       hubo_fallas = True
@@ -498,8 +530,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Extracción de temperatura con decimales para faros desde"
-                " Weather Underground [skip ci]"
+                "Cálculo de temperatura con decimales desde API imperial WU"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
