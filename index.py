@@ -175,7 +175,7 @@ def consultar_directemar(est):
             r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
             texto_plano,
             re.IGNORECASE,
-      )
+        )
       if not viento_match:
         viento_match = re.search(
             r"Viento[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
@@ -233,14 +233,20 @@ def consultar_wunderground_web(est):
 
         temp, hum, viento, ultimo = "--", "--", "--", "Reciente (Web)"
 
-        # Búsqueda prioritaria de temperatura con decimales en bloques de detalle o historial recientes
+        # 1. Búsqueda prioritaria de temperatura con decimales en el HTML renderizado (tarjetas de resumen/bloques de texto)
         temp_match = re.search(
             r"(?:dewpoint|temp|temperature)[^>]*?([0-9]+\.[0-9]+)\s*°?\s*C",
             html,
             re.IGNORECASE,
         )
         if not temp_match:
-          # Buscar específicamente valores con punto flotante en el JSON interno o etiquetas de resumen
+          # Buscar etiquetas comunes con decimales en clases de temperatura actual de la interfaz de WU
+          temp_match = re.search(
+              r'class=["\'][^"\']*metric-val[^"\']*["\'][^>]*>([0-9]+\.[0-9]+)',
+              html,
+          )
+        if not temp_match:
+          # Buscar en bloques JSON de temperatura métrica con decimal explícito
           temp_match = re.search(
               r'"metric"\s*:\s*\{\s*"temp"\s*:\s*([0-9]+\.[0-9]+)', html
           )
@@ -249,7 +255,7 @@ def consultar_wunderground_web(est):
           val = float(temp_match.group(1))
           temp = f"{val:.1f}°C"
         else:
-          # Respaldo a entero si no encuentra el decimal exacto en el HTML renderizado
+          # Respaldo general por si solo viene en entero dentro del JSON
           temp_match_int = re.search(
               r'"temp"\s*:\s*\{\s*"metric"\s*:\s*([0-9\.]+)', html
           )
@@ -286,6 +292,7 @@ def consultar_wunderground_web(est):
       print(f"Intento {intento+1} fallido para {est['nombre']}: {e}")
       time.sleep(2)
 
+  # Plan B: API de Weather.com si falla el rastreo web directo
   try:
     alt_url = (
         f"https://api.weather.com/v2/pws/observations/current"
