@@ -19,7 +19,6 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
         .card-link { text-decoration: none; color: inherit; display: block; }
         
-        /* NUEVO DISEÑO DE TARJETAS MODERNAS (ESTILO WEATHER APP) */
         .card { 
             border-radius: 16px; 
             padding: 16px; 
@@ -55,7 +54,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 12-09-2026 14:05:24 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 12-09-2026 14:06:03 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -102,7 +101,7 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 24.0°C</span>
+                    <span class="temp-val">🌡️ 17.7°C</span>
                 </div>
                 <div class="weather-info">
                     <span>💧 45.0%</span> <span>🌬️ 6.2 kt</span>
@@ -252,7 +251,7 @@
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 24.0°C | Hum: 45.0% | Viento: 6.2 kt<br>Reporte: 12-09-2026 14:00:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 17.7°C | Hum: 45.0% | Viento: 6.2 kt<br>Reporte: 12-09-2026 14:00:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
