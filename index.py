@@ -16,9 +16,12 @@ ZONA_CHILE = ZoneInfo("America/Santiago")
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
-        " like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        " like Gecko) Chrome/122.0.0.0 Safari/537.36"
     ),
-    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+    ),
+    "Accept-Language": "es-ES,es;q=0.9",
 }
 
 ctx = ssl.create_default_context()
@@ -84,7 +87,7 @@ ESTACIONES_DIRECTEMAR = [
 ]
 
 # ==========================================
-# FAROS WEATHER UNDERGROUND (API Histórica/Tabla)
+# FAROS WEATHER UNDERGROUND
 # ==========================================
 ESTACIONES_FAROS = [
     {
@@ -228,80 +231,92 @@ def consultar_directemar(est):
     return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
 
 
-def consultar_wunderground_tabla(est):
+def consultar_wunderground_web(est):
+  # Método robusto basado en descarga directa del panel web oficial y lectura de metadatos incrustados
+  for intento in range(3):
+    try:
+      req = urllib.request.Request(est["url"], headers=HEADERS)
+      with urllib.request.urlopen(req, timeout=12, context=ctx) as response:
+        html = response.read().decode("utf-8", errors="ignore")
+
+        temp, hum, viento, ultimo = "--", "--", "--", "Reciente (Web)"
+
+        # Buscar bloques JSON incrustados en la página (Angular / React state)
+        # Weather Underground almacena el estado actual en variables de script con formato JSON
+        temp_match = re.search(
+            r'"temp"\s*:\s*\{\s*"metric"\s*:\s*([0-9\.]+)', html
+        )
+        if not temp_match:
+          temp_match = re.search(r'"temp"\s*:\s*([0-9\.]+)', html)
+
+        if temp_match:
+          val = float(temp_match.group(1))
+          temp = f"{val:.1f}°C"
+
+        hum_match = re.search(
+            r'"humidity"\s*:\s*([0-9]+(?:\.[0-9]+)?)', html
+        )
+        if hum_match:
+          val = float(hum_match.group(1))
+          hum = f"{val:.1f}%"
+
+        wind_match = re.search(
+            r'"windSpeed"\s*:\s*([0-9\.]+)', html
+        )
+        if not wind_match:
+          wind_match = re.search(r'"wind"\s*:\s*\{\s*"speed"\s*:\s*([0-9\.]+)', html)
+
+        if wind_match:
+          v_kmh = float(wind_match.group(1))
+          # Convertir km/h a nudos
+          v_kt = v_kmh / 1.852
+          viento = f"{v_kt:.1f} kt"
+
+        # Buscar fecha u hora del reporte si existe en el HTML
+        time_match = re.search(r'"obsTimeLocal"\s*:\s*"([^"]+)"', html)
+        if time_match:
+          ultimo = time_match.group(1)
+
+        # Si logramos extraer al menos la temperatura o humedad, consideramos la estación operativa
+        if temp != "--" or hum != "--":
+          return True, "OPERATIVA", temp, hum, viento, ultimo
+
+    except Exception as e:
+      print(
+          f"Intento {intento+1} fallido para {est['nombre']} con URL web: {e}"
+      )
+      time.sleep(2)
+
+  # Plan B de respaldo: Consulta alternativa a la API pública abierta de wunderground widgets
   try:
-    # URL de la API de historial diario de Weather Underground (la misma fuente de la tabla)
-    fecha_hoy = datetime.now().strftime("%Y%m%d")
-    api_url = (
-        f"https://api.weather.com/v2/pws/observations/all/1day"
-        f"?stationId={est['id']}&format=json&units=m&date={fecha_hoy}&apiKey=6532d6454b8aa370768e917665188611"
+    alt_url = (
+        f"https://api.weather.com/v2/pws/observations/current"
+        f"?stationId={est['id']}&format=json&units=m&apiKey=e1f10a1e78da46f5b10a1e78da96f525"
     )
-
-    req = urllib.request.Request(api_url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=12, context=ctx) as response:
+    req = urllib.request.Request(alt_url, headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
       data = json.loads(response.read().decode("utf-8"))
-      observaciones = data.get("observations", [])
+      obs = data["observations"][0]
+      metric = obs["metric"]
 
-      if not observaciones:
-        raise Exception("No hay registros en la tabla para hoy")
-
-      # Tomamos el último registro de la tabla (el más reciente)
-      obs = observaciones[-1]
-      metric = obs.get("metric", {})
-
-      # Temperatura en °C
-      temp_val = metric.get("tempAvg") or metric.get("temp")
+      temp_val = metric.get("temp")
       temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
 
-      # Humedad en %
-      hum_val = obs.get("humidityAvg") or obs.get("humidity")
+      hum_val = obs.get("humidity")
       hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
 
-      # Viento (la tabla muestra velocidad en km/h, lo convertimos a nudos: / 1.852)
-      viento_kmh = metric.get("windspeedAvg") or metric.get("windSpeed")
+      viento_kmh = metric.get("windSpeed")
       if viento_kmh is not None:
         viento_kt = viento_kmh / 1.852
         viento = f"{viento_kt:.1f} kt"
       else:
         viento = "--"
 
-      # Hora del último registro en la tabla
-      obs_time = obs.get("obsTimeLocal", "Reciente (Tabla)")
+      return True, "OPERATIVA", temp, hum, viento, "Reciente (API Alt)"
+  except Exception as alt_e:
+    print(f"Error en Plan B API Alt [{est['nombre']}]: {alt_e}")
 
-      return True, "OPERATIVA", temp, hum, viento, str(obs_time)
-
-  except Exception as e:
-    print(f"Error API Tabla WU [{est['nombre']}]: {e}")
-    # Plan de respaldo directo a las observaciones actuales si falla la tabla horaria
-    try:
-      pws_url = (
-          f"https://api.weather.com/v2/pws/observations/current"
-          f"?stationId={est['id']}&format=json&units=m&apiKey=6532d6454b8aa370768e917665188611"
-      )
-      req = urllib.request.Request(pws_url, headers=HEADERS)
-      with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-        data = json.loads(response.read().decode("utf-8"))
-        obs = data["observations"][0]
-        metric = obs["metric"]
-
-        temp_val = metric.get("temp")
-        temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
-
-        hum_val = obs.get("humidity")
-        hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
-
-        viento_kmh = metric.get("windSpeed")
-        if viento_kmh is not None:
-          viento_kt = viento_kmh / 1.852
-          viento = f"{viento_kt:.1f} kt"
-        else:
-          viento = "--"
-
-        return True, "OPERATIVA", temp, hum, viento, "Reciente (Actual)"
-    except Exception as inner_e:
-      print(f"Error Plan Respaldo WU [{est['nombre']}]: {inner_e}")
-
-    return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
+  return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
 
 
 def generar_html(resultados_directemar, resultados_faros, hay_alerta):
@@ -324,7 +339,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     markers_js += f"""
         L.circleMarker([{faro['lat']}, {faro['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {r['temp']} | Hum: {r['hum']} | Viento: {r['viento']}<br>Reporte: {r['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {faro['temp']} | Hum: {faro['hum']} | Viento: {faro['viento']}<br>Reporte: {faro['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
@@ -465,11 +480,11 @@ def ejecutar_monitoreo():
     })
 
   for faro in ESTACIONES_FAROS:
-    ok, estado, temp, hum, viento, ultimo = consultar_wunderground_tabla(faro)
+    ok, estado, temp, hum, viento, ultimo = consultar_wunderground_web(faro)
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (Tabla): {estado} | Temp: {temp}, Hum:"
-        f" {hum}, Viento: {viento}"
+        f"[{simbolo}] {faro['nombre']} (Web/API): {estado} | Temp: {temp},"
+        f" Hum: {hum}, Viento: {viento}"
     )
     if not ok:
       hubo_fallas = True
@@ -500,7 +515,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Extracción de datos desde la API de la tabla horaria de Weather"
+                "Corrección robusta de extracción para faros de Weather"
                 " Underground [skip ci]"
             ),
         ],
