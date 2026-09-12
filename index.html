@@ -7,7 +7,7 @@
     <title>Monitor de Estaciones Automáticas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 15px; margin: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b1120; color: #f8fafc; padding: 15px; margin: 0; }
         h1 { text-align: center; color: #f1f5f9; margin-bottom: 0; font-size: 22px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .subtitle-line2 { text-align: center; color: #38bdf8; margin-bottom: 6px; font-size: 16px; font-weight: bold; }
         .subtitle { text-align: center; color: #94a3b8; margin-bottom: 12px; font-size: 12px; }
@@ -22,18 +22,18 @@
         .card { 
             border-radius: 16px; 
             padding: 16px; 
-            background: linear-gradient(135deg, #1e293b 0%, #090d16 100%); 
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
+            background: linear-gradient(145deg, #1e293b 0%, #091122 60%, #030712 100%); 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(256, 256, 256, 0.1); 
+            border: 1px solid rgba(56, 189, 248, 0.18); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }
         .card:hover { 
             transform: translateY(-4px); 
-            box-shadow: 0 20px 30px -10px rgba(56, 189, 248, 0.25); 
-            border-color: rgba(56, 189, 248, 0.5);
-            background: linear-gradient(135deg, #24344d 0%, #0f172a 100%);
+            box-shadow: 0 20px 35px -10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(256, 256, 256, 0.2); 
+            border-color: rgba(56, 189, 248, 0.6);
+            background: linear-gradient(145deg, #283854 0%, #0d172e 60%, #060a17 100%);
         }
         .card.ok { border-left: 5px solid #22c55e; }
         .card.error { border-left: 5px solid #ef4444; }
@@ -43,9 +43,9 @@
         .status-badge { font-size: 12px; }
         
         .weather-main { margin: 10px 0; }
-        .temp-val { font-size: 26px; font-weight: 700; color: #38bdf8; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .temp-val { font-size: 26px; font-weight: 700; color: #38bdf8; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         
-        .weather-info { font-size: 0.95em; color: #cbd5e1; margin-top: 8px; background: rgba(255, 255, 255, 0.03); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid rgba(255,255,255,0.04); }
+        .weather-info { font-size: 0.95em; color: #cbd5e1; margin-top: 8px; background: rgba(15, 23, 42, 0.6); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid rgba(255,255,255,0.06); }
         .time { font-size: 0.75em; color: #94a3b8; margin-top: 8px; }
         .click-text { font-size: 0.7em; color: #38bdf8; margin-top: 4px; font-style: italic; text-align: right; opacity: 0.8; }
         
@@ -55,7 +55,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 12-09-2026 14:25:24 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 12-09-2026 14:30:52 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -68,12 +68,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 18.1°C</span>
+                    <span class="temp-val">🌡️ 19.5°C</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 46.0%</span> <span>🌬️ 2.0 kt</span>
+                    <span>💧 48.0%</span> <span>🌬️ 5.1 kt</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 14:20:00</div>
+                <div class="time">Reporte: 12-09-2026 14:30:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -85,12 +85,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 18.3°C</span>
+                    <span class="temp-val">🌡️ 18.4°C</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 33.0%</span> <span>🌬️ 15.4 kt</span>
+                    <span>💧 33.0%</span> <span>🌬️ 13.1 kt</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 14:20:00</div>
+                <div class="time">Reporte: 12-09-2026 14:30:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -102,12 +102,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 18.2°C</span>
+                    <span class="temp-val">🌡️ 17.9°C</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 42.0%</span> <span>🌬️ 9.9 kt</span>
+                    <span>💧 44.0%</span> <span>🌬️ 8.9 kt</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 14:20:01</div>
+                <div class="time">Reporte: 12-09-2026 14:30:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -119,12 +119,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 17.8°C</span>
+                    <span class="temp-val">🌡️ 17.9°C</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 36.0%</span> <span>🌬️ 8.9 kt</span>
+                    <span>💧 35.0%</span> <span>🌬️ 12.1 kt</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 14:20:00</div>
+                <div class="time">Reporte: 12-09-2026 14:30:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -141,7 +141,7 @@
                 <div class="weather-info">
                     <span>💧 71.0%</span> <span>🌬️ 0.0 kt</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 14:20:00</div>
+                <div class="time">Reporte: 12-09-2026 14:30:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -153,12 +153,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 17.6°C</span>
+                    <span class="temp-val">🌡️ 17.7°C</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 57.0%</span> <span>🌬️ 8.8 kt</span>
+                    <span>💧 57.0%</span> <span>🌬️ 10.8 kt</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 14:20:00</div>
+                <div class="time">Reporte: 12-09-2026 14:30:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -170,12 +170,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 17.2°C</span>
+                    <span class="temp-val">🌡️ 17.3°C</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 34.0%</span> <span>🌬️ 8.1 kt</span>
+                    <span>💧 34.0%</span> <span>🌬️ 9.4 kt</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 14:20:01</div>
+                <div class="time">Reporte: 12-09-2026 14:30:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -187,12 +187,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 14.1°C</span>
+                    <span class="temp-val">🌡️ 14.2°C</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 41.0%</span> <span>🌬️ 13.0 kt</span>
+                    <span>💧 43.0%</span> <span>🌬️ 12.4 kt</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 14:20:01</div>
+                <div class="time">Reporte: 12-09-2026 14:30:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -244,35 +244,35 @@
         
         L.circleMarker([-35.333, -72.416], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Constitución-7700</b><br>Estado: OPERATIVA<br>Temp: 18.1°C | Hum: 46.0% | Viento: 2.0 kt<br>Reporte: 12-09-2026 14:20:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Constitución-7700</b><br>Estado: OPERATIVA<br>Temp: 19.5°C | Hum: 48.0% | Viento: 5.1 kt<br>Reporte: 12-09-2026 14:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.716, -72.933], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén-7406</b><br>Estado: OPERATIVA<br>Temp: 18.3°C | Hum: 33.0% | Viento: 15.4 kt<br>Reporte: 12-09-2026 14:20:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén-7406</b><br>Estado: OPERATIVA<br>Temp: 18.4°C | Hum: 33.0% | Viento: 13.1 kt<br>Reporte: 12-09-2026 14:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 18.2°C | Hum: 42.0% | Viento: 9.9 kt<br>Reporte: 12-09-2026 14:20:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 17.9°C | Hum: 44.0% | Viento: 8.9 kt<br>Reporte: 12-09-2026 14:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Coronel-7313</b><br>Estado: OPERATIVA<br>Temp: 17.8°C | Hum: 36.0% | Viento: 8.9 kt<br>Reporte: 12-09-2026 14:20:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Coronel-7313</b><br>Estado: OPERATIVA<br>Temp: 17.9°C | Hum: 35.0% | Viento: 12.1 kt<br>Reporte: 12-09-2026 14:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.09, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lota-7373</b><br>Estado: OPERATIVA<br>Temp: 16.1°C | Hum: 71.0% | Viento: 0.0 kt<br>Reporte: 12-09-2026 14:20:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lota/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lota-7373</b><br>Estado: OPERATIVA<br>Temp: 16.1°C | Hum: 71.0% | Viento: 0.0 kt<br>Reporte: 12-09-2026 14:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lota/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.606, -73.65], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu-7800</b><br>Estado: OPERATIVA<br>Temp: 17.6°C | Hum: 57.0% | Viento: 8.8 kt<br>Reporte: 12-09-2026 14:20:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu-7800</b><br>Estado: OPERATIVA<br>Temp: 17.7°C | Hum: 57.0% | Viento: 10.8 kt<br>Reporte: 12-09-2026 14:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-38.788, -73.397], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Carahue</b><br>Estado: OPERATIVA<br>Temp: 17.2°C | Hum: 34.0% | Viento: 8.1 kt<br>Reporte: 12-09-2026 14:20:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Carahue</b><br>Estado: OPERATIVA<br>Temp: 17.3°C | Hum: 34.0% | Viento: 9.4 kt<br>Reporte: 12-09-2026 14:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-39.883, -73.433], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral-1960</b><br>Estado: OPERATIVA<br>Temp: 14.1°C | Hum: 41.0% | Viento: 13.0 kt<br>Reporte: 12-09-2026 14:20:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral-1960</b><br>Estado: OPERATIVA<br>Temp: 14.2°C | Hum: 43.0% | Viento: 12.4 kt<br>Reporte: 12-09-2026 14:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.625, -73.033], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
