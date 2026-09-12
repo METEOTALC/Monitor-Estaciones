@@ -151,13 +151,13 @@ def consultar_directemar(est):
             texto_plano,
             re.IGNORECASE,
         )
-      
+
       if temp_match:
         val = convertir_numero(temp_match.group(1))
         if val is not None:
           temp = f"{val:.1f}°C"
 
-      # 2. Humedad (Español o Inglés, con el % obligatorio para evitar errores)
+      # 2. Humedad (Español o Inglés, con el % obligatorio)
       hum_match = re.search(
           r"(?:Humedad|Humidity|Hum|HR)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
           texto_plano,
@@ -167,18 +167,19 @@ def consultar_directemar(est):
         val = convertir_numero(hum_match.group(1))
         if val is not None and 0 <= val <= 100:
           hum = f"{val:.1f}%"
-      
+
       if hum == "--":
-        # Respaldo de humedad buscando el primer porcentaje válido
         for m in re.findall(r"(\d+(?:[.,]\d+)?)\s*%", texto_plano):
           val = convertir_numero(m)
           if val is not None and 0 <= val <= 100:
             hum = f"{val:.1f}%"
             break
 
-      # 3. Viento (Español o Inglés)
+      # 3. Viento Promedio (Busca específicamente Wind Speed (avg) o Viento Promedio)
       viento_match = re.search(
-          r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)", texto_plano, re.IGNORECASE
+          r"(?:Wind\s*Speed\s*\(avg\)|Wind\s*Speed|Viento)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)",
+          texto_plano,
+          re.IGNORECASE,
       )
       if viento_match:
         val = convertir_numero(viento_match.group(1))
@@ -488,7 +489,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección final ultra-flexible para Temp y Humedad en inglés y español [skip ci]"
+                "Extracción correcta del Wind Speed (avg) en estaciones Directemar [skip ci]"
             ),
         ],
         capture_output=True,
