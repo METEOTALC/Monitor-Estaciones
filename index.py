@@ -225,68 +225,6 @@ def consultar_directemar(est):
 
 
 def consultar_wunderground_web(est):
-  for intento in range(3):
-    try:
-      req = urllib.request.Request(est["url"], headers=HEADERS)
-      with urllib.request.urlopen(req, timeout=12, context=ctx) as response:
-        html = response.read().decode("utf-8", errors="ignore")
-
-        temp, hum, viento, ultimo = "--", "--", "--", "Reciente (Web)"
-
-        # Extracción prioritaria apuntando al bloque de temperatura actual de la tarjeta principal (ej. 10,8 °C)
-        temp_match = re.search(
-            r'class=["\'][^"\']*metric-val[^"\']*["\'][^>]*>([0-9]+[.,][0-9]+)',
-            html,
-        )
-        if not temp_match:
-          temp_match = re.search(
-              r"(?:current-temp|temperature|temp)[^>]*?([0-9]+[.,][0-9]+)\s*°?\s*C",
-              html,
-              re.IGNORECASE,
-          )
-        if not temp_match:
-          temp_match = re.search(
-              r'"metric"\s*:\s*\{\s*"temp"\s*:\s*([0-9]+[.,]?[0-9]*)', html
-          )
-
-        if temp_match:
-          val = convertir_numero(temp_match.group(1))
-          if val is not None:
-            temp = f"{val:.1f}°C"
-
-        hum_match = re.search(
-            r'"humidity"\s*:\s*([0-9]+(?:\.[0-9]+)?)', html
-        )
-        if not hum_match:
-          hum_match = re.search(r"Hum(?:edity)?.*?([0-9]+[.,][0-9]*)%", html, re.IGNORECASE)
-        if hum_match:
-          val = convertir_numero(hum_match.group(1))
-          if val is not None:
-            hum = f"{val:.1f}%"
-
-        wind_match = re.search(r'"windSpeed"\s*:\s*([0-9\.]+)', html)
-        if not wind_match:
-          wind_match = re.search(r'wind-speed[^>]*?>([0-9]+[.,][0-9]*)', html, re.IGNORECASE)
-
-        if wind_match:
-          v_val = convertir_numero(wind_match.group(1))
-          if v_val is not None:
-            # Si viene en km/h como en la interfaz web de la captura, convertimos a nudos (/ 1.852)
-            v_kt = v_val / 1.852
-            viento = f"{v_kt:.1f} kt"
-
-        time_match = re.search(r'"obsTimeLocal"\s*:\s*"([^"]+)"', html)
-        if time_match:
-          ultimo = time_match.group(1)
-
-        if temp != "--" or hum != "--":
-          return True, "OPERATIVA", temp, hum, viento, ultimo
-
-    except Exception as e:
-      print(f"Intento {intento+1} fallido para {est['nombre']}: {e}")
-      time.sleep(2)
-
-  # Plan B: API de Weather.com si falla el rastreo web directo
   try:
     alt_url = (
         f"https://api.weather.com/v2/pws/observations/current"
@@ -311,9 +249,10 @@ def consultar_wunderground_web(est):
       else:
         viento = "--"
 
-      return True, "OPERATIVA", temp, hum, viento, "Reciente (API Alt)"
-  except Exception as alt_e:
-    print(f"Error en Plan B API Alt [{est['nombre']}]: {alt_e}")
+      obs_time = obs.get("obsTimeLocal", "Reciente")
+      return True, "OPERATIVA", temp, hum, viento, obs_time
+  except Exception as e:
+    print(f"Error obteniendo datos API para [{est['nombre']}]: {e}")
 
   return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
 
@@ -338,7 +277,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     markers_js += f"""
         L.circleMarker([{faro['lat']}, {faro['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {r['temp'] if 'temp' in r else faro['temp']} | Hum: {faro['hum']} | Viento: {faro['viento']}<br>Reporte: {faro['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {faro['temp']} | Hum: {faro['hum']} | Viento: {faro['viento']}<br>Reporte: {faro['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
@@ -419,32 +358,32 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .card {{ 
             border-radius: 16px; 
             padding: 16px; 
-            background: linear-gradient(135deg, #1b3152 0%, #152238 50%, #222b3b 100%); 
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(256, 256, 256, 0.1); 
-            border: 1px solid rgba(56, 189, 248, 0.18); 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 40%, #b45309 100%); 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(256, 256, 256, 0.25); 
+            border: 1px solid rgba(147, 197, 253, 0.35); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }}
         .card:hover {{ 
             transform: translateY(-4px); 
-            box-shadow: 0 20px 35px -10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(256, 256, 256, 0.2); 
-            border-color: rgba(56, 189, 248, 0.6);
-            background: linear-gradient(135deg, #25426e 0%, #1a2a47 50%, #2b364a 100%);
+            box-shadow: 0 20px 35px -10px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(256, 256, 256, 0.35); 
+            border-color: rgba(255, 255, 255, 0.7);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 40%, #d97706 100%);
         }}
-        .card.ok {{ border-left: 5px solid #22c55e; }}
-        .card.error {{ border-left: 5px solid #ef4444; }}
+        .card.ok {{ border-left: 6px solid #22c55e; }}
+        .card.error {{ border-left: 6px solid #ef4444; }}
         
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }}
-        .station-name {{ font-weight: bold; font-size: 15px; color: #f8fafc; line-height: 1.2; }}
+        .station-name {{ font-weight: bold; font-size: 15px; color: #ffffff; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }}
         .status-badge {{ font-size: 12px; }}
         
         .weather-main {{ margin: 10px 0; }}
-        .temp-val {{ font-size: 26px; font-weight: 700; color: #38bdf8; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }}
+        .temp-val {{ font-size: 26px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }}
         
-        .weather-info {{ font-size: 0.95em; color: #cbd5e1; margin-top: 8px; background: rgba(15, 23, 42, 0.6); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid rgba(255,255,255,0.06); }}
-        .time {{ font-size: 0.75em; color: #94a3b8; margin-top: 8px; }}
-        .click-text {{ font-size: 0.7em; color: #38bdf8; margin-top: 4px; font-style: italic; text-align: right; opacity: 0.8; }}
+        .weather-info {{ font-size: 0.95em; color: #f8fafc; margin-top: 8px; background: rgba(15, 23, 42, 0.45); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(4px); }}
+        .time {{ font-size: 0.75em; color: #cbd5e1; margin-top: 8px; text-shadow: 0 1px 1px rgba(0,0,0,0.3); }}
+        .click-text {{ font-size: 0.7em; color: #fde047; margin-top: 4px; font-style: italic; text-align: right; font-weight: bold; }}
         
         .footer-dev {{ background: linear-gradient(135deg, #1e40af, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4); border: 1px solid rgba(255,255,255,0.1); }}
     </style>
@@ -475,7 +414,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado correctamente.")
+  print("✓ index.html actualizado correctamente con degradé diagonal.")
 
 
 def ejecutar_monitoreo():
@@ -513,7 +452,7 @@ def ejecutar_monitoreo():
     ok, estado, temp, hum, viento, ultimo = consultar_wunderground_web(faro)
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (Web/API): {estado} | Temp: {temp},"
+        f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp},"
         f" Hum: {hum}, Viento: {viento}"
     )
     if not ok:
@@ -545,8 +484,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Degradé sutil de tarjetas y extracción exacta de temperatura"
-                " actual de faros [skip ci]"
+                "Ajuste de degradé diagonal estilo WU en tarjetas de estaciones"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
