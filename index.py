@@ -226,33 +226,44 @@ def consultar_directemar(est):
 
 def consultar_wunderground_web(est):
   try:
-    alt_url = (
-        f"https://api.weather.com/v2/pws/observations/current"
-        f"?stationId={est['id']}&format=json&units=m&apiKey=e1f10a1e78da46f5b10a1e78da96f525"
-    )
-    req = urllib.request.Request(alt_url, headers=HEADERS)
+    req = urllib.request.Request(est["url"], headers=HEADERS)
     with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-      data = json.loads(response.read().decode("utf-8"))
-      obs = data["observations"][0]
-      metric = obs["metric"]
+      html = response.read().decode("utf-8", errors="ignore")
 
-      temp_val = metric.get("temp")
-      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
+      # Buscamos patrones de temperatura con decimales dentro del HTML del dashboard (ej: 18.4°C o 18.4 °C)
+      # Weather Underground suele renderizar los valores actuales o las tablas con las unidades.
+      temps_encontradas = re.findall(
+          r"([\-]?\d+[\.,]\d+)\s*(?:°C|&deg;C|ºC)", html
+      )
+      hums_encontradas = re.findall(r"(\d+)\s*%", html)
+      vientos_encontrados = re.findall(
+          r"([\-]?\d+[\.,]\d+)\s*(?:km/h|kts|mph)", html
+      )
 
-      hum_val = obs.get("humidity")
-      hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
+      temp = (
+          f"{convertir_numero(temps_encontradas[0]):.1f}°C"
+          if temps_encontradas
+          else "--"
+      )
 
-      viento_kmh = metric.get("windSpeed")
-      if viento_kmh is not None:
-        viento_kt = viento_kmh / 1.852
-        viento = f"{viento_kt:.1f} kt"
-      else:
-        viento = "--"
+      hum = "--"
+      for h in hums_encontradas:
+        val = convertir_numero(h)
+        if val is not None and 0 <= val <= 100:
+          hum = f"{val:.1f}%"
+          break
 
-      obs_time = obs.get("obsTimeLocal", "Reciente")
-      return True, "OPERATIVA", temp, hum, viento, obs_time
+      viento = "--"
+      if vientos_encontrados:
+        # Asumiendo km/h por defecto en wunderground métrico, convertimos a nudos (kt)
+        v_kmh = convertir_numero(vientos_encontrados[0])
+        if v_kmh is not None:
+          v_kt = v_kmh / 1.852
+          viento = f"{v_kt:.1f} kt"
+
+      return True, "OPERATIVA", temp, hum, viento, "Reciente (Web)"
   except Exception as e:
-    print(f"Error obteniendo datos API para [{est['nombre']}]: {e}")
+    print(f"Error obteniendo web para [{est['nombre']}]: {e}")
 
   return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
 
@@ -414,7 +425,10 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado correctamente con degradé sobrio.")
+  print(
+      "✓ index.html actualizado correctamente con extracción de decimales para"
+      " los faros."
+  )
 
 
 def ejecutar_monitoreo():
@@ -452,8 +466,8 @@ def ejecutar_monitoreo():
     ok, estado, temp, hum, viento, ultimo = consultar_wunderground_web(faro)
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp},"
-        f" Hum: {hum}, Viento: {viento}"
+        f"[{simbolo}] {faro['nombre']} (Web con decimales): {estado} | Temp:"
+        f" {temp}, Hum: {hum}, Viento: {viento}"
     )
     if not ok:
       hubo_fallas = True
@@ -484,8 +498,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Degradé diagonal sobrio integrado con el fondo de la página"
-                " [skip ci]"
+                "Extracción de temperatura con decimales para faros desde"
+                " Weather Underground [skip ci]"
             ),
         ],
         capture_output=True,
