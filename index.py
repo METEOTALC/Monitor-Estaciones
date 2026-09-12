@@ -120,7 +120,7 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # 1. Temperatura (Tu lógica exacta que funciona)
+      # 1. Temperatura (Tu lógica exacta funcional)
       temp_match = re.search(
           r"(?:Temperatura|Temp\.?)[^\d\-]*([\-]?\d+[\.,]?\d*)",
           texto_plano,
@@ -129,9 +129,9 @@ def consultar_directemar(est):
       if temp_match:
         temp = f"{temp_match.group(1).replace(',', '.')}°C"
 
-      # 2. Humedad (Lógica robusta restaurada)
+      # 2. Humedad corregida (Exige explícitamente el símbolo % para no confundir con térmica)
       hum_match = re.search(
-          r"(?:Humedad|HR|Humidity)[^\d]*(\d+(?:[.,]\d+)?)\s*%?",
+          r"(?:Humedad|HR)\s*[:]?\s*(\d+[\.,]?\d*)\s*%",
           texto_plano,
           re.IGNORECASE,
       )
@@ -140,7 +140,7 @@ def consultar_directemar(est):
         if 0 <= val_hum <= 100:
           hum = f"{val_hum:.1f}%"
 
-      # 3. Viento (Lógica robusta separando ráfagas y buscando unidades en nudos)
+      # 3. Viento
       partes_viento = re.split(r"racha|gust", texto_plano, flags=re.IGNORECASE)
       viento_match = re.search(
           r"(?:Viento|Wind|Velocidad|Vel\.?|Intensidad)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt)?",
@@ -430,8 +430,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección de expresiones regulares para temperatura, humedad"
-                " y viento [skip ci]"
+                "Corrección de filtro de humedad para evitar confusión con"
+                " sensación térmica [skip ci]"
             ),
         ],
         check=True,
