@@ -1,7 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import json
+import re
 import ssl
 import subprocess
+import time
 import urllib.request
 
 # ==========================================
@@ -10,7 +13,24 @@ import urllib.request
 WU_API_KEY = "9219a7502910484094a7502910+8405d"
 
 # ==========================================
-# CONFIGURACIÓN DE ESTACIONES
+# CONFIGURACIÓN GENERAL
+# ==========================================
+TOLERANCIA_MINUTOS = 12
+ZONA_CHILE = ZoneInfo("America/Santiago")
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
+        " like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
+}
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+
+# ==========================================
+# ESTACIONES DIRECTEMAR
 # ==========================================
 ESTACIONES_DIRECTEMAR = [
     {
@@ -67,6 +87,9 @@ ESTACIONES_DIRECTEMAR = [
     },
 ]
 
+# ==========================================
+# FAROS WEATHER UNDERGROUND
+# ==========================================
 ESTACIONES_FAROS = [
     {
         "nombre": "Faro Isla Quiriquina",
@@ -84,98 +107,105 @@ ESTACIONES_FAROS = [
     },
 ]
 
-TOLERANCIA_MINUTOS = 12
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
-        " like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    )
-}
-
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
-
 
 def obtener_hora_chile():
-  return datetime.utcnow() - timedelta(hours=3)
+  return datetime.now(ZONA_CHILE)
+
+
+def convertir_numero(valor):
+  if valor is None:
+    return None
+  try:
+    return float(str(valor).replace(",", "."))
+  except (ValueError, TypeError):
+    return None
 
 
 def consultar_directemar(est):
   try:
     req = urllib.request.Request(est["url"], headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
+    with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
       html = response.read().decode("utf-8", errors="ignore")
 
-      import re
-
-      match = re.search(
-          r"page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})",
-          html,
-          re.IGNORECASE,
-      )
       texto_plano = re.sub(r"<[^>]+>", " ", html)
-      texto_plano = re.sub(r"\s+", " ", texto_plano)
+      texto_plano = (
+          texto_plano.replace("\xa5", " ")
+          .replace("\xa0", " ")
+          .replace("&nbsp;", " ")
+      )
+      texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
       temp, hum, viento = "--", "--", "--"
 
-      # 1. Temperatura (Tu lógica exacta funcional)
+      # 1. Temperatura con doble estrategia robusta
       temp_match = re.search(
-          r"(?:Temperatura|Temp\.?)[^\d\-]*([\-]?\d+[\.,]?\d*)",
+          r"(?:Temperatura|Temp\.?)\s*[:|]?\s*([\-]?\d+(?:[.,]\d+)?)",
           texto_plano,
           re.IGNORECASE,
       )
+      if not temp_match:
+        # Respaldo: busca números de 1 o 2 dígitos seguidos de °C o ºC (evita rumbos de 3 dígitos)
+        temp_match = re.search(
+            r"\b([\-]?\d{1,2}(?:[.,]\d+)?)\s*[°º]\s*C",
+            texto_plano,
+            re.IGNORECASE,
+        )
       if temp_match:
-        temp = f"{temp_match.group(1).replace(',', '.')}°C"
+        val = convertir_numero(temp_match.group(1))
+        if val is not None:
+          temp = f"{val:.1f}°C"
 
-      # 2. Humedad corregida (Exige explícitamente el símbolo % para no confundir con térmica)
+      # Humedad (Corregida estrictamente para incluir "Relativa" y validar 0-100%)
       hum_match = re.search(
-          r"(?:Humedad|HR)\s*[:]?\s*(\d+[\.,]?\d*)\s*%",
+          r"(?:Humedad\s*(?:Relativa)?|HR)\s*[:|]?\s*(\d+(?:[.,]\d+)?)\s*%",
           texto_plano,
           re.IGNORECASE,
       )
       if hum_match:
-        val_hum = float(hum_match.group(1).replace(",", "."))
-        if 0 <= val_hum <= 100:
-          hum = f"{val_hum:.1f}%"
+        val = convertir_numero(hum_match.group(1))
+        if val is not None and 0 <= val <= 100:
+          hum = f"{val:.1f}%"
 
-      # 3. Viento
-      partes_viento = re.split(r"racha|gust", texto_plano, flags=re.IGNORECASE)
+      # Viento promedio (Estable y funcionando)
       viento_match = re.search(
-          r"(?:Viento|Wind|Velocidad|Vel\.?|Intensidad)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt)?",
-          partes_viento[0],
+          r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt)", texto_plano, re.IGNORECASE
+      )
+      if viento_match:
+        val = convertir_numero(viento_match.group(1))
+        if val is not None:
+          viento = f"{val:.1f} kt"
+
+      match_fecha = re.search(
+          r"(?:Page\s+updated|Actualizado)\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)",
+          texto_plano,
           re.IGNORECASE,
       )
-      if not viento_match:
-        viento_match = re.search(
-            r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt)",
-            partes_viento[0],
-            re.IGNORECASE,
-        )
-      if viento_match:
-        val_viento = float(viento_match.group(1).replace(",", "."))
-        viento = f"{val_viento:.1f} kt"
+      if not match_fecha:
+        return False, "SIN DATOS VÁLIDOS", "N/D", temp, hum, viento
 
-      if match:
-        fecha_str = match.group(1)
-        fecha_estacion = datetime.strptime(fecha_str, "%d-%m-%Y %H:%M")
-        dif_min = int(
-            abs((obtener_hora_chile() - fecha_estacion).total_seconds()) / 60
+      fecha_str = match_fecha.group(1)
+      formato_fecha = (
+          "%d-%m-%Y %H:%M:%S" if fecha_str.count(":") == 2 else "%d-%m-%Y %H:%M"
+      )
+      fecha_estacion = datetime.strptime(fecha_str, formato_fecha).replace(
+          tzinfo=ZONA_CHILE
+      )
+      dif_min = abs(
+          (obtener_hora_chile() - fecha_estacion).total_seconds() / 60
+      )
+
+      if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
+        return True, "OPERATIVA", fecha_str, temp, hum, viento
+      else:
+        return (
+            False,
+            f"DESACTUALIZADA ({int(dif_min)} min)",
+            fecha_str,
+            temp,
+            hum,
+            viento,
         )
 
-        if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
-          return True, "OPERATIVA", fecha_str, temp, hum, viento
-        else:
-          return (
-              False,
-              f"DESACTUALIZADA ({dif_min} min)",
-              fecha_str,
-              temp,
-              hum,
-              viento,
-          )
-    return False, "SIN DATOS VÁLIDOS", "N/D", "--", "--", "--"
   except Exception as e:
     print(f"Error Directemar {est['nombre']}: {e}")
     return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
@@ -183,34 +213,71 @@ def consultar_directemar(est):
 
 def consultar_wunderground_pws(station_id, nombre_faro):
   try:
-    url = f"https://api.weather.com/v2/pws/observations/current?stationId={station_id}&format=json&units=m&apiKey={WU_API_KEY}"
+    api_key_segura = WU_API_KEY.replace("+", "%2B")
+    url = f"https://api.weather.com/v2/pws/observations/current?stationId={station_id}&format=json&units=m&apiKey={api_key_segura}"
+
     req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
+    with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
       data = json.loads(response.read().decode("utf-8"))
       observations = data.get("observations", [])
-      if observations:
-        obs = observations[0]
-        metric = obs.get("metric", {})
 
-        temp = metric.get("temp")
-        hum = obs.get("humidity")
-        wind_speed_kmh = metric.get("windSpeed")
+      if not observations:
+        return False, "SIN DATOS VÁLIDOS", "--", "--", "--", "N/D"
 
-        temp_str = f"{round(float(temp), 1)}°C" if temp is not None else "--"
-        hum_str = f"{round(float(hum), 1)}%" if hum is not None else "--"
+      obs = observations[0]
+      metric = obs.get("metric", {})
 
-        if wind_speed_kmh is not None:
-          viento_kt = round(float(wind_speed_kmh) / 1.852, 1)
-          viento_str = f"{viento_kt} kt"
+      obs_utc = obs.get("obsTimeUtc")
+      fecha_obs = None
+      if obs_utc:
+        try:
+          if obs_utc.endswith("Z"):
+            obs_utc = obs_utc[:-1] + "+00:00"
+          fecha_obs = datetime.fromisoformat(obs_utc).astimezone(ZONA_CHILE)
+        except Exception:
+          pass
+
+      temp = metric.get("temp")
+      temp_num = convertir_numero(temp)
+      temp_str = f"{temp_num:.1f}°C" if temp_num is not None else "--"
+
+      hum = obs.get("humidity")
+      hum_num = convertir_numero(hum)
+      hum_str = f"{hum_num:.1f}%" if hum_num is not None else "--"
+
+      wind = metric.get("windspeed")
+      if wind is None:
+        wind = metric.get("windSpeed")
+
+      wind_num = convertir_numero(wind)
+      if wind_num is not None:
+        viento_kt = wind_num / 1.852
+        viento_str = f"{viento_kt:.1f} kt"
+      else:
+        viento_str = "--"
+
+      ahora = obtener_hora_chile()
+      if fecha_obs:
+        diferencia = abs((ahora - fecha_obs).total_seconds() / 60)
+        diferencia_int = int(diferencia)
+        ultimo_str = fecha_obs.strftime("%d-%m-%Y %H:%M:%S")
+
+        if diferencia <= TOLERANCIA_MINUTOS:
+          ok = True
+          estado = "OPERATIVA"
         else:
-          viento_str = "--"
+          ok = False
+          estado = f"DESACTUALIZADA ({diferencia_int} min)"
+      else:
+        ok = True
+        estado = "OPERATIVA"
+        ultimo_str = "Reciente (API)"
 
-        return True, temp_str, hum_str, viento_str
+      return ok, estado, temp_str, hum_str, viento_str, ultimo_str
 
-      return False, "--", "--", "--"
   except Exception as e:
     print(f"Excepción WU PWS [{nombre_faro}]: {e}")
-    return False, "--", "--", "--"
+    return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
 
 
 def generar_html(resultados_directemar, resultados_faros, hay_alerta):
@@ -224,10 +291,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     color = "green" if r["ok"] else "red"
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
-            color: '{color}',
-            fillColor: '{color}',
-            fillOpacity: 0.8,
-            radius: 9
+            color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
         }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Hum: {r['hum']} | Viento: {r['viento']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
@@ -235,11 +299,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     color = "green" if faro["ok"] else "red"
     markers_js += f"""
         L.circleMarker([{faro['lat']}, {faro['lon']}], {{
-            color: '{color}',
-            fillColor: '{color}',
-            fillOpacity: 0.8,
-            radius: 8
-        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Temp: {faro['temp']}<br>Hum: {faro['hum']}<br>Viento: {faro['viento']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
+            color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
+        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {faro['temp']} | Hum: {faro['hum']} | Viento: {faro['viento']}<br>Reporte: {faro['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
@@ -263,16 +324,15 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
   for faro in resultados_faros:
     clase = "ok" if faro["ok"] else "error"
     icono = "🟢" if faro["ok"] else "🔴"
-    estado_txt = "OPERATIVA" if faro["ok"] else "SIN CONEXIÓN"
     cards_html += f"""
         <a href="{faro['url']}" target="_blank" class="card-link">
             <div class="card {clase}">
                 <strong>{faro['nombre']}</strong>
-                <div class="status">{icono} {estado_txt}</div>
+                <div class="status">{icono} {faro['estado']}</div>
                 <div class="weather-info">
                     <span>🌡️ {faro['temp']}</span> <span>💧 {faro['hum']}</span> <span>🌬️ {faro['viento']}</span>
                 </div>
-                <div class="time">Fuente: Weather Underground API</div>
+                <div class="time">Último reporte: {faro['ultimo']}</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
@@ -293,26 +353,18 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="30">
-    <title>Monitor de Estaciones Automáticas - Constitución a Corral</title>
+    <title>Monitor de Estaciones Automáticas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {{ font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 10px; margin: 0; }}
-        h1 {{ text-align: center; color: #1a252f; margin-bottom: 0px; font-size: 20px; line-height: 1.1; }}
+        h1 {{ text-align: center; color: #1a252f; margin-bottom: 0; font-size: 20px; line-height: 1.1; }}
         .subtitle-line2 {{ text-align: center; color: #1a252f; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
         .subtitle {{ text-align: center; color: #7f8c8d; margin-bottom: 8px; font-size: 12px; }}
         .summary {{ text-align: center; font-weight: bold; margin-bottom: 12px; color: #2c3e50; font-size: 14px; }}
-        
-        @keyframes parpadeo {{
-            0% {{ background-color: #f4f6f9; }}
-            50% {{ background-color: #fadbd8; }}
-            100% {{ background-color: #f4f6f9; }}
-        }}
+        @keyframes parpadeo {{ 0% {{ background-color: #f4f6f9; }} 50% {{ background-color: #fadbd8; }} 100% {{ background-color: #f4f6f9; }} }}
         body.alerta-activa {{ animation: parpadeo 1.5s infinite; }}
-        
         .banner-alerta {{ background-color: #e74c3c; color: white; text-align: center; font-weight: bold; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }}
-
         #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 15px auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }}
-
         .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; max-width: 1200px; margin: 0 auto; }}
         .card-link {{ text-decoration: none; color: inherit; display: block; }}
         .card {{ border-radius: 8px; padding: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 6px solid #ccc; transition: transform 0.2s; }}
@@ -325,7 +377,6 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .weather-info {{ font-size: 0.9em; color: #34495e; margin-top: 5px; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px; display: flex; justify-content: space-around; }}
         .time {{ font-size: 0.75em; color: #7f8c8d; margin-top: 4px; }}
         .click-text {{ font-size: 0.65em; color: #95a5a6; margin-top: 4px; font-style: italic; text-align: right; }}
-
         .footer-dev {{ background: linear-gradient(to bottom, #1f618d, #154360); color: white; text-align: center; font-weight: 500; padding: 8px 20px; border-radius: 20px; margin: 25px auto 10px auto; display: table; font-size: 13px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }}
     </style>
 </head>
@@ -335,23 +386,18 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     <div class="subtitle">Última verificación: {hora_actual_chile} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
     {alerta_banner}
     <div class="summary">Estaciones Operativas: {operativas} de {total_estaciones}</div>
-
     <div id="map"></div>
-
     <div class="grid">
         {cards_html}
     </div>
-
     <div style="text-align: center;">
         <div class="footer-dev">Desarrollado por Sgto 2° (Met.) Luis Diego Achurra Garcés</div>
     </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([-37.5, -73.2], 7);
         L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
-            maxZoom: 12,
-            attribution: '© OpenStreetMap contributors'
+            maxZoom: 12, attribution: '© OpenStreetMap contributors'
         }}).addTo(map);
         {markers_js}
     </script>
@@ -360,7 +406,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ Archivo 'index.html' actualizado correctamente.")
+  print("✓ index.html actualizado.")
 
 
 def ejecutar_monitoreo():
@@ -395,13 +441,13 @@ def ejecutar_monitoreo():
     })
 
   for faro in ESTACIONES_FAROS:
-    ok, temp, hum, viento = consultar_wunderground_pws(
+    ok, estado, temp, hum, viento, ultimo = consultar_wunderground_pws(
         faro["station_id"], faro["nombre"]
     )
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (WU): Temp {temp}, Hum {hum}, Viento"
-        f" {viento}"
+        f"[{simbolo}] {faro['nombre']} (WU): {estado} | Temp: {temp}, Hum:"
+        f" {hum}, Viento: {viento}"
     )
     if not ok:
       hubo_fallas = True
@@ -411,6 +457,8 @@ def ejecutar_monitoreo():
         "lat": faro["lat"],
         "lon": faro["lon"],
         "ok": ok,
+        "estado": estado,
+        "ultimo": ultimo,
         "temp": temp,
         "hum": hum,
         "viento": viento,
@@ -424,20 +472,25 @@ def subir_a_github():
   try:
     print("Sincronizando cambios con GitHub...")
     subprocess.run(["git", "add", "index.html"], check=True)
-    subprocess.run(
+    resultado = subprocess.run(
         [
             "git",
             "commit",
             "-m",
             (
-                "Corrección de filtro de humedad para evitar confusión con"
-                " sensación térmica [skip ci]"
+                "Corrección robusta de temperatura manteniendo humedad y"
+                " viento [skip ci]"
             ),
         ],
-        check=True,
+        capture_output=True,
+        text=True,
     )
+    if resultado.returncode != 0:
+      if "nothing to commit" in (resultado.stdout + resultado.stderr).lower():
+        print("Sin cambios nuevos para subir.")
+        return
     subprocess.run(["git", "push"], check=True)
-    print("¡Sincronización completada con éxito!")
+    print("✓ Sincronización completada con éxito.")
   except subprocess.CalledProcessError as e:
     print(f"Error al sincronizar con Git: {e}")
 
