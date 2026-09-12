@@ -19,35 +19,38 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
         .card-link { text-decoration: none; color: inherit; display: block; }
         
+        /* TARJETAS MÁS COMPACTAS CON DEGRADADO DE CELESTE CLARO A GRIS */
         .card { 
-            border-radius: 16px; 
-            padding: 16px; 
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%); 
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8); 
-            border: 1px solid #cbd5e1; 
+            border-radius: 14px; 
+            padding: 12px 14px; 
+            background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+            border: 1px solid #94a3b8; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }
         .card:hover { 
-            transform: translateY(-4px); 
-            box-shadow: 0 12px 25px rgba(30, 64, 175, 0.12); 
-            border-color: #94a3b8;
-            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.2); 
+            border-color: #64748b;
         }
         .card.ok { border-left: 6px solid #16a34a; }
         .card.error { border-left: 6px solid #dc2626; }
         
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .station-name { font-weight: bold; font-size: 15px; color: #0f2942; line-height: 1.2; }
-        .status-badge { font-size: 12px; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+        .station-name { font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }
+        .status-badge { font-size: 11px; }
         
-        .weather-main { margin: 10px 0; }
-        .temp-val { font-size: 26px; font-weight: 700; color: #1d4ed8; }
+        .weather-row { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }
+        .temp-val { font-size: 22px; font-weight: 700; color: #0f172a; }
         
-        .weather-info { font-size: 0.95em; color: #334155; margin-top: 8px; background: rgba(255, 255, 255, 0.7); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid #e2e8f0; }
-        .time { font-size: 0.75em; color: #64748b; margin-top: 8px; }
-        .click-text { font-size: 0.7em; color: #2563eb; margin-top: 4px; font-style: italic; text-align: right; opacity: 0.9; }
+        .info-group { display: flex; gap: 10px; }
+        .info-item { font-size: 0.9em; color: #1e293b; background: rgba(255, 255, 255, 0.6); padding: 3px 8px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.8); }
+        
+        .card-footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }
+        .time { font-size: 0.7em; color: #334155; }
+        .click-text { font-size: 0.7em; color: #1d4ed8; font-weight: bold; font-style: italic; }
         
         .footer-dev { background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }
     </style>
@@ -55,7 +58,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 12-09-2026 18:20:20 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 12-09-2026 18:25:21 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -67,14 +70,17 @@
                     <span class="station-name">Capitanía de Puerto Constitución-7700</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 19.3°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 39.0%</span>
+                        <span class="info-item">🌬️ 5.4 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 39.0%</span> <span>🌬️ 5.4 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 12-09-2026 18:20:00</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 18:20:00</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -84,14 +90,17 @@
                     <span class="station-name">Capitanía de Puerto Lirquén-7406</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 20.3°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 34.0%</span>
+                        <span class="info-item">🌬️ 6.5 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 34.0%</span> <span>🌬️ 6.5 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 12-09-2026 18:20:01</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 18:20:01</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -101,14 +110,17 @@
                     <span class="station-name">Gobernación Marítima de Talcahuano</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 17.6°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 55.0%</span>
+                        <span class="info-item">🌬️ 9.6 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 55.0%</span> <span>🌬️ 9.6 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 12-09-2026 18:20:00</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 18:20:00</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -118,14 +130,17 @@
                     <span class="station-name">Capitanía de Puerto Coronel-7313</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 18.8°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 56.0%</span>
+                        <span class="info-item">🌬️ 6.2 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 56.0%</span> <span>🌬️ 6.2 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 12-09-2026 18:20:00</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 18:20:00</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -135,14 +150,17 @@
                     <span class="station-name">Capitanía de Puerto Lota-7373</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 21.3°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 38.0%</span>
+                        <span class="info-item">🌬️ 7.6 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 38.0%</span> <span>🌬️ 7.6 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 12-09-2026 18:20:01</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 18:20:01</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -152,14 +170,17 @@
                     <span class="station-name">Capitanía de Puerto Lebu-7800</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 17.6°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 62.0%</span>
+                        <span class="info-item">🌬️ 10.2 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 62.0%</span> <span>🌬️ 10.2 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 12-09-2026 18:20:00</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 18:20:00</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -169,14 +190,17 @@
                     <span class="station-name">Capitanía de Puerto Carahue</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 15.6°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 56.0%</span>
+                        <span class="info-item">🌬️ 7.1 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 56.0%</span> <span>🌬️ 7.1 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 12-09-2026 18:20:00</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 18:20:00</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -186,14 +210,17 @@
                     <span class="station-name">Capitanía de Puerto Corral-1960</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 16.6°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 37.0%</span>
+                        <span class="info-item">🌬️ 9.3 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 37.0%</span> <span>🌬️ 9.3 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 12-09-2026 18:20:00</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 12-09-2026 18:20:00</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -203,14 +230,17 @@
                     <span class="station-name">Faro Isla Quiriquina</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 18.9°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 44.0%</span>
+                        <span class="info-item">🌬️ 2.6 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 44.0%</span> <span>🌬️ 2.6 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 2026-09-12 18:25:19</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 2026-09-12 18:20:14</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -220,14 +250,17 @@
                     <span class="station-name">Faro Punta Hualpén</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ 16.7°C</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 66.0%</span>
+                        <span class="info-item">🌬️ 12.2 kt</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 66.0%</span> <span>🌬️ 12.2 kt</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: 2026-09-12 18:25:00</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: 2026-09-12 18:20:00</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         
@@ -276,11 +309,11 @@
         
         L.circleMarker([-36.625, -73.033], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 18.9°C | Hum: 44.0% | Viento: 2.6 kt<br>Reporte: 2026-09-12 18:20:14<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 18.9°C | Hum: 44.0% | Viento: 2.6 kt<br>Reporte: 2026-09-12 18:25:19<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 16.7°C | Hum: 66.0% | Viento: 12.2 kt<br>Reporte: 2026-09-12 18:20:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 16.7°C | Hum: 66.0% | Viento: 12.2 kt<br>Reporte: 2026-09-12 18:25:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
     </script>
 </body>
