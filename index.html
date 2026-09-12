@@ -22,7 +22,7 @@
         .card { 
             border-radius: 16px; 
             padding: 16px; 
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+            background: linear-gradient(135deg, #1e293b 0%, #090d16 100%); 
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3); 
             border: 1px solid rgba(255, 255, 255, 0.08); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -31,8 +31,9 @@
         }
         .card:hover { 
             transform: translateY(-4px); 
-            box-shadow: 0 20px 30px -10px rgba(56, 189, 248, 0.2); 
-            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 20px 30px -10px rgba(56, 189, 248, 0.25); 
+            border-color: rgba(56, 189, 248, 0.5);
+            background: linear-gradient(135deg, #24344d 0%, #0f172a 100%);
         }
         .card.ok { border-left: 5px solid #22c55e; }
         .card.error { border-left: 5px solid #ef4444; }
@@ -54,7 +55,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 12-09-2026 14:20:25 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 12-09-2026 14:22:51 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
