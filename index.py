@@ -113,7 +113,6 @@ def consultar_directemar(est):
     with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
       html = response.read().decode("utf-8", errors="ignore")
 
-      # Extraer fecha de actualización
       match = re.search(
           r"page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})",
           html,
@@ -125,7 +124,6 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # Temperatura: busca palabras clave seguidas de un número decimal/entero opcionalmente negativo
       temp_match = re.search(
           r"(?:Temperatura|Temp\.?)[^\d\-]*([\-]?\d+[\.,]?\d*)",
           texto_plano,
@@ -134,14 +132,12 @@ def consultar_directemar(est):
       if temp_match:
         temp = f"{temp_match.group(1).replace(',', '.')}°C"
 
-      # Humedad: busca palabras clave de humedad
       hum_match = re.search(
           r"(?:Humedad|HR)[^\d]*(\d+[\.,]?\d*)", texto_plano, re.IGNORECASE
       )
       if hum_match:
         hum = f"{hum_match.group(1)}%"
 
-      # Viento: Búsqueda flexible que captura valores seguidos o cercanos a Viento/Velocidad/Intensidad
       viento_match = re.search(
           r"(?:Viento|Velocidad|Vel\.?|Intensidad)[^\d]{0,15}(\d+[\.,]?\d*)",
           texto_plano,
@@ -303,7 +299,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
                 <strong>{r['nombre']}</strong>
                 <div class="status">{icono} {r['estado']}</div>
                 <div class="weather-info">
-                    <span>🌡️ {r['temp']}</span> | <span>💧 {r['hum']}</span> | <span>🌬️ {r['viento']}</span>
+                    <span>🌡️ {r['temp']}</span> <span>💧 {r['hum']}</span> <span>🌬️ {r['viento']}</span>
                 </div>
                 <div class="time">Último reporte: {r['ultimo']}</div>
                 <div class="click-text">Clic para abrir ↗</div>
@@ -321,7 +317,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
                 <strong>{faro['nombre']}</strong>
                 <div class="status">{icono} {estado_txt}</div>
                 <div class="weather-info">
-                    <span>🌡️ {faro['temp']}</span> | <span>💧 {faro['hum']}</span> | <span>🌬️ {faro['viento']}</span>
+                    <span>🌡️ {faro['temp']}</span> <span>💧 {faro['hum']}</span> <span>🌬️ {faro['viento']}</span>
                 </div>
                 <div class="time">Fuente: WeatherLink API v2</div>
                 <div class="click-text">Clic para abrir ↗</div>
@@ -342,15 +338,16 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="30">
     <title>Monitor de Estaciones Automáticas - Constitución a Corral</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {{ font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 15px; margin: 0; }}
-        h1 {{ text-align: center; color: #1a252f; margin-bottom: 0px; font-size: 22px; line-height: 1.1; }}
-        .subtitle-line2 {{ text-align: center; color: #1a252f; margin-bottom: 10px; font-size: 18px; font-weight: bold; }}
-        .subtitle {{ text-align: center; color: #7f8c8d; margin-bottom: 10px; font-size: 13px; }}
-        .summary {{ text-align: center; font-weight: bold; margin-bottom: 15px; color: #2c3e50; font-size: 15px; }}
+        body {{ font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 10px; margin: 0; }}
+        h1 {{ text-align: center; color: #1a252f; margin-bottom: 0px; font-size: 20px; line-height: 1.1; }}
+        .subtitle-line2 {{ text-align: center; color: #1a252f; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
+        .subtitle {{ text-align: center; color: #7f8c8d; margin-bottom: 8px; font-size: 12px; }}
+        .summary {{ text-align: center; font-weight: bold; margin-bottom: 12px; color: #2c3e50; font-size: 14px; }}
         
         @keyframes parpadeo {{
             0% {{ background-color: #f4f6f9; }}
@@ -359,24 +356,24 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         }}
         body.alerta-activa {{ animation: parpadeo 1.5s infinite; }}
         
-        .banner-alerta {{ background-color: #e74c3c; color: white; text-align: center; font-weight: bold; padding: 8px; border-radius: 6px; margin-bottom: 15px; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }}
+        .banner-alerta {{ background-color: #e74c3c; color: white; text-align: center; font-weight: bold; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }}
 
-        #map {{ height: 400px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }}
+        #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 15px auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }}
 
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; max-width: 1200px; margin: 0 auto; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; max-width: 1200px; margin: 0 auto; }}
         .card-link {{ text-decoration: none; color: inherit; display: block; }}
-        .card {{ border-radius: 8px; padding: 12px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 6px solid #ccc; transition: transform 0.2s; }}
+        .card {{ border-radius: 8px; padding: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 6px solid #ccc; transition: transform 0.2s; }}
         .card:hover {{ transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }}
         .card.ok {{ border-left-color: #2ecc71; }}
         .card.error {{ border-left-color: #e74c3c; }}
-        .status {{ font-weight: bold; margin-top: 4px; font-size: 13px; }}
+        .status {{ font-weight: bold; margin-top: 3px; font-size: 12px; }}
         .ok .status {{ color: #27ae60; }}
         .error .status {{ color: #c0392b; }}
-        .weather-info {{ font-size: 0.9em; color: #34495e; margin-top: 6px; font-weight: bold; background: #f8f9fa; padding: 4px; border-radius: 4px; }}
-        .time {{ font-size: 0.8em; color: #7f8c8d; margin-top: 4px; }}
-        .click-text {{ font-size: 0.7em; color: #95a5a6; margin-top: 6px; font-style: italic; text-align: right; }}
+        .weather-info {{ font-size: 0.9em; color: #34495e; margin-top: 5px; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px; display: flex; justify-content: space-around; }}
+        .time {{ font-size: 0.75em; color: #7f8c8d; margin-top: 4px; }}
+        .click-text {{ font-size: 0.65em; color: #95a5a6; margin-top: 4px; font-style: italic; text-align: right; }}
 
-        .footer-dev {{ background: linear-gradient(to bottom, #1f618d, #154360); color: white; text-align: center; font-weight: 500; padding: 10px 30px; border-radius: 25px; margin: 30px auto 15px auto; display: table; font-size: 14px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }}
+        .footer-dev {{ background: linear-gradient(to bottom, #1f618d, #154360); color: white; text-align: center; font-weight: 500; padding: 8px 20px; border-radius: 20px; margin: 25px auto 10px auto; display: table; font-size: 13px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }}
     </style>
 </head>
 <body class="{alerta_class}">
@@ -411,8 +408,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
   print(
-      "✓ Archivo 'index.html' generado exitosamente con la extracción corregida"
-      " de viento en kt."
+      "✓ Archivo 'index.html' generado exitosamente sin líneas y adaptado a"
+      " celulares."
   )
 
 
@@ -483,8 +480,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección en expresión regular de viento para Directemar"
-                " [skip ci]"
+                "Eliminación de líneas divisorias y mejora de diseño responsive"
+                " para móviles [skip ci]"
             ),
         ],
         check=True,
