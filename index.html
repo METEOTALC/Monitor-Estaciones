@@ -22,7 +22,7 @@
         .card { 
             border-radius: 16px; 
             padding: 16px; 
-            background: linear-gradient(145deg, #1e293b 0%, #091122 60%, #030712 100%); 
+            background: linear-gradient(135deg, #1b3152 0%, #152238 50%, #222b3b 100%); 
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(256, 256, 256, 0.1); 
             border: 1px solid rgba(56, 189, 248, 0.18); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -33,7 +33,7 @@
             transform: translateY(-4px); 
             box-shadow: 0 20px 35px -10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(256, 256, 256, 0.2); 
             border-color: rgba(56, 189, 248, 0.6);
-            background: linear-gradient(145deg, #283854 0%, #0d172e 60%, #060a17 100%);
+            background: linear-gradient(135deg, #25426e 0%, #1a2a47 50%, #2b364a 100%);
         }
         .card.ok { border-left: 5px solid #22c55e; }
         .card.error { border-left: 5px solid #ef4444; }
@@ -55,7 +55,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 12-09-2026 14:51:03 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 12-09-2026 14:55:50 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -204,12 +204,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 18.0°C</span>
+                    <span class="temp-val">🌡️ --</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 58.0%</span> <span>🌬️ 3.2 kt</span>
+                    <span>💧 37.8%</span> <span>🌬️ 7.0 kt</span>
                 </div>
-                <div class="time">Reporte: Reciente (API Alt)</div>
+                <div class="time">Reporte: 2026-09-12 00:04:59</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -221,12 +221,12 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-main">
-                    <span class="temp-val">🌡️ 18.0°C</span>
+                    <span class="temp-val">🌡️ --</span>
                 </div>
                 <div class="weather-info">
-                    <span>💧 36.0%</span> <span>🌬️ 1.6 kt</span>
+                    <span>💧 37.8%</span> <span>🌬️ 7.0 kt</span>
                 </div>
-                <div class="time">Reporte: Reciente (API Alt)</div>
+                <div class="time">Reporte: 2026-09-12 00:00:00</div>
                 <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
@@ -276,11 +276,11 @@
         
         L.circleMarker([-36.625, -73.033], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 18.0°C | Hum: 58.0% | Viento: 3.2 kt<br>Reporte: Reciente (API Alt)<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 14.3°C | Hum: 37.8% | Viento: 7.0 kt<br>Reporte: 2026-09-12 00:04:59<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 18.0°C | Hum: 36.0% | Viento: 1.6 kt<br>Reporte: Reciente (API Alt)<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 14.3°C | Hum: 37.8% | Viento: 7.0 kt<br>Reporte: 2026-09-12 00:00:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
     </script>
 </body>
