@@ -138,7 +138,6 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # Búsqueda estricta para capturar exactamente el valor de Temperature/Temperatura
       temp_match = re.search(
           r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
           texto_plano,
@@ -242,7 +241,7 @@ def consultar_wunderground_web(est):
 
         if temp_match:
           val = float(temp_match.group(1))
-          temp = f"{val:.1f}°C"
+          temp = f"{val:.1f}°C"  # Forzado con decimal
 
         hum_match = re.search(
             r'"humidity"\s*:\s*([0-9]+(?:\.[0-9]+)?)', html
@@ -283,7 +282,9 @@ def consultar_wunderground_web(est):
       metric = obs["metric"]
 
       temp_val = metric.get("temp")
-      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
+      temp = (
+          f"{temp_val:.1f}°C" if temp_val is not None else "--"
+      )  # Forzado con decimal
 
       hum_val = obs.get("humidity")
       hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
@@ -403,7 +404,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .card {{ 
             border-radius: 16px; 
             padding: 16px; 
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+            background: linear-gradient(135deg, #1e293b 0%, #090d16 100%); 
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3); 
             border: 1px solid rgba(255, 255, 255, 0.08); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -412,8 +413,9 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         }}
         .card:hover {{ 
             transform: translateY(-4px); 
-            box-shadow: 0 20px 30px -10px rgba(56, 189, 248, 0.2); 
-            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 20px 30px -10px rgba(56, 189, 248, 0.25); 
+            border-color: rgba(56, 189, 248, 0.5);
+            background: linear-gradient(135deg, #24344d 0%, #0f172a 100%);
         }}
         .card.ok {{ border-left: 5px solid #22c55e; }}
         .card.error {{ border-left: 5px solid #ef4444; }}
@@ -528,8 +530,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección de lectura de temperatura y diseño de tarjetas"
-                " [skip ci]"
+                "Decimales forzados en faros y degradé suave en tarjetas [skip"
+                " ci]"
             ),
         ],
         capture_output=True,
