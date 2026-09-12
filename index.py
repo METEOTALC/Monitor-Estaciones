@@ -328,14 +328,17 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
                     <span class="station-name">{r['nombre']}</span>
                     <span class="status-badge">{icono}</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ {r['temp']}</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 {r['hum']}</span>
+                        <span class="info-item">🌬️ {r['viento']}</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 {r['hum']}</span> <span>🌬️ {r['viento']}</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: {r['ultimo']}</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: {r['ultimo']}</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         """
@@ -350,14 +353,17 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
                     <span class="station-name">{faro['nombre']}</span>
                     <span class="status-badge">{icono}</span>
                 </div>
-                <div class="weather-main">
+                <div class="weather-row">
                     <span class="temp-val">🌡️ {faro['temp']}</span>
+                    <div class="info-group">
+                        <span class="info-item">💧 {faro['hum']}</span>
+                        <span class="info-item">🌬️ {faro['viento']}</span>
+                    </div>
                 </div>
-                <div class="weather-info">
-                    <span>💧 {faro['hum']}</span> <span>🌬️ {faro['viento']}</span>
+                <div class="card-footer-info">
+                    <span class="time">Reporte: {faro['ultimo']}</span>
+                    <span class="click-text">Ver ↗</span>
                 </div>
-                <div class="time">Reporte: {faro['ultimo']}</div>
-                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         """
@@ -392,35 +398,38 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }}
         .card-link {{ text-decoration: none; color: inherit; display: block; }}
         
+        /* TARJETAS MÁS COMPACTAS CON DEGRADADO DE CELESTE CLARO A GRIS */
         .card {{ 
-            border-radius: 16px; 
-            padding: 16px; 
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%); 
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8); 
-            border: 1px solid #cbd5e1; 
+            border-radius: 14px; 
+            padding: 12px 14px; 
+            background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+            border: 1px solid #94a3b8; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }}
         .card:hover {{ 
-            transform: translateY(-4px); 
-            box-shadow: 0 12px 25px rgba(30, 64, 175, 0.12); 
-            border-color: #94a3b8;
-            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.2); 
+            border-color: #64748b;
         }}
         .card.ok {{ border-left: 6px solid #16a34a; }}
         .card.error {{ border-left: 6px solid #dc2626; }}
         
-        .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }}
-        .station-name {{ font-weight: bold; font-size: 15px; color: #0f2942; line-height: 1.2; }}
-        .status-badge {{ font-size: 12px; }}
+        .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }}
+        .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
+        .status-badge {{ font-size: 11px; }}
         
-        .weather-main {{ margin: 10px 0; }}
-        .temp-val {{ font-size: 26px; font-weight: 700; color: #1d4ed8; }}
+        .weather-row {{ display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }}
+        .temp-val {{ font-size: 22px; font-weight: 700; color: #0f172a; }}
         
-        .weather-info {{ font-size: 0.95em; color: #334155; margin-top: 8px; background: rgba(255, 255, 255, 0.7); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid #e2e8f0; }}
-        .time {{ font-size: 0.75em; color: #64748b; margin-top: 8px; }}
-        .click-text {{ font-size: 0.7em; color: #2563eb; margin-top: 4px; font-style: italic; text-align: right; opacity: 0.9; }}
+        .info-group {{ display: flex; gap: 10px; }}
+        .info-item {{ font-size: 0.9em; color: #1e293b; background: rgba(255, 255, 255, 0.6); padding: 3px 8px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.8); }}
+        
+        .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }}
+        .time {{ font-size: 0.7em; color: #334155; }}
+        .click-text {{ font-size: 0.7em; color: #1d4ed8; font-weight: bold; font-style: italic; }}
         
         .footer-dev {{ background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }}
     </style>
@@ -452,8 +461,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
   print(
-      "✓ index.html actualizado con diseño institucional luminoso y tarjetas"
-      " con degradado claro."
+      "✓ index.html actualizado con tarjetas compactas y degradado de celeste"
+      " claro a gris."
   )
 
 
@@ -524,8 +533,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización a diseño institucional luminoso y tarjetas con"
-                " degradado claro [skip ci]"
+                "Actualización de diseño: tarjetas compactas con degradado"
+                " celeste a gris [skip ci]"
             ),
         ],
         capture_output=True,
