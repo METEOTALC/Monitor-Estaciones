@@ -395,10 +395,10 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         body.alerta-activa {{ animation: parpadeo 1.5s infinite; }}
         .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
         #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }}
-        .card-link {{ text-decoration: none; color: inherit; display: block; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }}
         
-        /* TARJETAS MÁS COMPACTAS CON DEGRADADO DE CELESTE CLARO A GRIS */
+        /* TARJETAS UNIFORMES Y FLEXIBLES */
+        .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
         .card {{ 
             border-radius: 14px; 
             padding: 12px 14px; 
@@ -408,6 +408,11 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            box-sizing: border-box;
         }}
         .card:hover {{ 
             transform: translateY(-3px); 
@@ -461,8 +466,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
   print(
-      "✓ index.html actualizado con tarjetas compactas y degradado de celeste"
-      " claro a gris."
+      "✓ index.html actualizado con tarjetas uniformes en altura mediante"
+      " Flexbox."
   )
 
 
@@ -533,8 +538,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización de diseño: tarjetas compactas con degradado"
-                " celeste a gris [skip ci]"
+                "Diseño uniforme: tarjetas con altura estirada mediante flexbox"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
