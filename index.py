@@ -1,18 +1,14 @@
 from datetime import datetime, timedelta
-import hashlib
-import hmac
 import json
-import re
 import ssl
 import subprocess
-import time
 import urllib.request
 
 # ==========================================
-# CONFIGURACIÓN DE CREDENCIALES WEATHERLINK V2
+# CONFIGURACIÓN WEATHER UNDERGROUND (PWS)
 # ==========================================
-WL_API_KEY = "pa73dvpxib2q7ki1ixnzvx0ti0atyrpk"
-WL_API_SECRET = "yzpyohbu6cnqxmunczgffa2fx80bjdal"
+# Ingresa tu API Key de Weather Underground (la que aparece en tu panel de Member Settings)
+WU_API_KEY = "9219a7502910484094a7502910+8405d"
 
 # ==========================================
 # CONFIGURACIÓN DE ESTACIONES
@@ -76,14 +72,14 @@ ESTACIONES_FAROS = [
     {
         "nombre": "Faro Isla Quiriquina",
         "url": "https://www.wunderground.com/dashboard/pws/ITALCA20",
-        "station_id": "178202",
+        "station_id": "ITALCA20",
         "lat": -36.625,
         "lon": -73.033,
     },
     {
         "nombre": "Faro Punta Hualpén",
         "url": "https://www.wunderground.com/dashboard/pws/IHUALP1",
-        "station_id": "236994",
+        "station_id": "IHUALP1",
         "lat": -36.745,
         "lon": -73.185,
     },
@@ -113,12 +109,13 @@ def consultar_directemar(est):
     with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
       html = response.read().decode("utf-8", errors="ignore")
 
+      import re
+
       match = re.search(
           r"page updated\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2})",
           html,
           re.IGNORECASE,
       )
-
       texto_plano = re.sub(r"<[^>]+>", " ", html)
       texto_plano = re.sub(r"\s+", " ", texto_plano)
 
@@ -170,93 +167,36 @@ def consultar_directemar(est):
     return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
 
 
-def consultar_weatherlink_v2(station_id, nombre_faro):
+def consultar_wunderground_pws(station_id, nombre_faro):
   try:
-    t = str(int(time.time()))
-    url_path = f"/v2/current/{station_id}"
-    string_to_sign = f"api-key{WL_API_KEY}t{t}{url_path}"
-
-    signature = hmac.new(
-        WL_API_SECRET.encode("utf-8"),
-        string_to_sign.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-
-    url = f"https://api.weatherlink.com{url_path}?api-key={WL_API_KEY}&t={t}&api-signature={signature}"
-
+    url = f"https://api.weather.com/v2/pws/observations/current?stationId={station_id}&format=json&units=m&apiKey={WU_API_KEY}"
     req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=8, context=ctx) as response:
-      resultado = json.loads(response.read().decode("utf-8"))
+      data = json.loads(response.read().decode("utf-8"))
+      observations = data.get("observations", [])
+      if observations:
+        obs = observations[0]
+        metric = obs.get("metric", {})
 
-      temp_c, hum, viento = "--", "--", "--"
+        temp = metric.get("temp")
+        hum = obs.get("humidity")
+        wind_speed_kmh = metric.get("windSpeed")
 
-      for sensor in resultado.get("sensors", []):
-        for dat in sensor.get("data", []):
-          for key, val in dat.items():
-            if val is not None:
-              k_lower = key.lower()
-              if (
-                  any(
-                      k in k_lower
-                      for k in [
-                          "temp",
-                          "out_temp",
-                          "temp_out",
-                          "temp_air",
-                          "the_temp",
-                      ]
-                  )
-                  and temp_c == "--"
-              ):
-                try:
-                  val_f = float(val)
-                  temp_c = (
-                      round((val_f - 32) * 5 / 9, 1)
-                      if val_f > 50
-                      else round(val_f, 1)
-                  )
-                except:
-                  pass
-              elif (
-                  any(
-                      k in k_lower
-                      for k in ["hum", "out_hum", "humidity", "moisture"]
-                  )
-                  and hum == "--"
-              ):
-                try:
-                  hum = round(float(val), 1)
-                except:
-                  pass
-              elif (
-                  any(
-                      k in k_lower
-                      for k in [
-                          "wind_speed",
-                          "wind_last",
-                          "wind_speed_last",
-                          "wind_avg",
-                      ]
-                  )
-                  and viento == "--"
-              ):
-                try:
-                  viento = round(float(val), 1)
-                except:
-                  pass
+        temp_str = f"{round(float(temp), 1)}°C" if temp is not None else "--"
+        hum_str = f"{round(float(hum), 1)}%" if hum is not None else "--"
 
-      if temp_c != "--" or hum != "--" or viento != "--":
-        return (
-            True,
-            f"{temp_c}°C" if temp_c != "--" else "--",
-            f"{hum}%" if hum != "--" else "--",
-            f"{viento} kt" if viento != "--" else "--",
-        )
-      else:
-        return False, "--", "--", "--"
+        # Convertir velocidad de viento de km/h a nudos (kt) dividiendo por 1.852
+        if wind_speed_kmh is not None:
+          viento_kt = round(float(wind_speed_kmh) / 1.852, 1)
+          viento_str = f"{viento_kt} kt"
+        else:
+          viento_str = "--"
 
+        return True, temp_str, hum_str, viento_str
+
+      return False, "--", "--", "--"
   except Exception as e:
-    print(f"Excepción WeatherLink [{nombre_faro}]: {e}")
+    print(f"Excepción WU PWS [{nombre_faro}]: {e}")
     return False, "--", "--", "--"
 
 
@@ -319,7 +259,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
                 <div class="weather-info">
                     <span>🌡️ {faro['temp']}</span> <span>💧 {faro['hum']}</span> <span>🌬️ {faro['viento']}</span>
                 </div>
-                <div class="time">Fuente: WeatherLink API v2</div>
+                <div class="time">Fuente: Weather Underground API</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
@@ -407,10 +347,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print(
-      "✓ Archivo 'index.html' generado exitosamente sin líneas y adaptado a"
-      " celulares."
-  )
+  print("✓ Archivo 'index.html' actualizado con la API de Weather Underground.")
 
 
 def ejecutar_monitoreo():
@@ -445,12 +382,12 @@ def ejecutar_monitoreo():
     })
 
   for faro in ESTACIONES_FAROS:
-    ok, temp, hum, viento = consultar_weatherlink_v2(
+    ok, temp, hum, viento = consultar_wunderground_pws(
         faro["station_id"], faro["nombre"]
     )
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (WL): Temp {temp}, Hum {hum}, Viento"
+        f"[{simbolo}] {faro['nombre']} (WU): Temp {temp}, Hum {hum}, Viento"
         f" {viento}"
     )
     if not ok:
@@ -480,8 +417,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Eliminación de líneas divisorias y mejora de diseño responsive"
-                " para móviles [skip ci]"
+                "Conexión de faros migrada a Weather Underground PWS API"
+                " [skip ci]"
             ),
         ],
         check=True,
