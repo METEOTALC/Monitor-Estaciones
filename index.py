@@ -125,25 +125,25 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # Temperatura
+      # Temperatura: busca palabras clave seguidas de un número decimal/entero opcionalmente negativo
       temp_match = re.search(
-          r"(?:Temperatura|Temp)[^\d\-]*([\-]?\d+[\.,]?\d*)",
+          r"(?:Temperatura|Temp\.?)[^\d\-]*([\-]?\d+[\.,]?\d*)",
           texto_plano,
           re.IGNORECASE,
       )
       if temp_match:
         temp = f"{temp_match.group(1).replace(',', '.')}°C"
 
-      # Humedad
+      # Humedad: busca palabras clave de humedad
       hum_match = re.search(
           r"(?:Humedad|HR)[^\d]*(\d+[\.,]?\d*)", texto_plano, re.IGNORECASE
       )
       if hum_match:
         hum = f"{hum_match.group(1)}%"
 
-      # Viento (Búsqueda más específica para evitar valores genéricos)
+      # Viento: Búsqueda flexible que captura valores seguidos o cercanos a Viento/Velocidad/Intensidad
       viento_match = re.search(
-          r"(?:Viento|Velocidad|Vel\.?)[^\d]*(\d+[\.,]?\d*)",
+          r"(?:Viento|Velocidad|Vel\.?|Intensidad)[^\d]{0,15}(\d+[\.,]?\d*)",
           texto_plano,
           re.IGNORECASE,
       )
@@ -410,7 +410,10 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ Archivo 'index.html' generado exitosamente con unidades en kt.")
+  print(
+      "✓ Archivo 'index.html' generado exitosamente con la extracción corregida"
+      " de viento en kt."
+  )
 
 
 def ejecutar_monitoreo():
@@ -480,7 +483,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización de unidades a kt y mejora de lectura de viento"
+                "Corrección en expresión regular de viento para Directemar"
                 " [skip ci]"
             ),
         ],
