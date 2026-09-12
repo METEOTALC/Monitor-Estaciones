@@ -232,7 +232,6 @@ def consultar_directemar(est):
 
 
 def consultar_wunderground_web(est):
-  # Método robusto basado en descarga directa del panel web oficial y lectura de metadatos incrustados
   for intento in range(3):
     try:
       req = urllib.request.Request(est["url"], headers=HEADERS)
@@ -241,8 +240,6 @@ def consultar_wunderground_web(est):
 
         temp, hum, viento, ultimo = "--", "--", "--", "Reciente (Web)"
 
-        # Buscar bloques JSON incrustados en la página (Angular / React state)
-        # Weather Underground almacena el estado actual en variables de script con formato JSON
         temp_match = re.search(
             r'"temp"\s*:\s*\{\s*"metric"\s*:\s*([0-9\.]+)', html
         )
@@ -260,34 +257,26 @@ def consultar_wunderground_web(est):
           val = float(hum_match.group(1))
           hum = f"{val:.1f}%"
 
-        wind_match = re.search(
-            r'"windSpeed"\s*:\s*([0-9\.]+)', html
-        )
+        wind_match = re.search(r'"windSpeed"\s*:\s*([0-9\.]+)', html)
         if not wind_match:
           wind_match = re.search(r'"wind"\s*:\s*\{\s*"speed"\s*:\s*([0-9\.]+)', html)
 
         if wind_match:
           v_kmh = float(wind_match.group(1))
-          # Convertir km/h a nudos
           v_kt = v_kmh / 1.852
           viento = f"{v_kt:.1f} kt"
 
-        # Buscar fecha u hora del reporte si existe en el HTML
         time_match = re.search(r'"obsTimeLocal"\s*:\s*"([^"]+)"', html)
         if time_match:
           ultimo = time_match.group(1)
 
-        # Si logramos extraer al menos la temperatura o humedad, consideramos la estación operativa
         if temp != "--" or hum != "--":
           return True, "OPERATIVA", temp, hum, viento, ultimo
 
     except Exception as e:
-      print(
-          f"Intento {intento+1} fallido para {est['nombre']} con URL web: {e}"
-      )
+      print(f"Intento {intento+1} fallido para {est['nombre']}: {e}")
       time.sleep(2)
 
-  # Plan B de respaldo: Consulta alternativa a la API pública abierta de wunderground widgets
   try:
     alt_url = (
         f"https://api.weather.com/v2/pws/observations/current"
@@ -349,13 +338,18 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     cards_html += f"""
         <a href="{r['url']}" target="_blank" class="card-link">
             <div class="card {clase}">
-                <strong>{r['nombre']}</strong>
-                <div class="status">{icono} {r['estado']}</div>
-                <div class="weather-info">
-                    <span>🌡️ {r['temp']}</span> <span>💧 {r['hum']}</span> <span>🌬️ {r['viento']}</span>
+                <div class="card-header">
+                    <span class="station-name">{r['nombre']}</span>
+                    <span class="status-badge">{icono}</span>
                 </div>
-                <div class="time">Último reporte: {r['ultimo']}</div>
-                <div class="click-text">Clic para abrir ↗</div>
+                <div class="weather-main">
+                    <span class="temp-val">🌡️ {r['temp']}</span>
+                </div>
+                <div class="weather-info">
+                    <span>💧 {r['hum']}</span> <span>🌬️ {r['viento']}</span>
+                </div>
+                <div class="time">Reporte: {r['ultimo']}</div>
+                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         """
@@ -366,13 +360,18 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     cards_html += f"""
         <a href="{faro['url']}" target="_blank" class="card-link">
             <div class="card {clase}">
-                <strong>{faro['nombre']}</strong>
-                <div class="status">{icono} {faro['estado']}</div>
-                <div class="weather-info">
-                    <span>🌡️ {faro['temp']}</span> <span>💧 {faro['hum']}</span> <span>🌬️ {faro['viento']}</span>
+                <div class="card-header">
+                    <span class="station-name">{faro['nombre']}</span>
+                    <span class="status-badge">{icono}</span>
                 </div>
-                <div class="time">Último reporte: {faro['ultimo']}</div>
-                <div class="click-text">Clic para abrir ↗</div>
+                <div class="weather-main">
+                    <span class="temp-val">🌡️ {faro['temp']}</span>
+                </div>
+                <div class="weather-info">
+                    <span>💧 {faro['hum']}</span> <span>🌬️ {faro['viento']}</span>
+                </div>
+                <div class="time">Reporte: {faro['ultimo']}</div>
+                <div class="click-text">Ver estación ↗</div>
             </div>
         </a>
         """
@@ -395,28 +394,49 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     <title>Monitor de Estaciones Automáticas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {{ font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 10px; margin: 0; }}
-        h1 {{ text-align: center; color: #1a252f; margin-bottom: 0; font-size: 20px; line-height: 1.1; }}
-        .subtitle-line2 {{ text-align: center; color: #1a252f; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
-        .subtitle {{ text-align: center; color: #7f8c8d; margin-bottom: 8px; font-size: 12px; }}
-        .summary {{ text-align: center; font-weight: bold; margin-bottom: 12px; color: #2c3e50; font-size: 14px; }}
-        @keyframes parpadeo {{ 0% {{ background-color: #f4f6f9; }} 50% {{ background-color: #fadbd8; }} 100% {{ background-color: #f4f6f9; }} }}
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 15px; margin: 0; }}
+        h1 {{ text-align: center; color: #f1f5f9; margin-bottom: 0; font-size: 22px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }}
+        .subtitle-line2 {{ text-align: center; color: #38bdf8; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
+        .subtitle {{ text-align: center; color: #94a3b8; margin-bottom: 12px; font-size: 12px; }}
+        .summary {{ text-align: center; font-weight: bold; margin-bottom: 15px; color: #e2e8f0; font-size: 14px; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 20px; max-width: 300px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }}
+        @keyframes parpadeo {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.6; }} 100% {{ opacity: 1; }} }}
         body.alerta-activa {{ animation: parpadeo 1.5s infinite; }}
-        .banner-alerta {{ background-color: #e74c3c; color: white; text-align: center; font-weight: bold; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }}
-        #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 15px auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }}
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; max-width: 1200px; margin: 0 auto; }}
+        .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }}
+        #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }}
         .card-link {{ text-decoration: none; color: inherit; display: block; }}
-        .card {{ border-radius: 8px; padding: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 6px solid #ccc; transition: transform 0.2s; }}
-        .card:hover {{ transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }}
-        .card.ok {{ border-left-color: #2ecc71; }}
-        .card.error {{ border-left-color: #e74c3c; }}
-        .status {{ font-weight: bold; margin-top: 3px; font-size: 12px; }}
-        .ok .status {{ color: #27ae60; }}
-        .error .status {{ color: #c0392b; }}
-        .weather-info {{ font-size: 0.9em; color: #34495e; margin-top: 5px; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px; display: flex; justify-content: space-around; }}
-        .time {{ font-size: 0.75em; color: #7f8c8d; margin-top: 4px; }}
-        .click-text {{ font-size: 0.65em; color: #95a5a6; margin-top: 4px; font-style: italic; text-align: right; }}
-        .footer-dev {{ background: linear-gradient(to bottom, #1f618d, #154360); color: white; text-align: center; font-weight: 500; padding: 8px 20px; border-radius: 20px; margin: 25px auto 10px auto; display: table; font-size: 13px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }}
+        
+        /* NUEVO DISEÑO DE TARJETAS MODERNAS (ESTILO WEATHER APP) */
+        .card {{ 
+            border-radius: 16px; 
+            padding: 16px; 
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }}
+        .card:hover {{ 
+            transform: translateY(-4px); 
+            box-shadow: 0 20px 30px -10px rgba(56, 189, 248, 0.2); 
+            border-color: rgba(56, 189, 248, 0.4);
+        }}
+        .card.ok {{ border-left: 5px solid #22c55e; }}
+        .card.error {{ border-left: 5px solid #ef4444; }}
+        
+        .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }}
+        .station-name {{ font-weight: bold; font-size: 15px; color: #f8fafc; line-height: 1.2; }}
+        .status-badge {{ font-size: 12px; }}
+        
+        .weather-main {{ margin: 10px 0; }}
+        .temp-val {{ font-size: 26px; font-weight: 700; color: #38bdf8; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }}
+        
+        .weather-info {{ font-size: 0.95em; color: #cbd5e1; margin-top: 8px; background: rgba(255, 255, 255, 0.03); padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; font-weight: 600; border: 1px solid rgba(255,255,255,0.04); }}
+        .time {{ font-size: 0.75em; color: #94a3b8; margin-top: 8px; }}
+        .click-text {{ font-size: 0.7em; color: #38bdf8; margin-top: 4px; font-style: italic; text-align: right; opacity: 0.8; }}
+        
+        .footer-dev {{ background: linear-gradient(135deg, #1e40af, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4); border: 1px solid rgba(255,255,255,0.1); }}
     </style>
 </head>
 <body class="{alerta_class}">
@@ -445,7 +465,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado.")
+  print("✓ index.html actualizado con diseño moderno tipo app de clima.")
 
 
 def ejecutar_monitoreo():
@@ -515,8 +535,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección robusta de extracción para faros de Weather"
-                " Underground [skip ci]"
+                "Actualización a diseño de tarjetas moderno estilo app de"
+                " clima [skip ci]"
             ),
         ],
         capture_output=True,
