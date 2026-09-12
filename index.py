@@ -175,12 +175,25 @@ def consultar_directemar(est):
             hum = f"{val:.1f}%"
             break
 
-      # 3. Viento Promedio (Busca específicamente Wind Speed (avg) o Viento Promedio)
+      # 3. Viento Promedio (Busca estrictamente Wind Speed (avg))
       viento_match = re.search(
-          r"(?:Wind\s*Speed\s*\(avg\)|Wind\s*Speed|Viento)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)",
+          r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
           texto_plano,
           re.IGNORECASE,
       )
+      if not viento_match:
+        viento_match = re.search(
+            r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
+            texto_plano,
+            re.IGNORECASE,
+        )
+      if not viento_match:
+        viento_match = re.search(
+            r"Viento[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
+            texto_plano,
+            re.IGNORECASE,
+        )
+
       if viento_match:
         val = convertir_numero(viento_match.group(1))
         if val is not None:
@@ -489,7 +502,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Extracción correcta del Wind Speed (avg) en estaciones Directemar [skip ci]"
+                "Extracción precisa del Wind Speed (avg) evitando rachas [skip ci]"
             ),
         ],
         capture_output=True,
