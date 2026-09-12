@@ -137,18 +137,16 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # Temperatura restaurada y ultra robusta (captura Temp/Temperatura con cualquier variante de grado o espacio)
+      # Temperatura con la expresión original exacta que funcionaba
       temp_match = re.search(
-          r"(?:Temperatura|Temp\.?)\s*[:|]?\s*([\-]?\d+(?:[.,]\d+)?)",
-          texto_plano,
-          re.IGNORECASE,
+          r"([\-]?\d+(?:[.,]\d+)?)\s*°\s*C", texto_plano, re.IGNORECASE
       )
       if temp_match:
         val = convertir_numero(temp_match.group(1))
         if val is not None:
           temp = f"{val:.1f}°C"
 
-      # Humedad (Exactamente la que funciona a la perfección)
+      # Humedad (Funciona perfecto)
       hum_match = re.search(
           r"(?:Humidity|Humedad)\s*(?:Relativa)?\s*\|?\s*(\d+(?:[.,]\d+)?)\s*%",
           texto_plano,
@@ -159,10 +157,17 @@ def consultar_directemar(est):
         if val is not None:
           hum = f"{val:.1f}%"
 
-      # Viento promedio (Exactamente el que funciona a la perfección)
+      # Viento promedio original (restringido al primer valor de nudos para evitar rachas)
       viento_match = re.search(
-          r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt)", texto_plano, re.IGNORECASE
+          r"(?:Viento|Wind)\s*(?:Dir[^\d]*)?\s*(\d+(?:[.,]\d+)?)\s*(?:kts|kt)",
+          texto_plano,
+          re.IGNORECASE,
       )
+      if not viento_match:
+        viento_match = re.search(
+            r"(\d+(?:[.,]\d+)?)\s*(?:kts|kt)", texto_plano, re.IGNORECASE
+        )
+
       if viento_match:
         val = convertir_numero(viento_match.group(1))
         if val is not None:
@@ -471,8 +476,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Restauración de temperatura con humedad y viento estables"
-                " [skip ci]"
+                "Restaurar lectura original exacta de temperatura y viento"
+                " promedio [skip ci]"
             ),
         ],
         capture_output=True,
