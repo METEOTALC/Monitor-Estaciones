@@ -138,18 +138,12 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
+      # Búsqueda estricta para capturar exactamente el valor de Temperature/Temperatura
       temp_match = re.search(
-          r"(?:Temperatura|Temperature|Temp)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:[°º]\s*[cC]|C\b)?",
+          r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
           texto_plano,
           re.IGNORECASE,
       )
-      if not temp_match:
-        temp_match = re.search(
-            r"([\-]?\d+(?:[.,]\d+)?)\s*[°º]\s*[cC]",
-            texto_plano,
-            re.IGNORECASE,
-        )
-
       if temp_match:
         val = convertir_numero(temp_match.group(1))
         if val is not None:
@@ -406,7 +400,6 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }}
         .card-link {{ text-decoration: none; color: inherit; display: block; }}
         
-        /* NUEVO DISEÑO DE TARJETAS MODERNAS (ESTILO WEATHER APP) */
         .card {{ 
             border-radius: 16px; 
             padding: 16px; 
@@ -465,7 +458,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado con diseño moderno tipo app de clima.")
+  print("✓ index.html actualizado correctamente.")
 
 
 def ejecutar_monitoreo():
@@ -535,8 +528,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización a diseño de tarjetas moderno estilo app de"
-                " clima [skip ci]"
+                "Corrección de lectura de temperatura y diseño de tarjetas"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
