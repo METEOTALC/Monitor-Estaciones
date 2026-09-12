@@ -31,12 +31,12 @@
         .footer-dev { background: linear-gradient(to bottom, #1f618d, #154360); color: white; text-align: center; font-weight: 500; padding: 8px 20px; border-radius: 20px; margin: 25px auto 10px auto; display: table; font-size: 13px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
     </style>
 </head>
-<body class="alerta-activa">
+<body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 12-09-2026 13:45:23 (Tolerancia: 12 min)</div>
-    <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
-    <div class="summary">Estaciones Operativas: 8 de 10</div>
+    <div class="subtitle">Última verificación: 12-09-2026 13:47:49 (Tolerancia: 12 min)</div>
+    
+    <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
     <div class="grid">
         
@@ -137,25 +137,25 @@
         </a>
         
         <a href="https://www.wunderground.com/dashboard/pws/ITALCA20" target="_blank" class="card-link">
-            <div class="card error">
+            <div class="card ok">
                 <strong>Faro Isla Quiriquina</strong>
-                <div class="status">🔴 SIN CONEXIÓN</div>
+                <div class="status">🟢 OPERATIVA</div>
                 <div class="weather-info">
-                    <span>🌡️ --</span> <span>💧 --</span> <span>🌬️ --</span>
+                    <span>🌡️ 17.0°C</span> <span>💧 54.0%</span> <span>🌬️ 5.9 kt</span>
                 </div>
-                <div class="time">Último reporte: Error de red</div>
+                <div class="time">Último reporte: Reciente (API Alt)</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
         
         <a href="https://www.wunderground.com/dashboard/pws/IHUALP1" target="_blank" class="card-link">
-            <div class="card error">
+            <div class="card ok">
                 <strong>Faro Punta Hualpén</strong>
-                <div class="status">🔴 SIN CONEXIÓN</div>
+                <div class="status">🟢 OPERATIVA</div>
                 <div class="weather-info">
-                    <span>🌡️ --</span> <span>💧 --</span> <span>🌬️ --</span>
+                    <span>🌡️ 17.0°C</span> <span>💧 40.0%</span> <span>🌬️ 4.3 kt</span>
                 </div>
-                <div class="time">Último reporte: Error de red</div>
+                <div class="time">Último reporte: Reciente (API Alt)</div>
                 <div class="click-text">Clic para abrir ↗</div>
             </div>
         </a>
@@ -204,12 +204,12 @@
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral-1960</b><br>Estado: OPERATIVA<br>Temp: 13.4°C | Hum: 41.0% | Viento: 15.2 kt<br>Reporte: 12-09-2026 13:40:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.625, -73.033], {
-            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: SIN CONEXIÓN<br>Temp: 13.4°C | Hum: 41.0% | Viento: 15.2 kt<br>Reporte: 12-09-2026 13:40:01<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 17.0°C | Hum: 54.0% | Viento: 5.9 kt<br>Reporte: Reciente (API Alt)<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
-            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: SIN CONEXIÓN<br>Temp: 13.4°C | Hum: 41.0% | Viento: 15.2 kt<br>Reporte: 12-09-2026 13:40:01<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 17.0°C | Hum: 40.0% | Viento: 4.3 kt<br>Reporte: Reciente (API Alt)<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
     </script>
 </body>
