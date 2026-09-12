@@ -233,53 +233,47 @@ def consultar_wunderground_web(est):
 
         temp, hum, viento, ultimo = "--", "--", "--", "Reciente (Web)"
 
-        # 1. Búsqueda prioritaria de temperatura con decimales en el HTML renderizado (tarjetas de resumen/bloques de texto)
+        # Extracción prioritaria apuntando al bloque de temperatura actual de la tarjeta principal (ej. 10,8 °C)
         temp_match = re.search(
-            r"(?:dewpoint|temp|temperature)[^>]*?([0-9]+\.[0-9]+)\s*°?\s*C",
+            r'class=["\'][^"\']*metric-val[^"\']*["\'][^>]*>([0-9]+[.,][0-9]+)',
             html,
-            re.IGNORECASE,
         )
         if not temp_match:
-          # Buscar etiquetas comunes con decimales en clases de temperatura actual de la interfaz de WU
           temp_match = re.search(
-              r'class=["\'][^"\']*metric-val[^"\']*["\'][^>]*>([0-9]+\.[0-9]+)',
+              r"(?:current-temp|temperature|temp)[^>]*?([0-9]+[.,][0-9]+)\s*°?\s*C",
               html,
+              re.IGNORECASE,
           )
         if not temp_match:
-          # Buscar en bloques JSON de temperatura métrica con decimal explícito
           temp_match = re.search(
-              r'"metric"\s*:\s*\{\s*"temp"\s*:\s*([0-9]+\.[0-9]+)', html
+              r'"metric"\s*:\s*\{\s*"temp"\s*:\s*([0-9]+[.,]?[0-9]*)', html
           )
 
         if temp_match:
-          val = float(temp_match.group(1))
-          temp = f"{val:.1f}°C"
-        else:
-          # Respaldo general por si solo viene en entero dentro del JSON
-          temp_match_int = re.search(
-              r'"temp"\s*:\s*\{\s*"metric"\s*:\s*([0-9\.]+)', html
-          )
-          if not temp_match_int:
-            temp_match_int = re.search(r'"temp"\s*:\s*([0-9\.]+)', html)
-          if temp_match_int:
-            val = float(temp_match_int.group(1))
+          val = convertir_numero(temp_match.group(1))
+          if val is not None:
             temp = f"{val:.1f}°C"
 
         hum_match = re.search(
             r'"humidity"\s*:\s*([0-9]+(?:\.[0-9]+)?)', html
         )
+        if not hum_match:
+          hum_match = re.search(r"Hum(?:edity)?.*?([0-9]+[.,][0-9]*)%", html, re.IGNORECASE)
         if hum_match:
-          val = float(hum_match.group(1))
-          hum = f"{val:.1f}%"
+          val = convertir_numero(hum_match.group(1))
+          if val is not None:
+            hum = f"{val:.1f}%"
 
         wind_match = re.search(r'"windSpeed"\s*:\s*([0-9\.]+)', html)
         if not wind_match:
-          wind_match = re.search(r'"wind"\s*:\s*\{\s*"speed"\s*:\s*([0-9\.]+)', html)
+          wind_match = re.search(r'wind-speed[^>]*?>([0-9]+[.,][0-9]*)', html, re.IGNORECASE)
 
         if wind_match:
-          v_kmh = float(wind_match.group(1))
-          v_kt = v_kmh / 1.852
-          viento = f"{v_kt:.1f} kt"
+          v_val = convertir_numero(wind_match.group(1))
+          if v_val is not None:
+            # Si viene en km/h como en la interfaz web de la captura, convertimos a nudos (/ 1.852)
+            v_kt = v_val / 1.852
+            viento = f"{v_kt:.1f} kt"
 
         time_match = re.search(r'"obsTimeLocal"\s*:\s*"([^"]+)"', html)
         if time_match:
@@ -344,7 +338,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     markers_js += f"""
         L.circleMarker([{faro['lat']}, {faro['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {faro['temp']} | Hum: {faro['hum']} | Viento: {faro['viento']}<br>Reporte: {faro['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {r['temp'] if 'temp' in r else faro['temp']} | Hum: {faro['hum']} | Viento: {faro['viento']}<br>Reporte: {faro['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
@@ -425,7 +419,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         .card {{ 
             border-radius: 16px; 
             padding: 16px; 
-            background: linear-gradient(145deg, #1e293b 0%, #091122 60%, #030712 100%); 
+            background: linear-gradient(135deg, #1b3152 0%, #152238 50%, #222b3b 100%); 
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(256, 256, 256, 0.1); 
             border: 1px solid rgba(56, 189, 248, 0.18); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -436,7 +430,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
             transform: translateY(-4px); 
             box-shadow: 0 20px 35px -10px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(256, 256, 256, 0.2); 
             border-color: rgba(56, 189, 248, 0.6);
-            background: linear-gradient(145deg, #283854 0%, #0d172e 60%, #060a17 100%);
+            background: linear-gradient(135deg, #25426e 0%, #1a2a47 50%, #2b364a 100%);
         }}
         .card.ok {{ border-left: 5px solid #22c55e; }}
         .card.error {{ border-left: 5px solid #ef4444; }}
@@ -551,8 +545,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Extracción de decimales detallados para faros y mejora de"
-                " degradé [skip ci]"
+                "Degradé sutil de tarjetas y extracción exacta de temperatura"
+                " actual de faros [skip ci]"
             ),
         ],
         capture_output=True,
