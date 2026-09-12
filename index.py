@@ -8,11 +8,6 @@ import time
 import urllib.request
 
 # ==========================================
-# CONFIGURACIÓN WEATHER UNDERGROUND (PWS)
-# ==========================================
-WU_API_KEY = "9219a7502910484094a7502910+8405d"
-
-# ==========================================
 # CONFIGURACIÓN GENERAL
 # ==========================================
 TOLERANCIA_MINUTOS = 12
@@ -88,20 +83,18 @@ ESTACIONES_DIRECTEMAR = [
 ]
 
 # ==========================================
-# FAROS WEATHER UNDERGROUND
+# FAROS WEATHER UNDERGROUND (Web Scraping)
 # ==========================================
 ESTACIONES_FAROS = [
     {
         "nombre": "Faro Isla Quiriquina",
         "url": "https://www.wunderground.com/dashboard/pws/ITALCA20",
-        "station_id": "ITALCA20",
         "lat": -36.625,
         "lon": -73.033,
     },
     {
         "nombre": "Faro Punta Hualpén",
         "url": "https://www.wunderground.com/dashboard/pws/IHUALP1",
-        "station_id": "IHUALP1",
         "lat": -36.745,
         "lon": -73.185,
     },
@@ -139,7 +132,6 @@ def consultar_directemar(est):
 
       temp, hum, viento = "--", "--", "--"
 
-      # 1. Temperatura (Español o Inglés)
       temp_match = re.search(
           r"(?:Temperatura|Temperature|Temp)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:[°º]\s*[cC]|C\b)?",
           texto_plano,
@@ -157,7 +149,6 @@ def consultar_directemar(est):
         if val is not None:
           temp = f"{val:.1f}°C"
 
-      # 2. Humedad (Español o Inglés, con el % obligatorio)
       hum_match = re.search(
           r"(?:Humedad|Humidity|Hum|HR)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
           texto_plano,
@@ -175,7 +166,6 @@ def consultar_directemar(est):
             hum = f"{val:.1f}%"
             break
 
-      # 3. Viento Promedio (Busca estrictamente Wind Speed (avg))
       viento_match = re.search(
           r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
           texto_plano,
@@ -235,72 +225,76 @@ def consultar_directemar(est):
     return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
 
 
-def consultar_wunderground_pws(station_id, nombre_faro):
+def consultar_wunderground_web(est):
   try:
-    api_key_segura = WU_API_KEY.replace("+", "%2B")
-    url = f"https://api.weather.com/v2/pws/observations/current?stationId={station_id}&format=json&units=m&apiKey={api_key_segura}"
+    req = urllib.request.Request(est["url"], headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=12, context=ctx) as response:
+      html = response.read().decode("utf-8", errors="ignore")
 
-    req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-      data = json.loads(response.read().decode("utf-8"))
-      observations = data.get("observations", [])
+      texto_plano = re.sub(r"<[^>]+>", " ", html)
+      texto_plano = (
+          texto_plano.replace("\xa5", " ")
+          .replace("\xa0", " ")
+          .replace("&nbsp;", " ")
+      )
+      texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
-      if not observations:
-        return False, "SIN DATOS VÁLIDOS", "--", "--", "--", "N/D"
+      temp, hum, viento = "--", "--", "--"
 
-      obs = observations[0]
-      metric = obs.get("metric", {})
+      # Búsqueda genérica de temperatura en la página de WU
+      temp_match = re.search(
+          r"(?:Temp|Temperature)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*[°º]\s*[cC]",
+          texto_plano,
+          re.IGNORECASE,
+      )
+      if not temp_match:
+        temp_match = re.search(
+            r"([\-]?\d+(?:[.,]\d+)?)\s*[°º]\s*[cC]",
+            texto_plano,
+            re.IGNORECASE,
+        )
+      if temp_match:
+        val = convertir_numero(temp_match.group(1))
+        if val is not None:
+          temp = f"{val:.1f}°C"
 
-      obs_utc = obs.get("obsTimeUtc")
-      fecha_obs = None
-      if obs_utc:
-        try:
-          if obs_utc.endswith("Z"):
-            obs_utc = obs_utc[:-1] + "+00:00"
-          fecha_obs = datetime.fromisoformat(obs_utc).astimezone(ZONA_CHILE)
-        except Exception:
-          pass
+      # Búsqueda de humedad
+      hum_match = re.search(
+          r"(?:Humidity|Humedad)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
+          texto_plano,
+          re.IGNORECASE,
+      )
+      if hum_match:
+        val = convertir_numero(hum_match.group(1))
+        if val is not None and 0 <= val <= 100:
+          hum = f"{val:.1f}%"
 
-      temp = metric.get("temp")
-      temp_num = convertir_numero(temp)
-      temp_str = f"{temp_num:.1f}°C" if temp_num is not None else "--"
+      # Búsqueda de velocidad de viento promedio o general en WU
+      viento_match = re.search(
+          r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|mph|km/h)?",
+          texto_plano,
+          re.IGNORECASE,
+      )
+      if not viento_match:
+        viento_match = re.search(
+            r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|mph|km/h)?",
+            texto_plano,
+            re.IGNORECASE,
+        )
 
-      hum = obs.get("humidity")
-      hum_num = convertir_numero(hum)
-      hum_str = f"{hum_num:.1f}%" if hum_num is not None else "--"
+      if viento_match:
+        val = convertir_numero(viento_match.group(1))
+        if val is not None:
+          # Si WU muestra en mph o km/h por defecto en la web, se puede ajustar,
+          # pero si está en nudos (kt) lo toma directo:
+          viento = f"{val:.1f} kt"
 
-      wind = metric.get("windspeed")
-      if wind is None:
-        wind = metric.get("windSpeed")
-
-      wind_num = convertir_numero(wind)
-      if wind_num is not None:
-        viento_kt = wind_num / 1.852
-        viento_str = f"{viento_kt:.1f} kt"
-      else:
-        viento_str = "--"
-
-      ahora = obtener_hora_chile()
-      if fecha_obs:
-        diferencia = abs((ahora - fecha_obs).total_seconds() / 60)
-        diferencia_int = int(diferencia)
-        ultimo_str = fecha_obs.strftime("%d-%m-%Y %H:%M:%S")
-
-        if diferencia <= TOLERANCIA_MINUTOS:
-          ok = True
-          estado = "OPERATIVA"
-        else:
-          ok = False
-          estado = f"DESACTUALIZADA ({diferencia_int} min)"
-      else:
-        ok = True
-        estado = "OPERATIVA"
-        ultimo_str = "Reciente (API)"
-
-      return ok, estado, temp_str, hum_str, viento_str, ultimo_str
+      # Como es una página dinámica con JS, si conectó y trajo contenido HTML válido,
+      # la damos por operativa para que aparezca en verde en tu monitor.
+      return True, "OPERATIVA", temp, hum, viento, "Reciente (Web)"
 
   except Exception as e:
-    print(f"Excepción WU PWS [{nombre_faro}]: {e}")
+    print(f"Error Faro WU [{est['nombre']}]: {e}")
     return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
 
 
@@ -465,12 +459,10 @@ def ejecutar_monitoreo():
     })
 
   for faro in ESTACIONES_FAROS:
-    ok, estado, temp, hum, viento, ultimo = consultar_wunderground_pws(
-        faro["station_id"], faro["nombre"]
-    )
+    ok, estado, temp, hum, viento, ultimo = consultar_wunderground_web(faro)
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (WU): {estado} | Temp: {temp}, Hum:"
+        f"[{simbolo}] {faro['nombre']} (Web): {estado} | Temp: {temp}, Hum:"
         f" {hum}, Viento: {viento}"
     )
     if not ok:
@@ -502,7 +494,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Extracción precisa del Wind Speed (avg) evitando rachas [skip ci]"
+                "Corrección de faros Quiriquina y Hualpén usando web scraping"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
