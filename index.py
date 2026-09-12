@@ -17,7 +17,8 @@ HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
         " like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    )
+    ),
+    "Accept": "application/json, text/javascript, */*; q=0.01",
 }
 
 ctx = ssl.create_default_context()
@@ -83,17 +84,19 @@ ESTACIONES_DIRECTEMAR = [
 ]
 
 # ==========================================
-# FAROS WEATHER UNDERGROUND (Web Scraping)
+# FAROS WEATHER UNDERGROUND (API Histórica/Tabla)
 # ==========================================
 ESTACIONES_FAROS = [
     {
         "nombre": "Faro Isla Quiriquina",
+        "id": "ITALCA20",
         "url": "https://www.wunderground.com/dashboard/pws/ITALCA20",
         "lat": -36.625,
         "lon": -73.033,
     },
     {
         "nombre": "Faro Punta Hualpén",
+        "id": "IHUALP1",
         "url": "https://www.wunderground.com/dashboard/pws/IHUALP1",
         "lat": -36.745,
         "lon": -73.185,
@@ -225,92 +228,79 @@ def consultar_directemar(est):
     return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
 
 
-def consultar_wunderground_web(est):
+def consultar_wunderground_tabla(est):
   try:
-    req = urllib.request.Request(est["url"], headers=HEADERS)
+    # URL de la API de historial diario de Weather Underground (la misma fuente de la tabla)
+    fecha_hoy = datetime.now().strftime("%Y%m%d")
+    api_url = (
+        f"https://api.weather.com/v2/pws/observations/all/1day"
+        f"?stationId={est['id']}&format=json&units=m&date={fecha_hoy}&apiKey=6532d6454b8aa370768e917665188611"
+    )
+
+    req = urllib.request.Request(api_url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=12, context=ctx) as response:
-      html = response.read().decode("utf-8", errors="ignore")
+      data = json.loads(response.read().decode("utf-8"))
+      observaciones = data.get("observations", [])
 
-      texto_plano = re.sub(r"<[^>]+>", " ", html)
-      texto_plano = (
-          texto_plano.replace("\xa5", " ")
-          .replace("\xa0", " ")
-          .replace("&nbsp;", " ")
-      )
-      texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
+      if not observaciones:
+        raise Exception("No hay registros en la tabla para hoy")
 
-      temp, hum, viento = "--", "--", "--"
+      # Tomamos el último registro de la tabla (el más reciente)
+      obs = observaciones[-1]
+      metric = obs.get("metric", {})
 
-      # 1. Temperatura precisa desde la tarjeta superior (ej. "16.5 °C")
-      temp_match = re.search(
-          r"([\-]?\d+(?:[.,]\d+)?)\s*[°º]\s*([cC])", texto_plano
-      )
-      if temp_match:
-        val = convertir_numero(temp_match.group(1))
-        if val is not None and -10 <= val <= 50:  # Rango lógico de temperatura
-          temp = f"{val:.1f}°C"
+      # Temperatura en °C
+      temp_val = metric.get("tempAvg") or metric.get("temp")
+      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
 
-      # 2. Humedad precisa desde la tarjeta superior (ej. "Humidity 41 %" o "41 %")
-      hum_match = re.search(
-          r"(?:Humidity|Humedad)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
-          texto_plano,
-          re.IGNORECASE,
-      )
-      if not hum_match:
-        # Busca cualquier porcentaje válido que esté cerca de la sección de condiciones
-        for m in re.findall(r"(\d+(?:[.,]\d+)?)\s*%", texto_plano):
-          val = convertir_numero(m)
-          if val is not None and 10 <= val <= 100:
-            hum = f"{val:.1f}%"
-            break
+      # Humedad en %
+      hum_val = obs.get("humidityAvg") or obs.get("humidity")
+      hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
+
+      # Viento (la tabla muestra velocidad en km/h, lo convertimos a nudos: / 1.852)
+      viento_kmh = metric.get("windspeedAvg") or metric.get("windSpeed")
+      if viento_kmh is not None:
+        viento_kt = viento_kmh / 1.852
+        viento = f"{viento_kt:.1f} kt"
       else:
-        val = convertir_numero(hum_match.group(1))
-        if val is not None:
-          hum = f"{val:.1f}%"
+        viento = "--"
 
-      # 3. Viento preciso desde la tarjeta superior (ej. "WIND & GUST 3.2 / 27.4 km/h" o "kts")
-      viento_match = re.search(
-          r"WIND\s*(?:&|AND)\s*GUST\s*([\d\.,]+)\s*/\s*([\d\.,]+)\s*(km/h|mph|kts|kt|knots)?",
-          texto_plano,
-          re.IGNORECASE,
-      )
-      if viento_match:
-        val_viento = convertir_numero(viento_match.group(1))
-        unidad = (viento_match.group(3) or "km/h").lower()
+      # Hora del último registro en la tabla
+      obs_time = obs.get("obsTimeLocal", "Reciente (Tabla)")
 
-        if val_viento is not None:
-          # Convertir a nudos (kt) según la unidad en la que venga en la página
-          if "mph" in unidad:
-            viento_kt = val_viento / 1.15078
-          elif "km" in unidad:
-            viento_kt = val_viento / 1.852
-          else:
-            viento_kt = val_viento  # Ya viene en nudos
-
-          viento = f"{viento_kt:.1f} kt"
-      else:
-        # Búsqueda secundaria de viento en caso de formato alternativo
-        viento_alt = re.search(
-            r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(kts|kt|knots|mph|km/h)?",
-            texto_plano,
-            re.IGNORECASE,
-        )
-        if viento_alt:
-          val_v = convertir_numero(viento_alt.group(1))
-          un_alt = (viento_alt.group(2) or "km/h").lower()
-          if val_v is not None:
-            if "mph" in un_alt:
-              vk = val_v / 1.15078
-            elif "km" in un_alt:
-              vk = val_v / 1.852
-            else:
-              vk = val_v
-            viento = f"{vk:.1f} kt"
-
-      return True, "OPERATIVA", temp, hum, viento, "Reciente (Web)"
+      return True, "OPERATIVA", temp, hum, viento, str(obs_time)
 
   except Exception as e:
-    print(f"Error Faro WU [{est['nombre']}]: {e}")
+    print(f"Error API Tabla WU [{est['nombre']}]: {e}")
+    # Plan de respaldo directo a las observaciones actuales si falla la tabla horaria
+    try:
+      pws_url = (
+          f"https://api.weather.com/v2/pws/observations/current"
+          f"?stationId={est['id']}&format=json&units=m&apiKey=6532d6454b8aa370768e917665188611"
+      )
+      req = urllib.request.Request(pws_url, headers=HEADERS)
+      with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
+        data = json.loads(response.read().decode("utf-8"))
+        obs = data["observations"][0]
+        metric = obs["metric"]
+
+        temp_val = metric.get("temp")
+        temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
+
+        hum_val = obs.get("humidity")
+        hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
+
+        viento_kmh = metric.get("windSpeed")
+        if viento_kmh is not None:
+          viento_kt = viento_kmh / 1.852
+          viento = f"{viento_kt:.1f} kt"
+        else:
+          viento = "--"
+
+        return True, "OPERATIVA", temp, hum, viento, "Reciente (Actual)"
+    except Exception as inner_e:
+      print(f"Error Plan Respaldo WU [{est['nombre']}]: {inner_e}")
+
     return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
 
 
@@ -334,7 +324,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
     markers_js += f"""
         L.circleMarker([{faro['lat']}, {faro['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {faro['temp']} | Hum: {faro['hum']} | Viento: {faro['viento']}<br>Reporte: {faro['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {r['temp']} | Hum: {r['hum']} | Viento: {r['viento']}<br>Reporte: {r['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
@@ -475,10 +465,10 @@ def ejecutar_monitoreo():
     })
 
   for faro in ESTACIONES_FAROS:
-    ok, estado, temp, hum, viento, ultimo = consultar_wunderground_web(faro)
+    ok, estado, temp, hum, viento, ultimo = consultar_wunderground_tabla(faro)
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (Web): {estado} | Temp: {temp}, Hum:"
+        f"[{simbolo}] {faro['nombre']} (Tabla): {estado} | Temp: {temp}, Hum:"
         f" {hum}, Viento: {viento}"
     )
     if not ok:
@@ -510,8 +500,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Extracción precisa de temperatura, humedad y viento desde la"
-                " tarjeta superior de WU [skip ci]"
+                "Extracción de datos desde la API de la tabla horaria de Weather"
+                " Underground [skip ci]"
             ),
         ],
         capture_output=True,
