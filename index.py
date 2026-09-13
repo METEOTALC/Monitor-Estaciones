@@ -144,9 +144,9 @@ def consultar_directemar(est):
       texto_plano = (
           texto_plano.replace("\xa5", " ")
           .replace("\xa0", " ")
-          .replace(" ", " ")
-          .replace("°", "°")
-          .replace("°", "°")
+          .replace("&nbsp;", " ")
+          .replace("&deg;", "°")
+          .replace("&#176;", "°")
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
