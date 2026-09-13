@@ -137,11 +137,9 @@ def formatear_direccion(dir_str):
   if not dir_str:
     return ""
   d = dir_str.upper().strip()
-  # Aplicar formato con barra si son de 3 letras repetidas (ej. SSE -> S/SE, SSW -> S/SW, NNW -> N/NW, ESE -> E/SE, etc.)
-  if len(d) == 3 and d[1] == d[2]:
+  # Corregir formato con barra para rumbos compuestos de 3 letras (ej. SSW -> S/SW, NNW -> N/NW, SSE -> S/SE)
+  if len(d) == 3:
     return f"{d[0]}/{d[1:]}"
-  if len(d) == 3 and d[0] == d[1]:
-    return f"{d[:2]}/{d[2]}"
   return d
 
 
@@ -225,7 +223,6 @@ def consultar_directemar(est):
             hum = f"{val:.1f}%"
             break
 
-      # Captura de Wind Bearing (ej: 178° S o directamente la letra cardinal asociada)
       bearing_match = re.search(
           r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
           texto_plano,
@@ -366,7 +363,7 @@ def generar_html(resultados_totales, hay_alerta):
   markers_js = ""
   for r in resultados_totales:
     color = "green" if r["ok"] else "red"
-    dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
+    dir_txt = f" ({r['dir_viento']})" if r['dir_viento'] else ""
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
@@ -378,11 +375,11 @@ def generar_html(resultados_totales, hay_alerta):
     clase = "ok" if r["ok"] else "error"
     icono = "🟢" if r["ok"] else "🔴"
 
-    # Estructura del viento restaurando el ícono 🌬️ si no hay dirección, o mostrando la dirección formateada con el ícono
+    # Mantener siempre el ícono de viento (🌬️) junto a la dirección y velocidad
     if r["dir_viento"]:
       viento_contenido = (
           f'<span style="display: block; font-size: 0.72em; color: #1d4ed8;'
-          f' font-weight: 800; line-height: 1;">{r["dir_viento"]}</span>'
+          f' font-weight: 800; line-height: 1;">🌬️ {r["dir_viento"]}</span>'
           f'<span style="display: block; font-size: 0.84em;'
           f' line-height: 1.1;">{r["viento"]}</span>'
       )
@@ -586,8 +583,8 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Formato de direccion de viento con barra y iconos restaurados"
-            " [skip ci]",
+            "Correccion de formato de direccion de viento (S/SW) e icono"
+            " restaurado [skip ci]",
         ],
         capture_output=True,
         text=True,
