@@ -514,8 +514,8 @@ def generar_html(resultados_totales, hay_alerta):
         /* Celdas normales (Presión, Humedad, Viento) con recuadro */
         .weather-item {{ font-size: 0.82em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 4px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
         
-        /* Temperatura suelta (sin recuadro) y levemente achicada */
-        .weather-item.temp-suelta {{ background: transparent; border: none; box-shadow: none; font-size: 0.9em; font-weight: 700; color: #0f172a; padding: 0; }}
+        /* Temperatura suelta, sin recuadro, más grande y destacada pero en la misma línea */
+        .weather-item.temp-suelta {{ background: transparent; border: none; box-shadow: none; font-size: 1.12em; font-weight: 800; color: #0f172a; padding: 0; }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }}
         .time {{ font-size: 0.7em; color: #334155; }}
@@ -550,7 +550,7 @@ def generar_html(resultados_totales, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado: temperatura sin recuadro y achicada.")
+  print("✓ index.html actualizado: temperatura ampliada sin perder la línea.")
 
 
 def ejecutar_monitoreo():
@@ -632,10 +632,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            (
-                "Remoción de recuadro en temperatura y ajuste de tamaño"
-                " [skip ci]"
-            ),
+            "Aumento de tamaño de temperatura manteniendo alineación [skip ci]",
         ],
         capture_output=True,
         text=True,
