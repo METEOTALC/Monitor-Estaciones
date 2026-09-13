@@ -51,8 +51,8 @@
         /* Celdas normales (Presión, Humedad, Viento) con recuadro */
         .weather-item { font-size: 0.82em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 4px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         
-        /* Temperatura suelta (sin recuadro) y levemente achicada */
-        .weather-item.temp-suelta { background: transparent; border: none; box-shadow: none; font-size: 0.9em; font-weight: 700; color: #0f172a; padding: 0; }
+        /* Temperatura suelta, sin recuadro, más grande y destacada pero en la misma línea */
+        .weather-item.temp-suelta { background: transparent; border: none; box-shadow: none; font-size: 1.12em; font-weight: 800; color: #0f172a; padding: 0; }
         
         .card-footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }
         .time { font-size: 0.7em; color: #334155; }
@@ -64,7 +64,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 13-09-2026 00:50:21 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 13-09-2026 00:53:01 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -121,7 +121,7 @@
                     <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 700; line-height: 1;">SE</span><span style="display: block; font-size: 0.9em; line-height: 1.1;">8.7 kt</span></div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-13 00:50:16</span>
+                    <span class="time">Reporte: 2026-09-13 00:52:56</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -281,7 +281,7 @@
         
         L.circleMarker([-36.625, -73.033], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Pres: 1020.3 hPa | Hum: 46.0% | Viento: 8.7 kt (SE)<br>Reporte: 2026-09-13 00:50:16<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Pres: 1020.3 hPa | Hum: 46.0% | Viento: 8.7 kt (SE)<br>Reporte: 2026-09-13 00:52:56<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
