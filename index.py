@@ -150,7 +150,7 @@ def consultar_directemar(est):
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
-      temp, hum, viento = "--", "--", "--"
+      temp, pres, hum, viento = "--", "--", "--", "--"
 
       temp_match = re.search(
           r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
@@ -161,6 +161,16 @@ def consultar_directemar(est):
         val = convertir_numero(temp_match.group(1))
         if val is not None:
           temp = f"{val:.1f}°C"
+
+      pres_match = re.search(
+          r"(?:Barometer|Presi[oó]n)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:hPa|mb)?",
+          texto_plano,
+          re.IGNORECASE,
+      )
+      if pres_match:
+        val = convertir_numero(pres_match.group(1))
+        if val is not None:
+          pres = f"{val:.1f} hPa"
 
       hum_match = re.search(
           r"(?:Humedad|Humidity|Hum|HR)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
@@ -208,7 +218,7 @@ def consultar_directemar(est):
           re.IGNORECASE,
       )
       if not match_fecha:
-        return False, "SIN DATOS VÁLIDOS", "N/D", temp, hum, viento
+        return False, "SIN DATOS VÁLIDOS", "N/D", temp, pres, hum, viento
 
       fecha_str = match_fecha.group(1)
       formato_fecha = (
@@ -222,20 +232,21 @@ def consultar_directemar(est):
       )
 
       if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
-        return True, "OPERATIVA", fecha_str, temp, hum, viento
+        return True, "OPERATIVA", fecha_str, temp, pres, hum, viento
       else:
         return (
             False,
             f"DESACTUALIZADA ({int(dif_min)} min)",
             fecha_str,
             temp,
+            pres,
             hum,
             viento,
         )
 
   except Exception as e:
     print(f"Error Directemar {est['nombre']}: {e}")
-    return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--"
+    return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "--"
 
 
 def consultar_wunderground_web(est):
@@ -257,6 +268,13 @@ def consultar_wunderground_web(est):
       else:
         temp = "--"
 
+      pres_inHg = imperial.get("pressure")
+      if pres_inHg is not None:
+        pres_hpa = pres_inHg * 33.86389
+        pres = f"{pres_hpa:.1f} hPa"
+      else:
+        pres = "--"
+
       hum_val = obs.get("humidity")
       hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
 
@@ -268,7 +286,7 @@ def consultar_wunderground_web(est):
         viento = "--"
 
       obs_time = obs.get("obsTimeLocal", "Reciente")
-      return True, "OPERATIVA", temp, hum, viento, str(obs_time)
+      return True, "OPERATIVA", temp, pres, hum, viento, str(obs_time)
 
   except Exception as e:
     print(
@@ -290,6 +308,9 @@ def consultar_wunderground_web(est):
       temp_val = metric.get("temp")
       temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
 
+      pres_val = metric.get("pressure")
+      pres = f"{pres_val:.1f} hPa" if pres_val is not None else "--"
+
       hum_val = obs.get("humidity")
       hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
 
@@ -301,11 +322,11 @@ def consultar_wunderground_web(est):
         viento = "--"
 
       obs_time = obs.get("obsTimeLocal", "Reciente")
-      return True, "OPERATIVA", temp, hum, viento, str(obs_time)
+      return True, "OPERATIVA", temp, pres, hum, viento, str(obs_time)
   except Exception as ex:
     print(f"Error total en WU para [{est['nombre']}]: {ex}")
 
-  return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
+  return False, "SIN CONEXIÓN", "--", "--", "--", "--", "Error de red"
 
 
 def generar_html(resultados_totales, hay_alerta):
@@ -318,7 +339,7 @@ def generar_html(resultados_totales, hay_alerta):
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Hum: {r['hum']} | Viento: {r['viento']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Pres: {r['pres']} | Hum: {r['hum']} | Viento: {r['viento']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
@@ -335,6 +356,7 @@ def generar_html(resultados_totales, hay_alerta):
                 <div class="weather-row">
                     <span class="temp-val">🌡️ {r['temp']}</span>
                     <div class="info-group">
+                        <span class="info-item">⏲️ {r['pres']}</span>
                         <span class="info-item">💧 {r['hum']}</span>
                         <span class="info-item">🌬️ {r['viento']}</span>
                     </div>
@@ -374,7 +396,7 @@ def generar_html(resultados_totales, hay_alerta):
         body.alerta-activa {{ animation: parpadeo 1.5s infinite; }}
         .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
         #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }}
         
         /* TARJETAS UNIFORMES Y FLEXIBLES */
         .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
@@ -406,11 +428,11 @@ def generar_html(resultados_totales, hay_alerta):
         .status-badge {{ font-size: 11px; }}
         
         /* FILA DE CLIMA CON BLOQUEO CONTRA SALTOS DE LÍNEA */
-        .weather-row {{ display: flex; justify-content: space-between; align-items: center; margin: 6px 0; flex-wrap: nowrap; gap: 8px; }}
-        .temp-val {{ font-size: 20px; font-weight: 700; color: #0f172a; white-space: nowrap; }}
+        .weather-row {{ display: flex; justify-content: space-between; align-items: center; margin: 6px 0; flex-wrap: nowrap; gap: 6px; }}
+        .temp-val {{ font-size: 19px; font-weight: 700; color: #0f172a; white-space: nowrap; }}
         
-        .info-group {{ display: flex; gap: 6px; flex-shrink: 0; }}
-        .info-item {{ font-size: 0.85em; color: #1e293b; background: rgba(255, 255, 255, 0.6); padding: 2px 6px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.8); white-space: nowrap; }}
+        .info-group {{ display: flex; gap: 5px; flex-shrink: 0; }}
+        .info-item {{ font-size: 0.8em; color: #1e293b; background: rgba(255, 255, 255, 0.6); padding: 2px 5px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.8); white-space: nowrap; }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }}
         .time {{ font-size: 0.7em; color: #334155; }}
@@ -445,7 +467,7 @@ def generar_html(resultados_totales, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado con el orden geográfico solicitado.")
+  print("✓ index.html actualizado con la presión barométrica integrada.")
 
 
 def ejecutar_monitoreo():
@@ -458,11 +480,11 @@ def ejecutar_monitoreo():
 
   # Consultar Directemar
   for est in ESTACIONES_DIRECTEMAR:
-    ok, estado, ultimo, temp, hum, viento = consultar_directemar(est)
+    ok, estado, ultimo, temp, pres, hum, viento = consultar_directemar(est)
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {est['nombre']}: {estado} | Temp: {temp}, Hum: {hum},"
-        f" Viento: {viento}"
+        f"[{simbolo}] {est['nombre']}: {estado} | Temp: {temp}, Pres: {pres},"
+        f" Hum: {hum}, Viento: {viento}"
     )
     if not ok:
       hubo_fallas = True
@@ -475,17 +497,20 @@ def ejecutar_monitoreo():
         "estado": estado,
         "ultimo": ultimo,
         "temp": temp,
+        "pres": pres,
         "hum": hum,
         "viento": viento,
     }
 
   # Consultar Faros (Weather Underground)
   for faro in ESTACIONES_FAROS:
-    ok, estado, temp, hum, viento, ultimo = consultar_wunderground_web(faro)
+    ok, estado, temp, pres, hum, viento, ultimo = consultar_wunderground_web(
+        faro
+    )
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp}, Hum:"
-        f" {hum}, Viento: {viento}"
+        f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp}, Pres:"
+        f" {pres}, Hum: {hum}, Viento: {viento}"
     )
     if not ok:
       hubo_fallas = True
@@ -498,6 +523,7 @@ def ejecutar_monitoreo():
         "estado": estado,
         "ultimo": ultimo,
         "temp": temp,
+        "pres": pres,
         "hum": hum,
         "viento": viento,
     }
@@ -523,8 +549,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Reordenamiento geográfico de estaciones (Quiriquina y Hualpén)"
-                " [skip ci]"
+                "Incorporación de presión barométrica entre temperatura y"
+                " humedad [skip ci]"
             ),
         ],
         capture_output=True,
