@@ -214,14 +214,16 @@ def consultar_directemar(est):
             hum = f"{val:.1f}%"
             break
 
+      # Búsqueda robusta de la dirección del viento en Directemar
       dir_match = re.search(
-          r"Wind\s*Direction[^\w]*([N,S,E,W]{1,3})",
+          r"(?:Wind\s*Direction|Direcci[oó]n\s*Viento|Dir\.?\s*Viento)[^\w]*([N,S,E,W]{1,3})",
           texto_plano,
           re.IGNORECASE,
       )
       if not dir_match:
+        # Búsqueda alternativa si aparece cerca de la velocidad o en texto plano directo
         dir_match = re.search(
-            r"Direcci[oó]n\s*Viento[^\w]*([N,S,E,W]{1,3})",
+            r"\b(N|NNE|NE|ENE|E|ESE|SE|SSE|S|SSW|SW|WSW|W|WNW|NW|NNW)\b(?=\s+\d+\s*(?:kt|kts|nudos))",
             texto_plano,
             re.IGNORECASE,
         )
@@ -421,13 +423,13 @@ def generar_html(resultados_totales, hay_alerta):
     clase = "ok" if r["ok"] else "error"
     icono = "🟢" if r["ok"] else "🔴"
 
-    # Viento compacto (Dirección arriba pequeña, velocidad abajo)
+    # Viento compacto (Dirección arriba pequeña si existe, velocidad abajo)
     viento_contenido = f"🌬️ {r['viento']}"
     if r["dir_viento"]:
       viento_contenido = (
-          f'<span style="display: block; font-size: 0.72em; color: #1d4ed8;'
+          f'<span style="display: block; font-size: 0.70em; color: #1d4ed8;'
           f' font-weight: 700; line-height: 1;">{r["dir_viento"]}</span>'
-          f'<span style="display: block; font-size: 0.9em;'
+          f'<span style="display: block; font-size: 0.86em;'
           f' line-height: 1.1;">{r["viento"]}</span>'
       )
 
@@ -484,7 +486,7 @@ def generar_html(resultados_totales, hay_alerta):
         .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
         .card {{ 
             border-radius: 14px; 
-            padding: 12px 14px; 
+            padding: 10px 12px; 
             background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
             border: 1px solid #94a3b8; 
@@ -509,17 +511,18 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        .weather-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; align-items: center; }}
+        /* Ajuste de distribución horizontal precisa para los 4 bloques */
+        .weather-grid {{ display: grid; grid-template-columns: 1.15fr 0.98fr 0.98fr 0.89fr; gap: 4px; margin: 6px 0; align-items: center; }}
         
-        /* Celdas normales (Presión, Humedad, Viento) con recuadro */
-        .weather-item {{ font-size: 0.82em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 4px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
+        /* Celdas normales (Presión, Humedad, Viento) con recuadro compacto */
+        .weather-item {{ font-size: 0.76em; color: #0f172a; background: rgba(255, 255, 255, 0.75); padding: 4px 2px; border-radius: 6px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
         
-        /* Temperatura suelta, sin recuadro, más grande y destacada pero en la misma línea */
-        .weather-item.temp-suelta {{ background: transparent; border: none; box-shadow: none; font-size: 1.12em; font-weight: 800; color: #0f172a; padding: 0; }}
+        /* Temperatura hacia la orilla izquierda, sin recuadro y con gran protagonismo */
+        .weather-item.temp-suelta {{ background: transparent; border: none; box-shadow: none; font-size: 1.1em; font-weight: 800; color: #0f172a; padding: 0; text-align: left; align-items: flex-start; }}
         
-        .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }}
-        .time {{ font-size: 0.7em; color: #334155; }}
-        .click-text {{ font-size: 0.7em; color: #1d4ed8; font-weight: bold; font-style: italic; }}
+        .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
+        .time {{ font-size: 0.68em; color: #334155; }}
+        .click-text {{ font-size: 0.68em; color: #1d4ed8; font-weight: bold; font-style: italic; }}
         
         .footer-dev {{ background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }}
     </style>
@@ -550,7 +553,10 @@ def generar_html(resultados_totales, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado: temperatura ampliada sin perder la línea.")
+  print(
+      "✓ index.html actualizado: temperatura alineada a la izquierda y"
+      " extracción de dirección de viento optimizada."
+  )
 
 
 def ejecutar_monitoreo():
@@ -632,7 +638,8 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Aumento de tamaño de temperatura manteniendo alineación [skip ci]",
+            "Alineacion de temperatura a la izquierda y captura de viento"
+            " Directemar [skip ci]",
         ],
         capture_output=True,
         text=True,
