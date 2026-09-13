@@ -363,7 +363,7 @@ def generar_html(resultados_totales, hay_alerta):
   markers_js = ""
   for r in resultados_totales:
     color = "green" if r["ok"] else "red"
-    dir_txt = f" ({r['dir_viento']})" if r['dir_viento'] else ""
+    dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
@@ -375,7 +375,7 @@ def generar_html(resultados_totales, hay_alerta):
     clase = "ok" if r["ok"] else "error"
     icono = "🟢" if r["ok"] else "🔴"
 
-    # Mantener siempre el ícono de viento (🌬️) junto a la dirección y velocidad
+    # Estructura unificada para que todas las tarjetas mantengan el mismo diseño de doble línea (Dirección + Velocidad con ícono)
     if r["dir_viento"]:
       viento_contenido = (
           f'<span style="display: block; font-size: 0.72em; color: #1d4ed8;'
@@ -384,7 +384,12 @@ def generar_html(resultados_totales, hay_alerta):
           f' line-height: 1.1;">{r["viento"]}</span>'
       )
     else:
-      viento_contenido = f"🌬️ {r['viento']}"
+      viento_contenido = (
+          '<span style="display: block; font-size: 0.72em; color: transparent;'
+          ' font-weight: 800; line-height: 1; user-select: none;">-</span>'
+          f'<span style="display: block; font-size: 0.84em;'
+          f' line-height: 1.1;">🌬️ {r["viento"]}</span>'
+      )
 
     cards_html += f"""
         <a href="{r['url']}" target="_blank" class="card-link">
@@ -583,8 +588,8 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Correccion de formato de direccion de viento (S/SW) e icono"
-            " restaurado [skip ci]",
+            "Unificacion de estructura visual de viento en todas las tarjetas"
+            " [skip ci]",
         ],
         capture_output=True,
         text=True,
