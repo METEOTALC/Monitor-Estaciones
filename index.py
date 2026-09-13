@@ -214,7 +214,6 @@ def consultar_directemar(est):
             hum = f"{val:.1f}%"
             break
 
-      # Búsqueda de dirección de viento
       dir_match = re.search(
           r"Wind\s*Direction[^\w]*([N,S,E,W]{1,3})",
           texto_plano,
@@ -422,13 +421,13 @@ def generar_html(resultados_totales, hay_alerta):
     clase = "ok" if r["ok"] else "error"
     icono = "🟢" if r["ok"] else "🔴"
 
-    # Estructura compacta para mostrar dirección arriba y velocidad abajo en la cajita de viento
+    # Viento compacto (Dirección arriba pequeña, velocidad abajo)
     viento_contenido = f"🌬️ {r['viento']}"
     if r["dir_viento"]:
       viento_contenido = (
-          f'<span style="display: block; font-size: 0.75em; color: #1d4ed8;'
+          f'<span style="display: block; font-size: 0.72em; color: #1d4ed8;'
           f' font-weight: 700; line-height: 1;">{r["dir_viento"]}</span>'
-          f'<span style="display: block; font-size: 0.95em;'
+          f'<span style="display: block; font-size: 0.9em;'
           f' line-height: 1.1;">{r["viento"]}</span>'
       )
 
@@ -440,7 +439,7 @@ def generar_html(resultados_totales, hay_alerta):
                     <span class="status-badge">{icono}</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item">🌡️ {r['temp']}</div>
+                    <div class="weather-item temp-suelta">🌡️ {r['temp']}</div>
                     <div class="weather-item">⏲️ {r['pres']}</div>
                     <div class="weather-item">💧 {r['hum']}</div>
                     <div class="weather-item">{viento_contenido}</div>
@@ -510,8 +509,13 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        .weather-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }}
-        .weather-item {{ font-size: 0.85em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 4px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
+        .weather-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; align-items: center; }}
+        
+        /* Celdas normales (Presión, Humedad, Viento) con recuadro */
+        .weather-item {{ font-size: 0.82em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 4px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
+        
+        /* Temperatura suelta (sin recuadro) y levemente achicada */
+        .weather-item.temp-suelta {{ background: transparent; border: none; box-shadow: none; font-size: 0.9em; font-weight: 700; color: #0f172a; padding: 0; }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }}
         .time {{ font-size: 0.7em; color: #334155; }}
@@ -546,7 +550,7 @@ def generar_html(resultados_totales, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado con dirección y velocidad de viento.")
+  print("✓ index.html actualizado: temperatura sin recuadro y achicada.")
 
 
 def ejecutar_monitoreo():
@@ -557,7 +561,6 @@ def ejecutar_monitoreo():
   resultados_dict = {}
   hubo_fallas = False
 
-  # Consultar Directemar
   for est in ESTACIONES_DIRECTEMAR:
     ok, estado, ultimo, temp, pres, hum, viento, dir_viento = (
         consultar_directemar(est)
@@ -584,7 +587,6 @@ def ejecutar_monitoreo():
         "dir_viento": dir_viento,
     }
 
-  # Consultar Faros (Weather Underground)
   for faro in ESTACIONES_FAROS:
     ok, estado, temp, pres, hum, viento, dir_viento, ultimo = (
         consultar_wunderground_web(faro)
@@ -611,7 +613,6 @@ def ejecutar_monitoreo():
         "dir_viento": dir_viento,
     }
 
-  # Ordenar resultados según la lista maestra georeferenciada
   resultados_totales = [
       resultados_dict[nombre]
       for nombre in ORDEN_ESTACIONES
@@ -632,7 +633,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Incorporación de dirección de viento en formato compacto"
+                "Remoción de recuadro en temperatura y ajuste de tamaño"
                 " [skip ci]"
             ),
         ],
