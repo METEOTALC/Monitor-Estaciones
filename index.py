@@ -134,6 +134,31 @@ def convertir_numero(valor):
     return None
 
 
+def grados_a_cardinal(grados):
+  if grados is None:
+    return "N/D"
+  direcciones = [
+      "N",
+      "NNE",
+      "NE",
+      "ENE",
+      "E",
+      "ESE",
+      "SE",
+      "SSE",
+      "S",
+      "SSW",
+      "SW",
+      "WSW",
+      "W",
+      "WNW",
+      "NW",
+      "NNW",
+  ]
+  indice = int((grados + 11.25) / 22.5) % 16
+  return direcciones[indice]
+
+
 def consultar_directemar(est):
   try:
     req = urllib.request.Request(est["url"], headers=HEADERS)
@@ -150,7 +175,7 @@ def consultar_directemar(est):
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
-      temp, pres, hum, viento = "--", "--", "--", "--"
+      temp, pres, hum, viento, dir_viento = "--", "--", "--", "--", ""
 
       temp_match = re.search(
           r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
@@ -189,6 +214,21 @@ def consultar_directemar(est):
             hum = f"{val:.1f}%"
             break
 
+      # Búsqueda de dirección y velocidad de viento en Directemar
+      dir_match = re.search(
+          r"Wind\s*Direction[^\w]*([N,S,E,W]{1,3})",
+          texto_plano,
+          re.IGNORECASE,
+      )
+      if not dir_match:
+        dir_match = re.search(
+            r"Direcci[oó]n\s*Viento[^\w]*([N,S,E,W]{1,3})",
+            texto_plano,
+            re.IGNORECASE,
+        )
+      if dir_match:
+        dir_viento = dir_match.group(1).upper()
+
       viento_match = re.search(
           r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
           texto_plano,
@@ -218,7 +258,16 @@ def consultar_directemar(est):
           re.IGNORECASE,
       )
       if not match_fecha:
-        return False, "SIN DATOS VÁLIDOS", "N/D", temp, pres, hum, viento
+        return (
+            False,
+            "SIN DATOS VÁLIDOS",
+            "N/D",
+            temp,
+            pres,
+            hum,
+            viento,
+            dir_viento,
+        )
 
       fecha_str = match_fecha.group(1)
       formato_fecha = (
@@ -232,7 +281,7 @@ def consultar_directemar(est):
       )
 
       if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
-        return True, "OPERATIVA", fecha_str, temp, pres, hum, viento
+        return True, "OPERATIVA", fecha_str, temp, pres, hum, viento, dir_viento
       else:
         return (
             False,
@@ -242,11 +291,12 @@ def consultar_directemar(est):
             pres,
             hum,
             viento,
+            dir_viento,
         )
 
   except Exception as e:
     print(f"Error Directemar {est['nombre']}: {e}")
-    return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "--"
+    return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "--", ""
 
 
 def consultar_wunderground_web(est):
@@ -285,8 +335,20 @@ def consultar_wunderground_web(est):
       else:
         viento = "--"
 
+      wind_dir_deg = obs.get("winddir")
+      dir_viento = grados_a_cardinal(wind_dir_deg)
+
       obs_time = obs.get("obsTimeLocal", "Reciente")
-      return True, "OPERATIVA", temp, pres, hum, viento, str(obs_time)
+      return (
+          True,
+          "OPERATIVA",
+          temp,
+          pres,
+          hum,
+          viento,
+          dir_viento,
+          str(obs_time),
+      )
 
   except Exception as e:
     print(
@@ -321,12 +383,24 @@ def consultar_wunderground_web(est):
       else:
         viento = "--"
 
+      wind_dir_deg = obs.get("winddir")
+      dir_viento = grados_a_cardinal(wind_dir_deg)
+
       obs_time = obs.get("obsTimeLocal", "Reciente")
-      return True, "OPERATIVA", temp, pres, hum, viento, str(obs_time)
+      return (
+          True,
+          "OPERATIVA",
+          temp,
+          pres,
+          hum,
+          viento,
+          dir_viento,
+          str(obs_time),
+      )
   except Exception as ex:
     print(f"Error total en WU para [{est['nombre']}]: {ex}")
 
-  return False, "SIN CONEXIÓN", "--", "--", "--", "--", "Error de red"
+  return False, "SIN CONEXIÓN", "--", "--", "--", "--", "", "Error de red"
 
 
 def generar_html(resultados_totales, hay_alerta):
@@ -336,16 +410,28 @@ def generar_html(resultados_totales, hay_alerta):
   markers_js = ""
   for r in resultados_totales:
     color = "green" if r["ok"] else "red"
+    dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Pres: {r['pres']} | Hum: {r['hum']} | Viento: {r['viento']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Pres: {r['pres']} | Hum: {r['hum']} | Viento: {r['viento']}{dir_txt}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
   for r in resultados_totales:
     clase = "ok" if r["ok"] else "error"
     icono = "🟢" if r["ok"] else "🔴"
+
+    # Estructura sutil para mostrar dirección arriba y velocidad abajo dentro del mismo ítem de viento
+    viento_contenido = f"🌬️ {r['viento']}"
+    if r["dir_viento"]:
+      viento_contenido = (
+          f'<span style="display: block; font-size: 0.75em; color: #1d4ed8;'
+          f' font-weight: 700; line-height: 1;">{r["dir_viento"]}</span>'
+          f'<span style="display: block; font-size: 0.95em;'
+          f' line-height: 1.1;">{r["viento"]}</span>'
+      )
+
     cards_html += f"""
         <a href="{r['url']}" target="_blank" class="card-link">
             <div class="card {clase}">
@@ -357,7 +443,7 @@ def generar_html(resultados_totales, hay_alerta):
                     <div class="weather-item">🌡️ {r['temp']}</div>
                     <div class="weather-item">⏲️ {r['pres']}</div>
                     <div class="weather-item">💧 {r['hum']}</div>
-                    <div class="weather-item">🌬️ {r['viento']}</div>
+                    <div class="weather-item">{viento_contenido}</div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: {r['ultimo']}</span>
@@ -396,7 +482,6 @@ def generar_html(resultados_totales, hay_alerta):
         #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
         .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }}
         
-        /* TARJETAS UNIFORMES Y FLEXIBLES */
         .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
         .card {{ 
             border-radius: 14px; 
@@ -425,9 +510,8 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* GRILLA DE CLIMA EN 2x2 PARA PERFECTA VISIBILIDAD EN MÓVILES */
-        .weather-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; }}
-        .weather-item {{ font-size: 0.9em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 8px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; }}
+        .weather-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }}
+        .weather-item {{ font-size: 0.85em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 4px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }}
         .time {{ font-size: 0.7em; color: #334155; }}
@@ -462,10 +546,7 @@ def generar_html(resultados_totales, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print(
-      "✓ index.html actualizado con diseño optimizado en grilla de 2x2 para"
-      " evitar cortes."
-  )
+  print("✓ index.html actualizado con dirección y velocidad de viento.")
 
 
 def ejecutar_monitoreo():
@@ -478,11 +559,13 @@ def ejecutar_monitoreo():
 
   # Consultar Directemar
   for est in ESTACIONES_DIRECTEMAR:
-    ok, estado, ultimo, temp, pres, hum, viento = consultar_directemar(est)
+    ok, estado, ultimo, temp, pres, hum, viento, dir_viento = (
+        consultar_directemar(est)
+    )
     simbolo = "✓" if ok else "X"
     print(
         f"[{simbolo}] {est['nombre']}: {estado} | Temp: {temp}, Pres: {pres},"
-        f" Hum: {hum}, Viento: {viento}"
+        f" Hum: {hum}, Viento: {dir_viento} {viento}"
     )
     if not ok:
       hubo_fallas = True
@@ -498,17 +581,18 @@ def ejecutar_monitoreo():
         "pres": pres,
         "hum": hum,
         "viento": viento,
+        "dir_viento": dir_viento,
     }
 
   # Consultar Faros (Weather Underground)
   for faro in ESTACIONES_FAROS:
-    ok, estado, temp, pres, hum, viento, ultimo = consultar_wunderground_web(
-        faro
+    ok, estado, temp, pres, hum, viento, dir_viento, ultimo = (
+        consultar_wunderground_web(faro)
     )
     simbolo = "✓" if ok else "X"
     print(
         f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp}, Pres:"
-        f" {pres}, Hum: {hum}, Viento: {viento}"
+        f" {pres}, Hum: {hum}, Viento: {dir_viento} {viento}"
     )
     if not ok:
       hubo_fallas = True
@@ -524,6 +608,7 @@ def ejecutar_monitoreo():
         "pres": pres,
         "hum": hum,
         "viento": viento,
+        "dir_viento": dir_viento,
     }
 
   # Ordenar resultados según la lista maestra georeferenciada
@@ -547,8 +632,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Optimización de diseño en grilla 2x2 para visualización de"
-                " datos meteorológicos [skip ci]"
+                "Incorporación de dirección de viento en formato compacto"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
