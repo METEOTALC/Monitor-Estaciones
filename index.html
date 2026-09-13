@@ -21,7 +21,7 @@
         .card-link { text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }
         .card { 
             border-radius: 14px; 
-            padding: 12px 14px; 
+            padding: 10px 12px; 
             background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
             border: 1px solid #94a3b8; 
@@ -46,17 +46,18 @@
         .station-name { font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }
         .status-badge { font-size: 11px; }
         
-        .weather-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; align-items: center; }
+        /* Ajuste de distribución horizontal precisa para los 4 bloques */
+        .weather-grid { display: grid; grid-template-columns: 1.15fr 0.98fr 0.98fr 0.89fr; gap: 4px; margin: 6px 0; align-items: center; }
         
-        /* Celdas normales (Presión, Humedad, Viento) con recuadro */
-        .weather-item { font-size: 0.82em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 4px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        /* Celdas normales (Presión, Humedad, Viento) con recuadro compacto */
+        .weather-item { font-size: 0.76em; color: #0f172a; background: rgba(255, 255, 255, 0.75); padding: 4px 2px; border-radius: 6px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         
-        /* Temperatura suelta, sin recuadro, más grande y destacada pero en la misma línea */
-        .weather-item.temp-suelta { background: transparent; border: none; box-shadow: none; font-size: 1.12em; font-weight: 800; color: #0f172a; padding: 0; }
+        /* Temperatura hacia la orilla izquierda, sin recuadro y con gran protagonismo */
+        .weather-item.temp-suelta { background: transparent; border: none; box-shadow: none; font-size: 1.1em; font-weight: 800; color: #0f172a; padding: 0; text-align: left; align-items: flex-start; }
         
-        .card-footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }
-        .time { font-size: 0.7em; color: #334155; }
-        .click-text { font-size: 0.7em; color: #1d4ed8; font-weight: bold; font-style: italic; }
+        .card-footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }
+        .time { font-size: 0.68em; color: #334155; }
+        .click-text { font-size: 0.68em; color: #1d4ed8; font-weight: bold; font-style: italic; }
         
         .footer-dev { background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }
     </style>
@@ -64,7 +65,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 13-09-2026 01:15:23 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 13-09-2026 01:17:36 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -115,13 +116,13 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 12.8°C</div>
-                    <div class="weather-item">⏲️ 1020.0 hPa</div>
-                    <div class="weather-item">💧 46.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 700; line-height: 1;">SE</span><span style="display: block; font-size: 0.9em; line-height: 1.1;">7.8 kt</span></div>
+                    <div class="weather-item temp-suelta">🌡️ 12.2°C</div>
+                    <div class="weather-item">⏲️ 1019.6 hPa</div>
+                    <div class="weather-item">💧 50.0%</div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 700; line-height: 1;">ESE</span><span style="display: block; font-size: 0.86em; line-height: 1.1;">7.0 kt</span></div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-13 01:15:21</span>
+                    <span class="time">Reporte: 2026-09-13 01:17:31</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -156,7 +157,7 @@
                     <div class="weather-item temp-suelta">🌡️ 14.4°C</div>
                     <div class="weather-item">⏲️ 1018.6 hPa</div>
                     <div class="weather-item">💧 42.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 700; line-height: 1;">NE</span><span style="display: block; font-size: 0.9em; line-height: 1.1;">3.5 kt</span></div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 700; line-height: 1;">NE</span><span style="display: block; font-size: 0.86em; line-height: 1.1;">3.5 kt</span></div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 2026-09-13 01:15:00</span>
@@ -281,7 +282,7 @@
         
         L.circleMarker([-36.625, -73.033], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Pres: 1020.0 hPa | Hum: 46.0% | Viento: 7.8 kt (SE)<br>Reporte: 2026-09-13 01:15:21<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.2°C | Pres: 1019.6 hPa | Hum: 50.0% | Viento: 7.0 kt (ESE)<br>Reporte: 2026-09-13 01:17:31<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
