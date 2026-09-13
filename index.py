@@ -106,7 +106,6 @@ ESTACIONES_FAROS = [
     },
 ]
 
-# ORDEN GEOGRÁFICO SOLICITADO
 ORDEN_ESTACIONES = [
     "Capitanía de Puerto Constitución-7700",
     "Capitanía de Puerto Lirquén-7406",
@@ -134,6 +133,18 @@ def convertir_numero(valor):
     return None
 
 
+def formatear_direccion(dir_str):
+  if not dir_str:
+    return ""
+  d = dir_str.upper().strip()
+  # Aplicar formato con barra si son de 3 letras repetidas (ej. SSE -> S/SE, SSW -> S/SW, NNW -> N/NW, ESE -> E/SE, etc.)
+  if len(d) == 3 and d[1] == d[2]:
+    return f"{d[0]}/{d[1:]}"
+  if len(d) == 3 and d[0] == d[1]:
+    return f"{d[:2]}/{d[2]}"
+  return d
+
+
 def grados_a_cardinal(grados):
   if grados is None:
     return "N/D"
@@ -156,7 +167,7 @@ def grados_a_cardinal(grados):
       "NNW",
   ]
   indice = int((grados + 11.25) / 22.5) % 16
-  return direcciones[indice]
+  return formatear_direccion(direcciones[indice])
 
 
 def consultar_directemar(est):
@@ -214,21 +225,21 @@ def consultar_directemar(est):
             hum = f"{val:.1f}%"
             break
 
-      # Búsqueda robusta de la dirección del viento en Directemar
-      dir_match = re.search(
-          r"(?:Wind\s*Direction|Direcci[oó]n\s*Viento|Dir\.?\s*Viento)[^\w]*([N,S,E,W]{1,3})",
+      # Captura de Wind Bearing (ej: 178° S o directamente la letra cardinal asociada)
+      bearing_match = re.search(
+          r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
           texto_plano,
           re.IGNORECASE,
       )
-      if not dir_match:
-        # Búsqueda alternativa si aparece cerca de la velocidad o en texto plano directo
-        dir_match = re.search(
-            r"\b(N|NNE|NE|ENE|E|ESE|SE|SSE|S|SSW|SW|WSW|W|WNW|NW|NNW)\b(?=\s+\d+\s*(?:kt|kts|nudos))",
+      if not bearing_match:
+        bearing_match = re.search(
+            r"(?:Direcci[oó]n\s*Viento|Wind\s*Direction)[^\w]*([N,S,E,W]{1,3})",
             texto_plano,
             re.IGNORECASE,
         )
-      if dir_match:
-        dir_viento = dir_match.group(1).upper()
+
+      if bearing_match:
+        dir_viento = formatear_direccion(bearing_match.group(1))
 
       viento_match = re.search(
           r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
@@ -313,28 +324,20 @@ def consultar_wunderground_web(est):
       imperial = obs["imperial"]
 
       temp_f = imperial.get("temp")
-      if temp_f is not None:
-        temp_c = (temp_f - 32.0) * 5.0 / 9.0
-        temp = f"{temp_c:.1f}°C"
-      else:
-        temp = "--"
+      temp = (
+          f"{(temp_f - 32.0) * 5.0 / 9.0:.1f}°C"
+          if temp_f is not None
+          else "--"
+      )
 
       pres_inHg = imperial.get("pressure")
-      if pres_inHg is not None:
-        pres_hpa = pres_inHg * 33.86389
-        pres = f"{pres_hpa:.1f} hPa"
-      else:
-        pres = "--"
+      pres = f"{pres_inHg * 33.86389:.1f} hPa" if pres_inHg is not None else "--"
 
       hum_val = obs.get("humidity")
       hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
 
       viento_mph = imperial.get("windSpeed")
-      if viento_mph is not None:
-        viento_kt = viento_mph / 1.15077945
-        viento = f"{viento_kt:.1f} kt"
-      else:
-        viento = "--"
+      viento = f"{viento_mph / 1.15077945:.1f} kt" if viento_mph is not None else "--"
 
       wind_dir_deg = obs.get("winddir")
       dir_viento = grados_a_cardinal(wind_dir_deg)
@@ -350,56 +353,8 @@ def consultar_wunderground_web(est):
           dir_viento,
           str(obs_time),
       )
-
   except Exception as e:
-    print(
-        f"Error en API imperial para [{est['nombre']}]: {e}. Intentando"
-        " respaldo..."
-    )
-
-  try:
-    api_url_m = (
-        f"https://api.weather.com/v2/pws/observations/current"
-        f"?stationId={est['id']}&format=json&units=m&apiKey=e1f10a1e78da46f5b10a1e78da96f525"
-    )
-    req = urllib.request.Request(api_url_m, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-      data = json.loads(response.read().decode("utf-8"))
-      obs = data["observations"][0]
-      metric = obs["metric"]
-
-      temp_val = metric.get("temp")
-      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
-
-      pres_val = metric.get("pressure")
-      pres = f"{pres_val:.1f} hPa" if pres_val is not None else "--"
-
-      hum_val = obs.get("humidity")
-      hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
-
-      viento_kmh = metric.get("windSpeed")
-      if viento_kmh is not None:
-        viento_kt = viento_kmh / 1.852
-        viento = f"{viento_kt:.1f} kt"
-      else:
-        viento = "--"
-
-      wind_dir_deg = obs.get("winddir")
-      dir_viento = grados_a_cardinal(wind_dir_deg)
-
-      obs_time = obs.get("obsTimeLocal", "Reciente")
-      return (
-          True,
-          "OPERATIVA",
-          temp,
-          pres,
-          hum,
-          viento,
-          dir_viento,
-          str(obs_time),
-      )
-  except Exception as ex:
-    print(f"Error total en WU para [{est['nombre']}]: {ex}")
+    print(f"Error WU [{est['nombre']}]: {e}")
 
   return False, "SIN CONEXIÓN", "--", "--", "--", "--", "", "Error de red"
 
@@ -423,15 +378,16 @@ def generar_html(resultados_totales, hay_alerta):
     clase = "ok" if r["ok"] else "error"
     icono = "🟢" if r["ok"] else "🔴"
 
-    # Viento compacto (Dirección arriba pequeña si existe, velocidad abajo)
-    viento_contenido = f"🌬️ {r['viento']}"
+    # Estructura del viento restaurando el ícono 🌬️ si no hay dirección, o mostrando la dirección formateada con el ícono
     if r["dir_viento"]:
       viento_contenido = (
-          f'<span style="display: block; font-size: 0.70em; color: #1d4ed8;'
-          f' font-weight: 700; line-height: 1;">{r["dir_viento"]}</span>'
-          f'<span style="display: block; font-size: 0.86em;'
+          f'<span style="display: block; font-size: 0.72em; color: #1d4ed8;'
+          f' font-weight: 800; line-height: 1;">{r["dir_viento"]}</span>'
+          f'<span style="display: block; font-size: 0.84em;'
           f' line-height: 1.1;">{r["viento"]}</span>'
       )
+    else:
+      viento_contenido = f"🌬️ {r['viento']}"
 
     cards_html += f"""
         <a href="{r['url']}" target="_blank" class="card-link">
@@ -511,13 +467,8 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* Ajuste de distribución horizontal precisa para los 4 bloques */
         .weather-grid {{ display: grid; grid-template-columns: 1.15fr 0.98fr 0.98fr 0.89fr; gap: 4px; margin: 6px 0; align-items: center; }}
-        
-        /* Celdas normales (Presión, Humedad, Viento) con recuadro compacto */
         .weather-item {{ font-size: 0.76em; color: #0f172a; background: rgba(255, 255, 255, 0.75); padding: 4px 2px; border-radius: 6px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
-        
-        /* Temperatura hacia la orilla izquierda, sin recuadro y con gran protagonismo */
         .weather-item.temp-suelta {{ background: transparent; border: none; box-shadow: none; font-size: 1.1em; font-weight: 800; color: #0f172a; padding: 0; text-align: left; align-items: flex-start; }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
@@ -553,10 +504,7 @@ def generar_html(resultados_totales, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print(
-      "✓ index.html actualizado: temperatura alineada a la izquierda y"
-      " extracción de dirección de viento optimizada."
-  )
+  print("✓ index.html actualizado correctamente.")
 
 
 def ejecutar_monitoreo():
@@ -638,8 +586,8 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Alineacion de temperatura a la izquierda y captura de viento"
-            " Directemar [skip ci]",
+            "Formato de direccion de viento con barra y iconos restaurados"
+            " [skip ci]",
         ],
         capture_output=True,
         text=True,
