@@ -106,6 +106,20 @@ ESTACIONES_FAROS = [
     },
 ]
 
+# ORDEN GEOGRÁFICO SOLICITADO
+ORDEN_ESTACIONES = [
+    "Capitanía de Puerto Constitución-7700",
+    "Capitanía de Puerto Lirquén-7406",
+    "Faro Isla Quiriquina",
+    "Gobernación Marítima de Talcahuano",
+    "Faro Punta Hualpén",
+    "Capitanía de Puerto Coronel-7313",
+    "Capitanía de Puerto Lota-7373",
+    "Capitanía de Puerto Lebu-7800",
+    "Capitanía de Puerto Carahue",
+    "Capitanía de Puerto Corral-1960",
+]
+
 
 def obtener_hora_chile():
   return datetime.now(ZONA_CHILE)
@@ -294,14 +308,12 @@ def consultar_wunderground_web(est):
   return False, "SIN CONEXIÓN", "--", "--", "--", "Error de red"
 
 
-def generar_html(resultados_directemar, resultados_faros, hay_alerta):
-  total_estaciones = len(resultados_directemar) + len(resultados_faros)
-  operativas = sum(1 for r in resultados_directemar if r["ok"]) + sum(
-      1 for f in resultados_faros if f["ok"]
-  )
+def generar_html(resultados_totales, hay_alerta):
+  total_estaciones = len(resultados_totales)
+  operativas = sum(1 for r in resultados_totales if r["ok"])
 
   markers_js = ""
-  for r in resultados_directemar:
+  for r in resultados_totales:
     color = "green" if r["ok"] else "red"
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
@@ -309,16 +321,8 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
         }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Hum: {r['hum']} | Viento: {r['viento']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
-  for faro in resultados_faros:
-    color = "green" if faro["ok"] else "red"
-    markers_js += f"""
-        L.circleMarker([{faro['lat']}, {faro['lon']}], {{
-            color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{faro['nombre']}</b><br>Estado: {faro['estado']}<br>Temp: {faro['temp']} | Hum: {faro['hum']} | Viento: {faro['viento']}<br>Reporte: {faro['ultimo']}<br><a href='{faro['url']}' target='_blank'>Abrir enlace ↗</a>");
-        """
-
   cards_html = ""
-  for r in resultados_directemar:
+  for r in resultados_totales:
     clase = "ok" if r["ok"] else "error"
     icono = "🟢" if r["ok"] else "🔴"
     cards_html += f"""
@@ -337,31 +341,6 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: {r['ultimo']}</span>
-                    <span class="click-text">Ver ↗</span>
-                </div>
-            </div>
-        </a>
-        """
-
-  for faro in resultados_faros:
-    clase = "ok" if faro["ok"] else "error"
-    icono = "🟢" if faro["ok"] else "🔴"
-    cards_html += f"""
-        <a href="{faro['url']}" target="_blank" class="card-link">
-            <div class="card {clase}">
-                <div class="card-header">
-                    <span class="station-name">{faro['nombre']}</span>
-                    <span class="status-badge">{icono}</span>
-                </div>
-                <div class="weather-row">
-                    <span class="temp-val">🌡️ {faro['temp']}</span>
-                    <div class="info-group">
-                        <span class="info-item">💧 {faro['hum']}</span>
-                        <span class="info-item">🌬️ {faro['viento']}</span>
-                    </div>
-                </div>
-                <div class="card-footer-info">
-                    <span class="time">Reporte: {faro['ultimo']}</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -466,10 +445,7 @@ def generar_html(resultados_directemar, resultados_faros, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print(
-      "✓ index.html actualizado: temperatura asegurada junto al ícono sin"
-      " saltos de línea."
-  )
+  print("✓ index.html actualizado con el orden geográfico solicitado.")
 
 
 def ejecutar_monitoreo():
@@ -477,10 +453,10 @@ def ejecutar_monitoreo():
       f"\n--- [{obtener_hora_chile().strftime('%H:%M:%S')}] Verificando litoral"
       " ---"
   )
-  resultados_directemar = []
-  resultados_faros = []
+  resultados_dict = {}
   hubo_fallas = False
 
+  # Consultar Directemar
   for est in ESTACIONES_DIRECTEMAR:
     ok, estado, ultimo, temp, hum, viento = consultar_directemar(est)
     simbolo = "✓" if ok else "X"
@@ -490,7 +466,7 @@ def ejecutar_monitoreo():
     )
     if not ok:
       hubo_fallas = True
-    resultados_directemar.append({
+    resultados_dict[est["nombre"]] = {
         "nombre": est["nombre"],
         "url": est["url"],
         "lat": est["lat"],
@@ -501,18 +477,19 @@ def ejecutar_monitoreo():
         "temp": temp,
         "hum": hum,
         "viento": viento,
-    })
+    }
 
+  # Consultar Faros (Weather Underground)
   for faro in ESTACIONES_FAROS:
     ok, estado, temp, hum, viento, ultimo = consultar_wunderground_web(faro)
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (API Imperial->Decimal): {estado} |"
-        f" Temp: {temp}, Hum: {hum}, Viento: {viento}"
+        f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp}, Hum:"
+        f" {hum}, Viento: {viento}"
     )
     if not ok:
       hubo_fallas = True
-    resultados_faros.append({
+    resultados_dict[faro["nombre"]] = {
         "nombre": faro["nombre"],
         "url": faro["url"],
         "lat": faro["lat"],
@@ -523,9 +500,16 @@ def ejecutar_monitoreo():
         "temp": temp,
         "hum": hum,
         "viento": viento,
-    })
+    }
 
-  generar_html(resultados_directemar, resultados_faros, hubo_fallas)
+  # Ordenar resultados según la lista maestra georeferenciada
+  resultados_totales = [
+      resultados_dict[nombre]
+      for nombre in ORDEN_ESTACIONES
+      if nombre in resultados_dict
+  ]
+
+  generar_html(resultados_totales, hubo_fallas)
   subir_a_github()
 
 
@@ -539,8 +523,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Ajuste visual: temperatura y termómetro fijados en una sola"
-                " línea [skip ci]"
+                "Reordenamiento geográfico de estaciones (Quiriquina y Hualpén)"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
