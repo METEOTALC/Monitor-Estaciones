@@ -353,13 +353,11 @@ def generar_html(resultados_totales, hay_alerta):
                     <span class="station-name">{r['nombre']}</span>
                     <span class="status-badge">{icono}</span>
                 </div>
-                <div class="weather-row">
-                    <span class="temp-val">🌡️ {r['temp']}</span>
-                    <div class="info-group">
-                        <span class="info-item">⏲️ {r['pres']}</span>
-                        <span class="info-item">💧 {r['hum']}</span>
-                        <span class="info-item">🌬️ {r['viento']}</span>
-                    </div>
+                <div class="weather-grid">
+                    <div class="weather-item">🌡️ {r['temp']}</div>
+                    <div class="weather-item">⏲️ {r['pres']}</div>
+                    <div class="weather-item">💧 {r['hum']}</div>
+                    <div class="weather-item">🌬️ {r['viento']}</div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: {r['ultimo']}</span>
@@ -396,7 +394,7 @@ def generar_html(resultados_totales, hay_alerta):
         body.alerta-activa {{ animation: parpadeo 1.5s infinite; }}
         .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
         #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }}
         
         /* TARJETAS UNIFORMES Y FLEXIBLES */
         .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
@@ -427,12 +425,9 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* FILA DE CLIMA CON BLOQUEO CONTRA SALTOS DE LÍNEA */
-        .weather-row {{ display: flex; justify-content: space-between; align-items: center; margin: 6px 0; flex-wrap: nowrap; gap: 6px; }}
-        .temp-val {{ font-size: 19px; font-weight: 700; color: #0f172a; white-space: nowrap; }}
-        
-        .info-group {{ display: flex; gap: 5px; flex-shrink: 0; }}
-        .info-item {{ font-size: 0.8em; color: #1e293b; background: rgba(255, 255, 255, 0.6); padding: 2px 5px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.8); white-space: nowrap; }}
+        /* GRILLA DE CLIMA EN 2x2 PARA PERFECTA VISIBILIDAD EN MÓVILES */
+        .weather-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; }}
+        .weather-item {{ font-size: 0.9em; color: #0f172a; background: rgba(255, 255, 255, 0.7); padding: 5px 8px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 4px; }}
         .time {{ font-size: 0.7em; color: #334155; }}
@@ -467,7 +462,10 @@ def generar_html(resultados_totales, hay_alerta):
 
   with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
-  print("✓ index.html actualizado con la presión barométrica integrada.")
+  print(
+      "✓ index.html actualizado con diseño optimizado en grilla de 2x2 para"
+      " evitar cortes."
+  )
 
 
 def ejecutar_monitoreo():
@@ -549,8 +547,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Incorporación de presión barométrica entre temperatura y"
-                " humedad [skip ci]"
+                "Optimización de diseño en grilla 2x2 para visualización de"
+                " datos meteorológicos [skip ci]"
             ),
         ],
         capture_output=True,
