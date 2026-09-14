@@ -183,8 +183,9 @@ def consultar_directemar(est):
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
-      temp, pres, hum, viento, dir_viento = "--", "--", "--", "--", ""
+      temp, pres, viento, dir_viento, racha = "--", "--", "--", "", "--"
 
+      # Temperatura
       temp_match = re.search(
           r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
           texto_plano,
@@ -195,6 +196,7 @@ def consultar_directemar(est):
         if val is not None:
           temp = f"{val:.1f}°C"
 
+      # Presión
       pres_match = re.search(
           r"(?:Barometer|Presi[oó]n)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:hPa|mb)?",
           texto_plano,
@@ -205,23 +207,7 @@ def consultar_directemar(est):
         if val is not None:
           pres = f"{val:.1f} hPa"
 
-      hum_match = re.search(
-          r"(?:Humedad|Humidity|Hum|HR)[^\d]*(\d+(?:[.,]\d+)?)\s*%",
-          texto_plano,
-          re.IGNORECASE,
-      )
-      if hum_match:
-        val = convertir_numero(hum_match.group(1))
-        if val is not None and 0 <= val <= 100:
-          hum = f"{val:.1f}%"
-
-      if hum == "--":
-        for m in re.findall(r"(\d+(?:[.,]\d+)?)\s*%", texto_plano):
-          val = convertir_numero(m)
-          if val is not None and 0 <= val <= 100:
-            hum = f"{val:.1f}%"
-            break
-
+      # Dirección de Viento
       bearing_match = re.search(
           r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
           texto_plano,
@@ -237,6 +223,7 @@ def consultar_directemar(est):
       if bearing_match:
         dir_viento = formatear_direccion(bearing_match.group(1))
 
+      # Intensidad de Viento
       viento_match = re.search(
           r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
           texto_plano,
@@ -260,22 +247,24 @@ def consultar_directemar(est):
         if val is not None:
           viento = f"{val:.1f} kt"
 
+      # Rachas (Gust / Wind Speed (gust))
+      racha_match = re.search(
+          r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
+          texto_plano,
+          re.IGNORECASE,
+      )
+      if racha_match:
+        val = convertir_numero(racha_match.group(1))
+        if val is not None:
+          racha = f"{val:.1f} kt"
+
       match_fecha = re.search(
           r"(?:Page\s+updated|Actualizado)\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)",
           texto_plano,
           re.IGNORECASE,
       )
       if not match_fecha:
-        return (
-            False,
-            "SIN DATOS VÁLIDOS",
-            "N/D",
-            temp,
-            pres,
-            hum,
-            viento,
-            dir_viento,
-        )
+        return False, "SIN DATOS VÁLIDOS", "N/D", temp, pres, viento, dir_viento, racha
 
       fecha_str = match_fecha.group(1)
       formato_fecha = (
@@ -289,7 +278,7 @@ def consultar_directemar(est):
       )
 
       if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
-        return True, "OPERATIVA", fecha_str, temp, pres, hum, viento, dir_viento
+        return True, "OPERATIVA", fecha_str, temp, pres, viento, dir_viento, racha
       else:
         return (
             False,
@@ -297,14 +286,14 @@ def consultar_directemar(est):
             fecha_str,
             temp,
             pres,
-            hum,
             viento,
             dir_viento,
+            racha,
         )
 
   except Exception as e:
     print(f"Error Directemar {est['nombre']}: {e}")
-    return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "--", ""
+    return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "", "--"
 
 
 def consultar_wunderground_web(est):
@@ -329,11 +318,15 @@ def consultar_wunderground_web(est):
       pres_inHg = imperial.get("pressure")
       pres = f"{pres_inHg * 33.86389:.1f} hPa" if pres_inHg is not None else "--"
 
-      hum_val = obs.get("humidity")
-      hum = f"{hum_val:.1f}%" if hum_val is not None else "--"
-
       viento_mph = imperial.get("windSpeed")
       viento = f"{viento_mph / 1.15077945:.1f} kt" if viento_mph is not None else "--"
+
+      gust_mph = imperial.get("windGust")
+      racha = (
+          f"{gust_mph / 1.15077945:.1f} kt"
+          if gust_mph is not None
+          else "--"
+      )
 
       wind_dir_deg = obs.get("winddir")
       dir_viento = grados_a_cardinal(wind_dir_deg)
@@ -344,15 +337,15 @@ def consultar_wunderground_web(est):
           "OPERATIVA",
           temp,
           pres,
-          hum,
           viento,
           dir_viento,
+          racha,
           str(obs_time),
       )
   except Exception as e:
     print(f"Error WU [{est['nombre']}]: {e}")
 
-  return False, "SIN CONEXIÓN", "--", "--", "--", "--", "", "Error de red"
+  return False, "SIN CONEXIÓN", "--", "--", "--", "", "--", "Error de red"
 
 
 def generar_html(resultados_totales, hay_alerta):
@@ -362,11 +355,11 @@ def generar_html(resultados_totales, hay_alerta):
   markers_js = ""
   for r in resultados_totales:
     color = "green" if r["ok"] else "red"
-    dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
+    dir_txt = f" ({r['dir_viento']})" if r['dir_viento'] else ""
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Pres: {r['pres']} | Hum: {r['hum']} | Viento: {r['viento']}{dir_txt}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
@@ -398,9 +391,9 @@ def generar_html(resultados_totales, hay_alerta):
                 </div>
                 <div class="weather-grid">
                     <div class="weather-item temp-suelta">🌡️ {r['temp']}</div>
-                    <div class="weather-item">⏲️ {r['pres']}</div>
-                    <div class="weather-item">💧 {r['hum']}</div>
                     <div class="weather-item">{viento_contenido}</div>
+                    <div class="weather-item">💨 {r['racha']}</div>
+                    <div class="weather-item">⏲️ {r['pres']}</div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: {r['ultimo']}</span>
@@ -444,14 +437,13 @@ def generar_html(resultados_totales, hay_alerta):
         .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
         #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
         
-        /* Contenedor principal de tarjetas con alineación uniforme */
         .grid {{ 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
             gap: 15px; 
             max-width: 1200px; 
             margin: 0 auto; 
-            align-items: stretch; /* Fuerza a todas las filas del grid a estirarse por igual */
+            align-items: stretch; 
         }}
         
         .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
@@ -465,7 +457,7 @@ def generar_html(resultados_totales, hay_alerta):
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            height: 100%; /* Ocupa el 100% de la celda del grid garantizando misma altura */
+            height: 100%; 
             box-sizing: border-box;
         }}
         .card.ok {{ 
@@ -490,9 +482,10 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        .weather-grid {{ display: grid; grid-template-columns: 1.15fr 0.98fr 0.98fr 0.89fr; gap: 4px; margin: 6px 0; align-items: center; }}
-        .weather-item {{ font-size: 0.76em; color: #0f172a; background: rgba(255, 255, 255, 0.75); padding: 4px 2px; border-radius: 6px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
-        .weather-item.temp-suelta {{ background: transparent; border: none; box-shadow: none; font-size: 1.1em; font-weight: 800; color: #0f172a; padding: 0; text-align: left; align-items: flex-start; }}
+        /* Weather grid con 4 elementos: Temp, Viento, Racha, Presión */
+        .weather-grid {{ display: grid; grid-template-columns: 1.15fr 0.95fr 0.95fr 0.95fr; gap: 4px; margin: 6px 0; align-items: center; }}
+        .weather-item {{ font-size: 0.72em; color: #0f172a; background: rgba(255, 255, 255, 0.75); padding: 4px 2px; border-radius: 6px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
+        .weather-item.temp-suelta {{ background: transparent; border: none; box-shadow: none; font-size: 1.05em; font-weight: 800; color: #0f172a; padding: 0; text-align: left; align-items: flex-start; }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
         .time {{ font-size: 0.68em; color: #334155; }}
@@ -539,13 +532,13 @@ def ejecutar_monitoreo():
   hubo_fallas = False
 
   for est in ESTACIONES_DIRECTEMAR:
-    ok, estado, ultimo, temp, pres, hum, viento, dir_viento = (
+    ok, estado, ultimo, temp, pres, viento, dir_viento, racha = (
         consultar_directemar(est)
     )
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {est['nombre']}: {estado} | Temp: {temp}, Pres: {pres},"
-        f" Hum: {hum}, Viento: {dir_viento} {viento}"
+        f"[{simbolo}] {est['nombre']}: {estado} | Temp: {temp}, Viento: {dir_viento}"
+        f" {viento}, Racha: {racha}, Pres: {pres}"
     )
     if not ok:
       hubo_fallas = True
@@ -559,19 +552,19 @@ def ejecutar_monitoreo():
         "ultimo": ultimo,
         "temp": temp,
         "pres": pres,
-        "hum": hum,
         "viento": viento,
         "dir_viento": dir_viento,
+        "racha": racha,
     }
 
   for faro in ESTACIONES_FAROS:
-    ok, estado, temp, pres, hum, viento, dir_viento, ultimo = (
+    ok, estado, temp, pres, viento, dir_viento, racha, ultimo = (
         consultar_wunderground_web(faro)
     )
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp}, Pres:"
-        f" {pres}, Hum: {hum}, Viento: {dir_viento} {viento}"
+        f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp}, Viento:"
+        f" {dir_viento} {viento}, Racha: {racha}, Pres: {pres}"
     )
     if not ok:
       hubo_fallas = True
@@ -585,9 +578,9 @@ def ejecutar_monitoreo():
         "ultimo": ultimo,
         "temp": temp,
         "pres": pres,
-        "hum": hum,
         "viento": viento,
         "dir_viento": dir_viento,
+        "racha": racha,
     }
 
   resultados_totales = [
@@ -609,8 +602,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Actualizacion de alertas visuales en tarjetas y pantalla [skip"
-            " ci]",
+            "Actualizacion: orden de variables (Temp, Viento, Racha, Presion) y eliminacion de humedad [skip ci]",
         ],
         capture_output=True,
         text=True,
