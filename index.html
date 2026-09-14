@@ -68,7 +68,7 @@
         .station-name { font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }
         .status-badge { font-size: 11px; }
         
-        /* Contenedor principal del cuerpo: temperatura suelta y cuadrícula al lado */
+        /* Contenedor principal alineado perfectamente al centro */
         .card-body-content {
             display: flex;
             align-items: center;
@@ -81,23 +81,23 @@
             font-weight: 800;
             color: #0f172a;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
         }
         
-        /* Cuadrícula de 3 columnas ajustada para que quepa perfectamente hPa sin cortes */
+        /* Cuadrícula de 3 columnas estrictamente equilibrada */
         .weather-grid-3 { 
             display: grid; 
             grid-template-columns: repeat(3, minmax(0, 1fr)); 
             gap: 3px; 
             flex: 1;
-            align-items: stretch; 
+            align-items: center; 
         }
         .weather-item { 
-            font-size: 0.72em; 
             color: #0f172a; 
             background: rgba(255, 255, 255, 0.9); 
-            padding: 5px 1px; 
+            padding: 5px 2px; 
             border-radius: 6px; 
-            font-weight: 700; 
             border: 1px solid rgba(255, 255, 255, 0.95); 
             text-align: center; 
             white-space: nowrap; 
@@ -105,6 +105,7 @@
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
+            height: 34px; /* Altura fija para evitar desfases entre una y dos líneas */
         }
         
         .card-footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }
@@ -117,7 +118,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 14-09-2026 16:40:23 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 14-09-2026 16:45:23 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -132,9 +133,9 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 19.9°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ S/SW</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">5.2 kt</span></div>
-                        <div class="weather-item">💨 11.3 kt</div>
-                        <div class="weather-item">⏲️ 1015.3 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ S/SW</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">5.2 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 11.3 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1015.3 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -153,9 +154,9 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 18.7°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">7.6 kt</span></div>
-                        <div class="weather-item">💨 9.6 kt</div>
-                        <div class="weather-item">⏲️ 1017.0 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ W</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">7.6 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 9.6 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1017.0 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -174,13 +175,13 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 18.3°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">1.7 kt</span></div>
-                        <div class="weather-item">💨 3.5 kt</div>
-                        <div class="weather-item">⏲️ 1017.9 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ SE</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">1.7 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 3.5 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1017.9 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-14 16:40:16</span>
+                    <span class="time">Reporte: 2026-09-14 16:45:21</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -195,9 +196,9 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 18.2°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ S/SW</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">11.5 kt</span></div>
-                        <div class="weather-item">💨 17.4 kt</div>
-                        <div class="weather-item">⏲️ 1017.5 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ S/SW</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">11.5 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 17.4 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1017.5 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -216,13 +217,13 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 17.2°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">15.6 kt</span></div>
-                        <div class="weather-item">💨 17.4 kt</div>
-                        <div class="weather-item">⏲️ 1016.6 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ SW</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">15.6 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 17.4 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1016.6 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-14 16:40:00</span>
+                    <span class="time">Reporte: 2026-09-14 16:45:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -237,9 +238,9 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 15.3°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">2.0 kt</span></div>
-                        <div class="weather-item">💨 3.5 kt</div>
-                        <div class="weather-item">⏲️ 1016.7 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ SW</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">2.0 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 3.5 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1016.7 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -258,9 +259,9 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 17.1°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W/NW</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">2.8 kt</span></div>
-                        <div class="weather-item">💨 3.5 kt</div>
-                        <div class="weather-item">⏲️ 1017.8 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ W/NW</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">2.8 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 3.5 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1017.8 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -279,9 +280,9 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 18.7°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">7.0 kt</span></div>
-                        <div class="weather-item">💨 12.2 kt</div>
-                        <div class="weather-item">⏲️ 1019.2 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ SE</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">7.0 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 12.2 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1019.2 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -300,9 +301,9 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 13.9°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">8.1 kt</span></div>
-                        <div class="weather-item">💨 14.8 kt</div>
-                        <div class="weather-item">⏲️ 1019.9 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ SE</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">8.1 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 14.8 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1019.9 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -321,9 +322,9 @@
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 14.9°C</div>
                     <div class="weather-grid-3">
-                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ N/NE</span><span style="display: block; font-size: 0.82em; line-height: 1.1;">1.6 kt</span></div>
-                        <div class="weather-item">💨 5.2 kt</div>
-                        <div class="weather-item">⏲️ 1020.3 hPa</div>
+                        <div class="weather-item"><span style="display: block; font-size: 0.70em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ N/NE</span><span style="display: block; font-size: 0.82em; font-weight: 700; line-height: 1.1;">1.6 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 5.2 kt</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ 1020.3 hPa</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -354,7 +355,7 @@
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 18.3°C | Viento: 1.7 kt (SE) | Racha: 3.5 kt | Pres: 1017.9 hPa<br>Reporte: 2026-09-14 16:40:16<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 18.3°C | Viento: 1.7 kt (SE) | Racha: 3.5 kt | Pres: 1017.9 hPa<br>Reporte: 2026-09-14 16:45:21<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -362,7 +363,7 @@
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 17.2°C | Viento: 15.6 kt (SW) | Racha: 17.4 kt | Pres: 1016.6 hPa<br>Reporte: 2026-09-14 16:40:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 17.2°C | Viento: 15.6 kt (SW) | Racha: 17.4 kt | Pres: 1016.6 hPa<br>Reporte: 2026-09-14 16:45:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
