@@ -68,13 +68,13 @@
         .station-name { font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }
         .status-badge { font-size: 11px; }
         
-        /* Weather grid: Temperatura suelta + 3 recuadros uniformes para Viento, Racha y Presión */
+        /* Weather grid: Temperatura suelta + 3 recuadros perfectamente uniformes y estirados */
         .weather-grid { 
             display: grid; 
-            grid-template-columns: 1.15fr 0.95fr 0.95fr 0.95fr; 
+            grid-template-columns: 1.1fr 1fr 1fr 1fr; 
             gap: 4px; 
             margin: 6px 0; 
-            align-items: center; 
+            align-items: stretch; 
         }
         .weather-item { 
             font-size: 0.78em; 
@@ -113,7 +113,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 14-09-2026 16:20:22 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 14-09-2026 16:25:22 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -170,7 +170,7 @@
                     <div class="weather-item">⏲️ 1017.6 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-14 16:20:16</span>
+                    <span class="time">Reporte: 2026-09-14 16:25:16</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -208,7 +208,7 @@
                     <div class="weather-item">⏲️ 1016.3 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-14 16:20:00</span>
+                    <span class="time">Reporte: 2026-09-14 16:25:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -330,7 +330,7 @@
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 17.8°C | Viento: 4.3 kt (W/SW) | Racha: 7.8 kt | Pres: 1017.6 hPa<br>Reporte: 2026-09-14 16:20:16<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 17.8°C | Viento: 4.3 kt (W/SW) | Racha: 7.8 kt | Pres: 1017.6 hPa<br>Reporte: 2026-09-14 16:25:16<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -338,7 +338,7 @@
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 16.1°C | Viento: 19.1 kt (SW) | Racha: 19.1 kt | Pres: 1016.3 hPa<br>Reporte: 2026-09-14 16:20:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 16.1°C | Viento: 19.1 kt (SW) | Racha: 19.1 kt | Pres: 1016.3 hPa<br>Reporte: 2026-09-14 16:25:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
