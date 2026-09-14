@@ -390,7 +390,7 @@ def generar_html(resultados_totales, hay_alerta):
                     <span class="status-badge">{icono}</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item">🌡️ {r['temp']}</div>
+                    <div class="weather-item temp-suelta">🌡️ {r['temp']}</div>
                     <div class="weather-item">{viento_contenido}</div>
                     <div class="weather-item">💨 {r['racha']}</div>
                     <div class="weather-item">⏲️ {r['pres']}</div>
@@ -482,16 +482,16 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* Alineación y estiramiento uniforme de los 4 recuadros internos */
+        /* Weather grid: Temperatura suelta + 3 recuadros uniformes para Viento, Racha y Presión */
         .weather-grid {{ 
             display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
+            grid-template-columns: 1.15fr 0.95fr 0.95fr 0.95fr; 
             gap: 4px; 
             margin: 6px 0; 
-            align-items: stretch; /* Fuerza a todos a igualar la misma altura en la fila */
+            align-items: center; 
         }}
         .weather-item {{ 
-            font-size: 0.82em; 
+            font-size: 0.78em; 
             color: #0f172a; 
             background: rgba(255, 255, 255, 0.85); 
             padding: 5px 3px; 
@@ -504,6 +504,17 @@ def generar_html(resultados_totales, hay_alerta):
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
+        }}
+        .weather-item.temp-suelta {{ 
+            background: transparent; 
+            border: none; 
+            box-shadow: none; 
+            font-size: 1.05em; 
+            font-weight: 800; 
+            color: #0f172a; 
+            padding: 0; 
+            text-align: left; 
+            align-items: flex-start; 
         }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
@@ -621,7 +632,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Actualizacion: alineacion uniforme y altura simetrica de recuadros [skip ci]",
+            "Actualizacion: temperatura en formato suelto y recuadros de datos uniformes [skip ci]",
         ],
         capture_output=True,
         text=True,
