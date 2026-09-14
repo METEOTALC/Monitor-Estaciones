@@ -247,7 +247,7 @@ def consultar_directemar(est):
         if val is not None:
           viento = f"{val:.1f} kt"
 
-      # Rachas (Gust / Wind Speed (gust))
+      # Rachas
       racha_match = re.search(
           r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
           texto_plano,
@@ -389,11 +389,13 @@ def generar_html(resultados_totales, hay_alerta):
                     <span class="station-name">{r['nombre']}</span>
                     <span class="status-badge">{icono}</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ {r['temp']}</div>
-                    <div class="weather-item">{viento_contenido}</div>
-                    <div class="weather-item">💨 {r['racha']}</div>
-                    <div class="weather-item">⏲️ {r['pres']}</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ {r['temp']}</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item">{viento_contenido}</div>
+                        <div class="weather-item">💨 {r['racha']}</div>
+                        <div class="weather-item">⏲️ {r['pres']}</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: {r['ultimo']}</span>
@@ -482,12 +484,27 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* Weather grid: Temperatura suelta + 3 recuadros perfectamente uniformes y estirados */
-        .weather-grid {{ 
+        /* Contenedor principal del cuerpo: temperatura suelta a la izquierda y los 3 recuadros a la derecha */
+        .card-body-content {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 6px 0;
+        }}
+        .temp-suelta {{
+            font-size: 1.05em;
+            font-weight: 800;
+            color: #0f172a;
+            white-space: nowrap;
+        }}
+        
+        /* Cuadrícula exclusiva de 3 columnas estrictamente iguales (33.33% cada una) para Viento, Racha y Presión */
+        .weather-grid-3 {{ 
             display: grid; 
-            grid-template-columns: 1.1fr 1fr 1fr 1fr; 
+            grid-template-columns: repeat(3, minmax(0, 1fr)); 
             gap: 4px; 
-            margin: 6px 0; 
+            flex: 1;
             align-items: stretch; 
         }}
         .weather-item {{ 
@@ -504,17 +521,8 @@ def generar_html(resultados_totales, hay_alerta):
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
-        }}
-        .weather-item.temp-suelta {{ 
-            background: transparent; 
-            border: none; 
-            box-shadow: none; 
-            font-size: 1.05em; 
-            font-weight: 800; 
-            color: #0f172a; 
-            padding: 0; 
-            text-align: left; 
-            align-items: flex-start; 
+            overflow: hidden;
+            text-overflow: ellipsis;
         }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
@@ -632,7 +640,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Actualizacion: temperatura suelta y altura uniforme para los tres recuadros de datos [skip ci]",
+            "Actualizacion: temperatura suelta separada y 3 recuadros de datos de ancho uniforme [skip ci]",
         ],
         capture_output=True,
         text=True,
