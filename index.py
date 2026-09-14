@@ -33,15 +33,15 @@ ctx.verify_mode = ssl.CERT_NONE
 # ==========================================
 ESTACIONES_DIRECTEMAR = [
     {
-        "nombre": "Capitanía de Puerto Constitución-7700",
+        "nombre": "Capitanía de Puerto Constitución",
         "url": (
             "http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm"
         ),
-        "lat": -35.333,
-        "lon": -72.416,
+        "lat": -35.3241667,
+        "lon": -72.4080555, 
     },
     {
-        "nombre": "Capitanía de Puerto Lirquén-7406",
+        "nombre": "Capitanía de Puerto Lirquén",
         "url": "http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm",
         "lat": -36.7027,
         "lon": -72.9775,
@@ -55,19 +55,19 @@ ESTACIONES_DIRECTEMAR = [
         "lon": -73.115,
     },
     {
-        "nombre": "Capitanía de Puerto Coronel-7313",
+        "nombre": "Capitanía de Puerto Coronel",
         "url": "http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm",
         "lat": -37.020,
         "lon": -73.150,
     },
     {
-        "nombre": "Capitanía de Puerto Lota-7373",
+        "nombre": "Capitanía de Puerto Lota",
         "url": "http://web.directemar.cl/met/jturno/estaciones/lota/index.htm",
         "lat": -37.090,
         "lon": -73.150,
     },
     {
-        "nombre": "Capitanía de Puerto Lebu-7800",
+        "nombre": "Capitanía de Puerto Lebu",
         "url": "http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm",
         "lat": -37.606,
         "lon": -73.650,
@@ -79,7 +79,7 @@ ESTACIONES_DIRECTEMAR = [
         "lon": -73.397,
     },
     {
-        "nombre": "Capitanía de Puerto Corral-1960",
+        "nombre": "Capitanía de Puerto Corral",
         "url": "http://web.directemar.cl/met/jturno/estaciones/corral/index.htm",
         "lat": -39.883,
         "lon": -73.433,
