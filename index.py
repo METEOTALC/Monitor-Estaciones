@@ -364,17 +364,17 @@ def generar_html(resultados_totales, hay_alerta):
 
     if r["dir_viento"]:
       viento_contenido = (
-          f'<span style="display: block; font-size: 0.72em; color: #1d4ed8;'
-          f' font-weight: 800; line-height: 1;">🌬️ {r["dir_viento"]}</span>'
+          f'<span style="display: block; font-size: 0.70em; color: #1d4ed8;'
+          f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
           f'<span style="display: block; font-size: 0.82em;'
-          f' line-height: 1.1;">{r["viento"]}</span>'
+          f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
       )
     else:
       viento_contenido = (
-          '<span style="display: block; font-size: 0.72em; color: transparent;'
-          ' font-weight: 800; line-height: 1; user-select: none;">-</span>'
+          '<span style="display: block; font-size: 0.70em; color: transparent;'
+          ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
           f'<span style="display: block; font-size: 0.82em;'
-          f' line-height: 1.1;">🌬️ {r["viento"]}</span>'
+          f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
       )
 
     cards_html += f"""
@@ -388,8 +388,8 @@ def generar_html(resultados_totales, hay_alerta):
                     <div class="temp-suelta">🌡️ {r['temp']}</div>
                     <div class="weather-grid-3">
                         <div class="weather-item">{viento_contenido}</div>
-                        <div class="weather-item">💨 {r['racha']}</div>
-                        <div class="weather-item">⏲️ {r['pres']}</div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 {r['racha']}</span></div>
+                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ {r['pres']}</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -479,7 +479,7 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* Contenedor principal del cuerpo: temperatura suelta y cuadrícula al lado */
+        /* Contenedor principal alineado perfectamente al centro */
         .card-body-content {{
             display: flex;
             align-items: center;
@@ -492,23 +492,23 @@ def generar_html(resultados_totales, hay_alerta):
             font-weight: 800;
             color: #0f172a;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
         }}
         
-        /* Cuadrícula de 3 columnas ajustada para que quepa perfectamente hPa sin cortes */
+        /* Cuadrícula de 3 columnas estrictamente equilibrada */
         .weather-grid-3 {{ 
             display: grid; 
             grid-template-columns: repeat(3, minmax(0, 1fr)); 
             gap: 3px; 
             flex: 1;
-            align-items: stretch; 
+            align-items: center; 
         }}
         .weather-item {{ 
-            font-size: 0.72em; 
             color: #0f172a; 
             background: rgba(255, 255, 255, 0.9); 
-            padding: 5px 1px; 
+            padding: 5px 2px; 
             border-radius: 6px; 
-            font-weight: 700; 
             border: 1px solid rgba(255, 255, 255, 0.95); 
             text-align: center; 
             white-space: nowrap; 
@@ -516,6 +516,7 @@ def generar_html(resultados_totales, hay_alerta):
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
+            height: 34px; /* Altura fija para evitar desfases entre una y dos líneas */
         }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
@@ -633,7 +634,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Ajuste visual: corregido el ancho de celdas para que hPa y iconos se muestren completos [skip ci]",
+            "Alineacion perfecta: corregido desfase vertical en los cajones de datos [skip ci]",
         ],
         capture_output=True,
         text=True,
