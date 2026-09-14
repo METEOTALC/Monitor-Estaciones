@@ -185,7 +185,6 @@ def consultar_directemar(est):
 
       temp, pres, viento, dir_viento, racha = "--", "--", "--", "", "--"
 
-      # Temperatura
       temp_match = re.search(
           r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
           texto_plano,
@@ -196,7 +195,6 @@ def consultar_directemar(est):
         if val is not None:
           temp = f"{val:.1f}°C"
 
-      # Presión
       pres_match = re.search(
           r"(?:Barometer|Presi[oó]n)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:hPa|mb)?",
           texto_plano,
@@ -207,7 +205,6 @@ def consultar_directemar(est):
         if val is not None:
           pres = f"{val:.1f} hPa"
 
-      # Dirección de Viento
       bearing_match = re.search(
           r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
           texto_plano,
@@ -223,7 +220,6 @@ def consultar_directemar(est):
       if bearing_match:
         dir_viento = formatear_direccion(bearing_match.group(1))
 
-      # Intensidad de Viento
       viento_match = re.search(
           r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
           texto_plano,
@@ -247,7 +243,6 @@ def consultar_directemar(est):
         if val is not None:
           viento = f"{val:.1f} kt"
 
-      # Rachas
       racha_match = re.search(
           r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
           texto_plano,
@@ -371,14 +366,14 @@ def generar_html(resultados_totales, hay_alerta):
       viento_contenido = (
           f'<span style="display: block; font-size: 0.72em; color: #1d4ed8;'
           f' font-weight: 800; line-height: 1;">🌬️ {r["dir_viento"]}</span>'
-          f'<span style="display: block; font-size: 0.84em;'
+          f'<span style="display: block; font-size: 0.82em;'
           f' line-height: 1.1;">{r["viento"]}</span>'
       )
     else:
       viento_contenido = (
           '<span style="display: block; font-size: 0.72em; color: transparent;'
           ' font-weight: 800; line-height: 1; user-select: none;">-</span>'
-          f'<span style="display: block; font-size: 0.84em;'
+          f'<span style="display: block; font-size: 0.82em;'
           f' line-height: 1.1;">🌬️ {r["viento"]}</span>'
       )
 
@@ -484,45 +479,43 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* Contenedor principal del cuerpo: temperatura suelta a la izquierda y los 3 recuadros a la derecha */
+        /* Contenedor principal del cuerpo: temperatura suelta y cuadrícula al lado */
         .card-body-content {{
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: 6px;
             margin: 6px 0;
         }}
         .temp-suelta {{
-            font-size: 1.05em;
+            font-size: 1.0em;
             font-weight: 800;
             color: #0f172a;
             white-space: nowrap;
         }}
         
-        /* Cuadrícula exclusiva de 3 columnas estrictamente iguales (33.33% cada una) para Viento, Racha y Presión */
+        /* Cuadrícula de 3 columnas ajustada para que quepa perfectamente hPa sin cortes */
         .weather-grid-3 {{ 
             display: grid; 
             grid-template-columns: repeat(3, minmax(0, 1fr)); 
-            gap: 4px; 
+            gap: 3px; 
             flex: 1;
             align-items: stretch; 
         }}
         .weather-item {{ 
-            font-size: 0.78em; 
+            font-size: 0.72em; 
             color: #0f172a; 
-            background: rgba(255, 255, 255, 0.85); 
-            padding: 5px 3px; 
+            background: rgba(255, 255, 255, 0.9); 
+            padding: 5px 1px; 
             border-radius: 6px; 
             font-weight: 700; 
-            border: 1px solid rgba(255, 255, 255, 0.9); 
+            border: 1px solid rgba(255, 255, 255, 0.95); 
             text-align: center; 
             white-space: nowrap; 
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
-            overflow: hidden;
-            text-overflow: ellipsis;
         }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
@@ -640,7 +633,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Actualizacion: temperatura suelta separada y 3 recuadros de datos de ancho uniforme [skip ci]",
+            "Ajuste visual: corregido el ancho de celdas para que hPa y iconos se muestren completos [skip ci]",
         ],
         capture_output=True,
         text=True,
