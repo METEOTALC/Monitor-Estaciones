@@ -443,7 +443,16 @@ def generar_html(resultados_totales, hay_alerta):
 
         .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
         #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }}
+        
+        /* Contenedor principal de tarjetas con alineación uniforme */
+        .grid {{ 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 15px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            align-items: stretch; /* Fuerza a todas las filas del grid a estirarse por igual */
+        }}
         
         .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
         .card {{ 
@@ -456,7 +465,7 @@ def generar_html(resultados_totales, hay_alerta):
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            height: 100%;
+            height: 100%; /* Ocupa el 100% de la celda del grid garantizando misma altura */
             box-sizing: border-box;
         }}
         .card.ok {{ 
