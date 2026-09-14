@@ -366,14 +366,14 @@ def generar_html(resultados_totales, hay_alerta):
       viento_contenido = (
           f'<span style="display: block; font-size: 0.70em; color: #1d4ed8;'
           f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
-          f'<span style="display: block; font-size: 0.82em;'
+          f'<span style="display: block; font-size: 0.80em;'
           f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
       )
     else:
       viento_contenido = (
           '<span style="display: block; font-size: 0.70em; color: transparent;'
           ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
-          f'<span style="display: block; font-size: 0.82em;'
+          f'<span style="display: block; font-size: 0.80em;'
           f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
       )
 
@@ -388,8 +388,8 @@ def generar_html(resultados_totales, hay_alerta):
                     <div class="temp-suelta">🌡️ {r['temp']}</div>
                     <div class="weather-grid-3">
                         <div class="weather-item">{viento_contenido}</div>
-                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">💨 {r['racha']}</span></div>
-                        <div class="weather-item"><span style="font-size: 0.82em; font-weight: 700;">⏲️ {r['pres']}</span></div>
+                        <div class="weather-item"><span style="font-size: 0.80em; font-weight: 700;">💨 {r['racha']}</span></div>
+                        <div class="weather-item"><span style="font-size: 0.76em; font-weight: 700;">⏲️ {r['pres']}</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -479,7 +479,6 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* Contenedor principal alineado perfectamente al centro */
         .card-body-content {{
             display: flex;
             align-items: center;
@@ -496,10 +495,10 @@ def generar_html(resultados_totales, hay_alerta):
             align-items: center;
         }}
         
-        /* Cuadrícula de 3 columnas estrictamente equilibrada */
+        /* Se asigna mayor proporción al tercer recuadro (presión) para que el texto quepa holgado */
         .weather-grid-3 {{ 
             display: grid; 
-            grid-template-columns: repeat(3, minmax(0, 1fr)); 
+            grid-template-columns: 1fr 0.9fr 1.18fr; 
             gap: 3px; 
             flex: 1;
             align-items: center; 
@@ -516,7 +515,6 @@ def generar_html(resultados_totales, hay_alerta):
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
-            height: 34px; /* Altura fija para evitar desfases entre una y dos líneas */
         }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
@@ -634,7 +632,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Alineacion perfecta: corregido desfase vertical en los cajones de datos [skip ci]",
+            "Ajuste de ancho: se amplía el recuadro de presión para que el texto y icono queden contenidos [skip ci]",
         ],
         capture_output=True,
         text=True,
