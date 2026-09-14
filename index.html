@@ -23,14 +23,13 @@
         .banner-alerta { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
         #map { height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }
         
-        /* Contenedor principal de tarjetas con alineación uniforme */
         .grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
             gap: 15px; 
             max-width: 1200px; 
             margin: 0 auto; 
-            align-items: stretch; /* Fuerza a todas las filas del grid a estirarse por igual */
+            align-items: stretch; 
         }
         
         .card-link { text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }
@@ -44,7 +43,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            height: 100%; /* Ocupa el 100% de la celda del grid garantizando misma altura */
+            height: 100%; 
             box-sizing: border-box;
         }
         .card.ok { 
@@ -69,9 +68,10 @@
         .station-name { font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }
         .status-badge { font-size: 11px; }
         
-        .weather-grid { display: grid; grid-template-columns: 1.15fr 0.98fr 0.98fr 0.89fr; gap: 4px; margin: 6px 0; align-items: center; }
-        .weather-item { font-size: 0.76em; color: #0f172a; background: rgba(255, 255, 255, 0.75); padding: 4px 2px; border-radius: 6px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .weather-item.temp-suelta { background: transparent; border: none; box-shadow: none; font-size: 1.1em; font-weight: 800; color: #0f172a; padding: 0; text-align: left; align-items: flex-start; }
+        /* Weather grid con 4 elementos: Temp, Viento, Racha, Presión */
+        .weather-grid { display: grid; grid-template-columns: 1.15fr 0.95fr 0.95fr 0.95fr; gap: 4px; margin: 6px 0; align-items: center; }
+        .weather-item { font-size: 0.72em; color: #0f172a; background: rgba(255, 255, 255, 0.75); padding: 4px 2px; border-radius: 6px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.9); text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .weather-item.temp-suelta { background: transparent; border: none; box-shadow: none; font-size: 1.05em; font-weight: 800; color: #0f172a; padding: 0; text-align: left; align-items: flex-start; }
         
         .card-footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }
         .time { font-size: 0.68em; color: #334155; }
@@ -83,7 +83,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 14-09-2026 16:05:19 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 14-09-2026 16:10:24 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -96,13 +96,13 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 18.1°C</div>
+                    <div class="weather-item temp-suelta">🌡️ 18.8°C</div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">7.5 kt</span></div>
+                    <div class="weather-item">💨 14.8 kt</div>
                     <div class="weather-item">⏲️ 1015.7 hPa</div>
-                    <div class="weather-item">💧 58.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">8.5 kt</span></div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 14-09-2026 16:00:00</span>
+                    <span class="time">Reporte: 14-09-2026 16:10:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -115,13 +115,13 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 18.6°C</div>
+                    <div class="weather-item temp-suelta">🌡️ 18.2°C</div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W/SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">8.9 kt</span></div>
+                    <div class="weather-item">💨 13.9 kt</div>
                     <div class="weather-item">⏲️ 1017.1 hPa</div>
-                    <div class="weather-item">💧 54.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">8.3 kt</span></div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 14-09-2026 16:00:01</span>
+                    <span class="time">Reporte: 14-09-2026 16:10:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -135,12 +135,12 @@
                 </div>
                 <div class="weather-grid">
                     <div class="weather-item temp-suelta">🌡️ 17.8°C</div>
-                    <div class="weather-item">⏲️ 1017.6 hPa</div>
-                    <div class="weather-item">💧 63.0%</div>
                     <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W/NW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">2.6 kt</span></div>
+                    <div class="weather-item">💨 7.0 kt</div>
+                    <div class="weather-item">⏲️ 1017.6 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-14 16:05:16</span>
+                    <span class="time">Reporte: 2026-09-14 16:10:21</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -153,13 +153,13 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 17.2°C</div>
-                    <div class="weather-item">⏲️ 1017.7 hPa</div>
-                    <div class="weather-item">💧 67.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ S/SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">9.5 kt</span></div>
+                    <div class="weather-item temp-suelta">🌡️ 17.6°C</div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ S/SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">10.6 kt</span></div>
+                    <div class="weather-item">💨 15.7 kt</div>
+                    <div class="weather-item">⏲️ 1017.5 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 14-09-2026 16:00:00</span>
+                    <span class="time">Reporte: 14-09-2026 16:10:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -173,12 +173,12 @@
                 </div>
                 <div class="weather-grid">
                     <div class="weather-item temp-suelta">🌡️ 15.0°C</div>
-                    <div class="weather-item">⏲️ 1016.6 hPa</div>
-                    <div class="weather-item">💧 68.0%</div>
                     <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">20.9 kt</span></div>
+                    <div class="weather-item">💨 23.5 kt</div>
+                    <div class="weather-item">⏲️ 1016.6 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-14 16:05:00</span>
+                    <span class="time">Reporte: 2026-09-14 16:10:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -191,13 +191,13 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 15.4°C</div>
-                    <div class="weather-item">⏲️ 1017.1 hPa</div>
-                    <div class="weather-item">💧 78.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W/SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">3.0 kt</span></div>
+                    <div class="weather-item temp-suelta">🌡️ 15.1°C</div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">2.4 kt</span></div>
+                    <div class="weather-item">💨 3.5 kt</div>
+                    <div class="weather-item">⏲️ 1016.9 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 14-09-2026 16:00:00</span>
+                    <span class="time">Reporte: 14-09-2026 16:10:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -210,13 +210,13 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 16.9°C</div>
-                    <div class="weather-item">⏲️ 1018.1 hPa</div>
-                    <div class="weather-item">💧 72.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">2.9 kt</span></div>
+                    <div class="weather-item temp-suelta">🌡️ 17.2°C</div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">2.0 kt</span></div>
+                    <div class="weather-item">💨 3.5 kt</div>
+                    <div class="weather-item">⏲️ 1017.9 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 14-09-2026 16:00:01</span>
+                    <span class="time">Reporte: 14-09-2026 16:10:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -230,12 +230,12 @@
                 </div>
                 <div class="weather-grid">
                     <div class="weather-item temp-suelta">🌡️ 18.3°C</div>
-                    <div class="weather-item">⏲️ 1019.4 hPa</div>
-                    <div class="weather-item">💧 55.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ N</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">12.6 kt</span></div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ E/SE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">9.1 kt</span></div>
+                    <div class="weather-item">💨 13.0 kt</div>
+                    <div class="weather-item">⏲️ 1019.3 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 14-09-2026 16:00:00</span>
+                    <span class="time">Reporte: 14-09-2026 16:10:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -248,13 +248,13 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 13.8°C</div>
-                    <div class="weather-item">⏲️ 1019.9 hPa</div>
-                    <div class="weather-item">💧 67.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">7.5 kt</span></div>
+                    <div class="weather-item temp-suelta">🌡️ 14.1°C</div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">7.4 kt</span></div>
+                    <div class="weather-item">💨 12.2 kt</div>
+                    <div class="weather-item">⏲️ 1020.0 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 14-09-2026 16:00:00</span>
+                    <span class="time">Reporte: 14-09-2026 16:10:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -267,13 +267,13 @@
                     <span class="status-badge">🟢</span>
                 </div>
                 <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 14.3°C</div>
-                    <div class="weather-item">⏲️ 1020.6 hPa</div>
-                    <div class="weather-item">💧 69.0%</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ N/NE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">6.3 kt</span></div>
+                    <div class="weather-item temp-suelta">🌡️ 15.3°C</div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ NE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">2.6 kt</span></div>
+                    <div class="weather-item">💨 6.1 kt</div>
+                    <div class="weather-item">⏲️ 1020.5 hPa</div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 14-09-2026 16:00:00</span>
+                    <span class="time">Reporte: 14-09-2026 16:10:01</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -292,43 +292,43 @@
         
         L.circleMarker([-35.3241667, -72.40805555], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Constitución</b><br>Estado: OPERATIVA<br>Temp: 18.1°C | Pres: 1015.7 hPa | Hum: 58.0% | Viento: 8.5 kt (SW)<br>Reporte: 14-09-2026 16:00:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Constitución</b><br>Estado: OPERATIVA<br>Temp: 18.8°C | Viento: 7.5 kt (SW) | Racha: 14.8 kt | Pres: 1015.7 hPa<br>Reporte: 14-09-2026 16:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.7027778, -72.9775], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén</b><br>Estado: OPERATIVA<br>Temp: 18.6°C | Pres: 1017.1 hPa | Hum: 54.0% | Viento: 8.3 kt (W)<br>Reporte: 14-09-2026 16:00:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén</b><br>Estado: OPERATIVA<br>Temp: 18.2°C | Viento: 8.9 kt (W/SW) | Racha: 13.9 kt | Pres: 1017.1 hPa<br>Reporte: 14-09-2026 16:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 17.8°C | Pres: 1017.6 hPa | Hum: 63.0% | Viento: 2.6 kt (W/NW)<br>Reporte: 2026-09-14 16:05:16<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 17.8°C | Viento: 2.6 kt (W/NW) | Racha: 7.0 kt | Pres: 1017.6 hPa<br>Reporte: 2026-09-14 16:10:21<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 17.2°C | Pres: 1017.7 hPa | Hum: 67.0% | Viento: 9.5 kt (S/SW)<br>Reporte: 14-09-2026 16:00:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 17.6°C | Viento: 10.6 kt (S/SW) | Racha: 15.7 kt | Pres: 1017.5 hPa<br>Reporte: 14-09-2026 16:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 15.0°C | Pres: 1016.6 hPa | Hum: 68.0% | Viento: 20.9 kt (SW)<br>Reporte: 2026-09-14 16:05:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 15.0°C | Viento: 20.9 kt (SW) | Racha: 23.5 kt | Pres: 1016.6 hPa<br>Reporte: 2026-09-14 16:10:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Coronel</b><br>Estado: OPERATIVA<br>Temp: 15.4°C | Pres: 1017.1 hPa | Hum: 78.0% | Viento: 3.0 kt (W/SW)<br>Reporte: 14-09-2026 16:00:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Coronel</b><br>Estado: OPERATIVA<br>Temp: 15.1°C | Viento: 2.4 kt (SW) | Racha: 3.5 kt | Pres: 1016.9 hPa<br>Reporte: 14-09-2026 16:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.09, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lota</b><br>Estado: OPERATIVA<br>Temp: 16.9°C | Pres: 1018.1 hPa | Hum: 72.0% | Viento: 2.9 kt (W)<br>Reporte: 14-09-2026 16:00:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/lota/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lota</b><br>Estado: OPERATIVA<br>Temp: 17.2°C | Viento: 2.0 kt (W) | Racha: 3.5 kt | Pres: 1017.9 hPa<br>Reporte: 14-09-2026 16:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lota/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.606, -73.65], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu</b><br>Estado: OPERATIVA<br>Temp: 18.3°C | Pres: 1019.4 hPa | Hum: 55.0% | Viento: 12.6 kt (N)<br>Reporte: 14-09-2026 16:00:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu</b><br>Estado: OPERATIVA<br>Temp: 18.3°C | Viento: 9.1 kt (E/SE) | Racha: 13.0 kt | Pres: 1019.3 hPa<br>Reporte: 14-09-2026 16:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-38.788, -73.397], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Carahue</b><br>Estado: OPERATIVA<br>Temp: 13.8°C | Pres: 1019.9 hPa | Hum: 67.0% | Viento: 7.5 kt (SE)<br>Reporte: 14-09-2026 16:00:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Carahue</b><br>Estado: OPERATIVA<br>Temp: 14.1°C | Viento: 7.4 kt (SE) | Racha: 12.2 kt | Pres: 1020.0 hPa<br>Reporte: 14-09-2026 16:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-39.883, -73.433], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral</b><br>Estado: OPERATIVA<br>Temp: 14.3°C | Pres: 1020.6 hPa | Hum: 69.0% | Viento: 6.3 kt (N/NE)<br>Reporte: 14-09-2026 16:00:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral</b><br>Estado: OPERATIVA<br>Temp: 15.3°C | Viento: 2.6 kt (NE) | Racha: 6.1 kt | Pres: 1020.5 hPa<br>Reporte: 14-09-2026 16:10:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
     </script>
 </body>
