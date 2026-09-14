@@ -38,12 +38,12 @@ ESTACIONES_DIRECTEMAR = [
             "http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm"
         ),
         "lat": -35.3241667,
-        "lon": -72.4080555, 
+        "lon": -72.40805555,
     },
     {
         "nombre": "Capitanía de Puerto Lirquén",
         "url": "http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm",
-        "lat": -36.7027,
+        "lat": -36.0727,
         "lon": -72.9775,
     },
     {
@@ -107,16 +107,16 @@ ESTACIONES_FAROS = [
 ]
 
 ORDEN_ESTACIONES = [
-    "Capitanía de Puerto Constitución-7700",
-    "Capitanía de Puerto Lirquén-7406",
+    "Capitanía de Puerto Constitución",
+    "Capitanía de Puerto Lirquén",
     "Faro Isla Quiriquina",
     "Gobernación Marítima de Talcahuano",
     "Faro Punta Hualpén",
-    "Capitanía de Puerto Coronel-7313",
-    "Capitanía de Puerto Lota-7373",
-    "Capitanía de Puerto Lebu-7800",
+    "Capitanía de Puerto Coronel",
+    "Capitanía de Puerto Lota",
+    "Capitanía de Puerto Lebu",
     "Capitanía de Puerto Carahue",
-    "Capitanía de Puerto Corral-1960",
+    "Capitanía de Puerto Corral",
 ]
 
 
@@ -137,7 +137,6 @@ def formatear_direccion(dir_str):
   if not dir_str:
     return ""
   d = dir_str.upper().strip()
-  # Corregir formato con barra para rumbos compuestos de 3 letras (ej. SSW -> S/SW, NNW -> N/NW, SSE -> S/SE)
   if len(d) == 3:
     return f"{d[0]}/{d[1:]}"
   return d
@@ -375,7 +374,6 @@ def generar_html(resultados_totales, hay_alerta):
     clase = "ok" if r["ok"] else "error"
     icono = "🟢" if r["ok"] else "🔴"
 
-    # Estructura unificada para que todas las tarjetas mantengan el mismo diseño de doble línea (Dirección + Velocidad con ícono)
     if r["dir_viento"]:
       viento_contenido = (
           f'<span style="display: block; font-size: 0.72em; color: #1d4ed8;'
@@ -588,8 +586,8 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Unificacion de estructura visual de viento en todas las tarjetas"
-            " [skip ci]",
+            "Actualizacion de coordenadas y nombres de capitanias sin"
+            " numeros [skip ci]",
         ],
         capture_output=True,
         text=True,
