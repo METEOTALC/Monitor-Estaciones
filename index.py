@@ -482,13 +482,13 @@ def generar_html(resultados_totales, hay_alerta):
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
-        /* Weather grid: Temperatura suelta + 3 recuadros uniformes para Viento, Racha y Presión */
+        /* Weather grid: Temperatura suelta + 3 recuadros perfectamente uniformes y estirados */
         .weather-grid {{ 
             display: grid; 
-            grid-template-columns: 1.15fr 0.95fr 0.95fr 0.95fr; 
+            grid-template-columns: 1.1fr 1fr 1fr 1fr; 
             gap: 4px; 
             margin: 6px 0; 
-            align-items: center; 
+            align-items: stretch; 
         }}
         .weather-item {{ 
             font-size: 0.78em; 
@@ -632,7 +632,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Actualizacion: temperatura en formato suelto y recuadros de datos uniformes [skip ci]",
+            "Actualizacion: temperatura suelta y altura uniforme para los tres recuadros de datos [skip ci]",
         ],
         capture_output=True,
         text=True,
