@@ -68,12 +68,27 @@
         .station-name { font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }
         .status-badge { font-size: 11px; }
         
-        /* Weather grid: Temperatura suelta + 3 recuadros perfectamente uniformes y estirados */
-        .weather-grid { 
+        /* Contenedor principal del cuerpo: temperatura suelta a la izquierda y los 3 recuadros a la derecha */
+        .card-body-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 6px 0;
+        }
+        .temp-suelta {
+            font-size: 1.05em;
+            font-weight: 800;
+            color: #0f172a;
+            white-space: nowrap;
+        }
+        
+        /* Cuadrícula exclusiva de 3 columnas estrictamente iguales (33.33% cada una) para Viento, Racha y Presión */
+        .weather-grid-3 { 
             display: grid; 
-            grid-template-columns: 1.1fr 1fr 1fr 1fr; 
+            grid-template-columns: repeat(3, minmax(0, 1fr)); 
             gap: 4px; 
-            margin: 6px 0; 
+            flex: 1;
             align-items: stretch; 
         }
         .weather-item { 
@@ -90,17 +105,8 @@
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
-        }
-        .weather-item.temp-suelta { 
-            background: transparent; 
-            border: none; 
-            box-shadow: none; 
-            font-size: 1.05em; 
-            font-weight: 800; 
-            color: #0f172a; 
-            padding: 0; 
-            text-align: left; 
-            align-items: flex-start; 
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .card-footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }
@@ -113,7 +119,7 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 14-09-2026 16:30:26 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 14-09-2026 16:32:45 (Tolerancia: 12 min)</div>
     
     <div class="summary">Estaciones Operativas: 10 de 10</div>
     <div id="map"></div>
@@ -125,11 +131,13 @@
                     <span class="station-name">Capitanía de Puerto Constitución</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 18.5°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">6.5 kt</span></div>
-                    <div class="weather-item">💨 13.0 kt</div>
-                    <div class="weather-item">⏲️ 1015.5 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 18.5°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">6.5 kt</span></div>
+                        <div class="weather-item">💨 13.0 kt</div>
+                        <div class="weather-item">⏲️ 1015.5 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 14-09-2026 16:30:00</span>
@@ -144,11 +152,13 @@
                     <span class="station-name">Capitanía de Puerto Lirquén</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 18.6°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">8.5 kt</span></div>
-                    <div class="weather-item">💨 11.3 kt</div>
-                    <div class="weather-item">⏲️ 1017.0 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 18.6°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">8.5 kt</span></div>
+                        <div class="weather-item">💨 11.3 kt</div>
+                        <div class="weather-item">⏲️ 1017.0 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 14-09-2026 16:30:00</span>
@@ -163,14 +173,16 @@
                     <span class="station-name">Faro Isla Quiriquina</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 17.8°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W/SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">4.3 kt</span></div>
-                    <div class="weather-item">💨 7.8 kt</div>
-                    <div class="weather-item">⏲️ 1017.6 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 18.3°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">1.7 kt</span></div>
+                        <div class="weather-item">💨 3.5 kt</div>
+                        <div class="weather-item">⏲️ 1017.9 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-14 16:30:21</span>
+                    <span class="time">Reporte: 2026-09-14 16:32:41</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -182,11 +194,13 @@
                     <span class="station-name">Gobernación Marítima de Talcahuano</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 17.7°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ S/SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">9.5 kt</span></div>
-                    <div class="weather-item">💨 14.8 kt</div>
-                    <div class="weather-item">⏲️ 1017.6 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 17.7°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ S/SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">9.5 kt</span></div>
+                        <div class="weather-item">💨 14.8 kt</div>
+                        <div class="weather-item">⏲️ 1017.6 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 14-09-2026 16:30:00</span>
@@ -201,11 +215,13 @@
                     <span class="station-name">Faro Punta Hualpén</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 16.1°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">19.1 kt</span></div>
-                    <div class="weather-item">💨 19.1 kt</div>
-                    <div class="weather-item">⏲️ 1016.3 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 16.1°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">19.1 kt</span></div>
+                        <div class="weather-item">💨 19.1 kt</div>
+                        <div class="weather-item">⏲️ 1016.3 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 2026-09-14 16:30:00</span>
@@ -220,11 +236,13 @@
                     <span class="station-name">Capitanía de Puerto Coronel</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 15.2°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">1.9 kt</span></div>
-                    <div class="weather-item">💨 4.3 kt</div>
-                    <div class="weather-item">⏲️ 1016.6 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 15.2°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">1.9 kt</span></div>
+                        <div class="weather-item">💨 4.3 kt</div>
+                        <div class="weather-item">⏲️ 1016.6 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 14-09-2026 16:30:00</span>
@@ -239,11 +257,13 @@
                     <span class="station-name">Capitanía de Puerto Lota</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 17.1°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">3.2 kt</span></div>
-                    <div class="weather-item">💨 5.2 kt</div>
-                    <div class="weather-item">⏲️ 1017.8 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 17.1°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ W</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">3.2 kt</span></div>
+                        <div class="weather-item">💨 5.2 kt</div>
+                        <div class="weather-item">⏲️ 1017.8 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 14-09-2026 16:30:00</span>
@@ -258,11 +278,13 @@
                     <span class="station-name">Capitanía de Puerto Lebu</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 18.3°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">8.4 kt</span></div>
-                    <div class="weather-item">💨 14.8 kt</div>
-                    <div class="weather-item">⏲️ 1019.2 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 18.3°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">8.4 kt</span></div>
+                        <div class="weather-item">💨 14.8 kt</div>
+                        <div class="weather-item">⏲️ 1019.2 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 14-09-2026 16:30:00</span>
@@ -277,11 +299,13 @@
                     <span class="station-name">Capitanía de Puerto Carahue</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 13.9°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">7.4 kt</span></div>
-                    <div class="weather-item">💨 13.0 kt</div>
-                    <div class="weather-item">⏲️ 1020.0 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 13.9°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">7.4 kt</span></div>
+                        <div class="weather-item">💨 13.0 kt</div>
+                        <div class="weather-item">⏲️ 1020.0 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 14-09-2026 16:30:01</span>
@@ -296,11 +320,13 @@
                     <span class="station-name">Capitanía de Puerto Corral</span>
                     <span class="status-badge">🟢</span>
                 </div>
-                <div class="weather-grid">
-                    <div class="weather-item temp-suelta">🌡️ 14.6°C</div>
-                    <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ NE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">3.5 kt</span></div>
-                    <div class="weather-item">💨 6.1 kt</div>
-                    <div class="weather-item">⏲️ 1020.3 hPa</div>
+                <div class="card-body-content">
+                    <div class="temp-suelta">🌡️ 14.6°C</div>
+                    <div class="weather-grid-3">
+                        <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ NE</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">3.5 kt</span></div>
+                        <div class="weather-item">💨 6.1 kt</div>
+                        <div class="weather-item">⏲️ 1020.3 hPa</div>
+                    </div>
                 </div>
                 <div class="card-footer-info">
                     <span class="time">Reporte: 14-09-2026 16:30:00</span>
@@ -330,7 +356,7 @@
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 17.8°C | Viento: 4.3 kt (W/SW) | Racha: 7.8 kt | Pres: 1017.6 hPa<br>Reporte: 2026-09-14 16:30:21<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 18.3°C | Viento: 1.7 kt (SE) | Racha: 3.5 kt | Pres: 1017.9 hPa<br>Reporte: 2026-09-14 16:32:41<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
