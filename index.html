@@ -7,13 +7,19 @@
     <title>Monitor de Estaciones Automáticas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #1e293b; padding: 15px; margin: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #1e293b; padding: 15px; margin: 0; transition: background-color 0.5s ease; }
         h1 { text-align: center; color: #0f2942; margin-bottom: 0; font-size: 22px; line-height: 1.2; font-weight: 700; }
         .subtitle-line2 { text-align: center; color: #1e40af; margin-bottom: 6px; font-size: 16px; font-weight: bold; }
         .subtitle { text-align: center; color: #64748b; margin-bottom: 12px; font-size: 12px; }
         .summary { text-align: center; font-weight: bold; margin-bottom: 15px; color: #0f2942; font-size: 14px; background: #ffffff; padding: 6px 16px; border-radius: 20px; max-width: 280px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #cbd5e1; }
-        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        body.alerta-activa { animation: parpadeo 1.5s infinite; }
+        
+        @keyframes parpadeoFondo { 
+            0% { background-color: #f4f6f9; } 
+            50% { background-color: #fca5a5; } 
+            100% { background-color: #f4f6f9; } 
+        }
+        body.alerta-activa { animation: parpadeoFondo 1.5s infinite; }
+
         .banner-alerta { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
         #map { height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }
@@ -22,9 +28,7 @@
         .card { 
             border-radius: 14px; 
             padding: 10px 12px; 
-            background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
-            border: 1px solid #94a3b8; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
@@ -34,13 +38,23 @@
             height: 100%;
             box-sizing: border-box;
         }
+        .card.ok { 
+            background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
+            border: 1px solid #94a3b8;
+            border-left: 6px solid #16a34a; 
+        }
+        .card.error { 
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 55%, #f87171 100%); 
+            border: 1px solid #f87171;
+            border-left: 6px solid #dc2626; 
+        }
         .card:hover { 
             transform: translateY(-3px); 
             box-shadow: 0 8px 20px rgba(30, 64, 175, 0.2); 
-            border-color: #64748b;
         }
-        .card.ok { border-left: 6px solid #16a34a; }
-        .card.error { border-left: 6px solid #dc2626; }
+        .card.error:hover {
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3); 
+        }
         
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
         .station-name { font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }
@@ -60,7 +74,7 @@
 <body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 14-09-2026 13:55:18 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 14-09-2026 13:58:18 (Tolerancia: 12 min)</div>
     <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
     <div class="summary">Estaciones Operativas: 9 de 10</div>
     <div id="map"></div>
@@ -117,7 +131,7 @@
                     <div class="weather-item"><span style="display: block; font-size: 0.72em; color: #1d4ed8; font-weight: 800; line-height: 1;">🌬️ SW</span><span style="display: block; font-size: 0.84em; line-height: 1.1;">4.3 kt</span></div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-14 13:55:14</span>
+                    <span class="time">Reporte: 2026-09-14 13:58:14</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -271,17 +285,17 @@
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Constitución</b><br>Estado: OPERATIVA<br>Temp: 18.2°C | Pres: 1016.4 hPa | Hum: 61.0% | Viento: 2.0 kt (NW)<br>Reporte: 14-09-2026 13:50:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
-        L.circleMarker([-36.7027778, -72.9775], {
+        L.circleMarker([-36.0727, -72.9775], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén</b><br>Estado: OPERATIVA<br>Temp: 21.7°C | Pres: 1017.8 hPa | Hum: 35.0% | Viento: 4.2 kt (S/SE)<br>Reporte: 14-09-2026 13:50:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 20.0°C | Pres: 1019.3 hPa | Hum: 48.0% | Viento: 4.3 kt (SW)<br>Reporte: 2026-09-14 13:55:14<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 20.0°C | Pres: 1019.3 hPa | Hum: 48.0% | Viento: 4.3 kt (SW)<br>Reporte: 2026-09-14 13:58:14<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 20.1°C | Pres: 1018.7 hPa | Hum: 56.0% | Viento: 5.8 kt (S/SW)<br>Reporte: 14-09-2026 13:40:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: DESACTUALIZADA (18 min)<br>Temp: 20.1°C | Pres: 1018.7 hPa | Hum: 56.0% | Viento: 5.8 kt (S/SW)<br>Reporte: 14-09-2026 13:40:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
