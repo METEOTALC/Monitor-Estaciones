@@ -364,16 +364,16 @@ def generar_html(resultados_totales, hay_alerta):
 
     if r["dir_viento"]:
       viento_contenido = (
-          f'<span style="display: block; font-size: 0.70em; color: #1d4ed8;'
+          f'<span style="display: block; font-size: 0.68em; color: #1d4ed8;'
           f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
-          f'<span style="display: block; font-size: 0.80em;'
+          f'<span style="display: block; font-size: 0.78em;'
           f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
       )
     else:
       viento_contenido = (
-          '<span style="display: block; font-size: 0.70em; color: transparent;'
+          '<span style="display: block; font-size: 0.68em; color: transparent;'
           ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
-          f'<span style="display: block; font-size: 0.80em;'
+          f'<span style="display: block; font-size: 0.78em;'
           f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
       )
 
@@ -388,8 +388,8 @@ def generar_html(resultados_totales, hay_alerta):
                     <div class="temp-suelta">🌡️ {r['temp']}</div>
                     <div class="weather-grid-3">
                         <div class="weather-item">{viento_contenido}</div>
-                        <div class="weather-item"><span style="font-size: 0.80em; font-weight: 700;">💨 {r['racha']}</span></div>
-                        <div class="weather-item"><span style="font-size: 0.76em; font-weight: 700;">⏲️ {r['pres']}</span></div>
+                        <div class="weather-item"><span style="font-size: 0.78em; font-weight: 700;">💨 {r['racha']}</span></div>
+                        <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ {r['pres']}</span></div>
                     </div>
                 </div>
                 <div class="card-footer-info">
@@ -483,11 +483,11 @@ def generar_html(resultados_totales, hay_alerta):
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 6px;
+            gap: 5px;
             margin: 6px 0;
         }}
         .temp-suelta {{
-            font-size: 1.0em;
+            font-size: 0.95em;
             font-weight: 800;
             color: #0f172a;
             white-space: nowrap;
@@ -495,18 +495,18 @@ def generar_html(resultados_totales, hay_alerta):
             align-items: center;
         }}
         
-        /* Se asigna mayor proporción al tercer recuadro (presión) para que el texto quepa holgado */
+        /* Proporción equilibrada y estiramiento automático idéntico para los 3 elementos */
         .weather-grid-3 {{ 
             display: grid; 
-            grid-template-columns: 1fr 0.9fr 1.18fr; 
+            grid-template-columns: 1fr 0.95fr 1.2fr; 
             gap: 3px; 
             flex: 1;
-            align-items: center; 
+            align-items: stretch; 
         }}
         .weather-item {{ 
             color: #0f172a; 
             background: rgba(255, 255, 255, 0.9); 
-            padding: 5px 2px; 
+            padding: 4px 2px; 
             border-radius: 6px; 
             border: 1px solid rgba(255, 255, 255, 0.95); 
             text-align: center; 
@@ -632,7 +632,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Ajuste de ancho: se amplía el recuadro de presión para que el texto y icono queden contenidos [skip ci]",
+            "Alineacion uniforme: misma altura adaptativa para viento, racha y presion manteniendo temperatura intacta [skip ci]",
         ],
         capture_output=True,
         text=True,
