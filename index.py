@@ -43,7 +43,7 @@ ESTACIONES_DIRECTEMAR = [
     {
         "nombre": "Capitanía de Puerto Lirquén",
         "url": "http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm",
-        "lat": -36.7027778,
+        "lat": -36.0727,
         "lon": -72.9775,
     },
     {
@@ -372,7 +372,7 @@ def generar_html(resultados_totales, hay_alerta):
   cards_html = ""
   for r in resultados_totales:
     clase = "ok" if r["ok"] else "error"
-    icono = "🟢" if r["ok"] else "🔴"
+    icono = "🔴" if not r["ok"] else "🟢"
 
     if r["dir_viento"]:
       viento_contenido = (
@@ -428,13 +428,19 @@ def generar_html(resultados_totales, hay_alerta):
     <title>Monitor de Estaciones Automáticas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #1e293b; padding: 15px; margin: 0; }}
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #1e293b; padding: 15px; margin: 0; transition: background-color 0.5s ease; }}
         h1 {{ text-align: center; color: #0f2942; margin-bottom: 0; font-size: 22px; line-height: 1.2; font-weight: 700; }}
         .subtitle-line2 {{ text-align: center; color: #1e40af; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
         .subtitle {{ text-align: center; color: #64748b; margin-bottom: 12px; font-size: 12px; }}
         .summary {{ text-align: center; font-weight: bold; margin-bottom: 15px; color: #0f2942; font-size: 14px; background: #ffffff; padding: 6px 16px; border-radius: 20px; max-width: 280px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #cbd5e1; }}
-        @keyframes parpadeo {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} 100% {{ opacity: 1; }} }}
-        body.alerta-activa {{ animation: parpadeo 1.5s infinite; }}
+        
+        @keyframes parpadeoFondo {{ 
+            0% {{ background-color: #f4f6f9; }} 
+            50% {{ background-color: #fca5a5; }} 
+            100% {{ background-color: #f4f6f9; }} 
+        }}
+        body.alerta-activa {{ animation: parpadeoFondo 1.5s infinite; }}
+
         .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
         #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
         .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; align-items: stretch; }}
@@ -443,9 +449,7 @@ def generar_html(resultados_totales, hay_alerta):
         .card {{ 
             border-radius: 14px; 
             padding: 10px 12px; 
-            background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
-            border: 1px solid #94a3b8; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
@@ -455,13 +459,23 @@ def generar_html(resultados_totales, hay_alerta):
             height: 100%;
             box-sizing: border-box;
         }}
+        .card.ok {{ 
+            background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
+            border: 1px solid #94a3b8;
+            border-left: 6px solid #16a34a; 
+        }}
+        .card.error {{ 
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 55%, #f87171 100%); 
+            border: 1px solid #f87171;
+            border-left: 6px solid #dc2626; 
+        }}
         .card:hover {{ 
             transform: translateY(-3px); 
             box-shadow: 0 8px 20px rgba(30, 64, 175, 0.2); 
-            border-color: #64748b;
         }}
-        .card.ok {{ border-left: 6px solid #16a34a; }}
-        .card.error {{ border-left: 6px solid #dc2626; }}
+        .card.error:hover {{
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3); 
+        }}
         
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }}
         .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
@@ -586,8 +600,8 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Actualizacion de coordenadas y nombres de capitanias sin"
-            " numeros [skip ci]",
+            "Actualizacion de alertas visuales en tarjetas y pantalla [skip"
+            " ci]",
         ],
         capture_output=True,
         text=True,
