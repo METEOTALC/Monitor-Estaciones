@@ -43,7 +43,7 @@ ESTACIONES_DIRECTEMAR = [
     {
         "nombre": "Capitanía de Puerto Lirquén",
         "url": "http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm",
-        "lat": -36.0727778,
+        "lat": -36.7027778,
         "lon": -72.9775,
     },
     {
