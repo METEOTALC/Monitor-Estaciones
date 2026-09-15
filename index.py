@@ -113,14 +113,14 @@ ESTACIONES_IFOP = [
     {
         "nombre": "Faro Punta Carranza",
         "url": "https://giscc.ifop.cl/doma_met/",
-        "lat": -35.5608333,
-        "lon": -72.6177777,
+        "lat": -35.590,
+        "lon": -72.600,
     },
     {
         "nombre": "Isla Mocha",
         "url": "https://giscc.ifop.cl/doma_met/",
-        "lat": -38.3849472,
-        "lon": -73.8688523,
+        "lat": -38.370,
+        "lon": -73.900,
     },
 ]
 
@@ -198,9 +198,9 @@ def consultar_directemar(est):
       texto_plano = (
           texto_plano.replace("\xa5", " ")
           .replace("\xa0", " ")
-          .replace(" ", " ")
-          .replace("°", "°")
-          .replace("°", "°")
+          .replace("&nbsp;", " ")
+          .replace("&deg;", "°")
+          .replace("&#176;", "°")
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
@@ -226,6 +226,7 @@ def consultar_directemar(est):
         if val is not None:
           pres = f"{val:.1f} hPa"
 
+      # Búsqueda de dirección de viento más flexible (admite grados previos, abreviaturas o letras sueltas)
       bearing_match = re.search(
           r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
           texto_plano,
@@ -234,6 +235,13 @@ def consultar_directemar(est):
       if not bearing_match:
         bearing_match = re.search(
             r"(?:Direcci[oó]n\s*Viento|Wind\s*Direction)[^\w]*([N,S,E,W]{1,3})",
+            texto_plano,
+            re.IGNORECASE,
+        )
+      if not bearing_match:
+        # Búsqueda adicional por si aparece como grados cardinales directos ej: N, NNW, SSW
+        bearing_match = re.search(
+            r"(?:Direcci[oó]n|Dir)[^\w]*(?:Viento)?[^\w]*([N,S,E,W]{1,3})",
             texto_plano,
             re.IGNORECASE,
         )
@@ -703,8 +711,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización de enlaces IFOP a DOMA Met directo y orden"
-                " correcto [skip ci]"
+                "Corrección de lectura de dirección de viento en estaciones"
+                " Directemar [skip ci]"
             ),
         ],
         capture_output=True,
