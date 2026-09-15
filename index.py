@@ -376,37 +376,70 @@ def consultar_ifop(est):
   try:
     req = urllib.request.Request(est["api_url"], headers=HEADERS)
     with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-      data = json.loads(response.read().decode("utf-8"))
+      texto_raw = response.read().decode("utf-8")
+      data = json.loads(texto_raw)
       
-      # Dependiendo de cómo venga estructurado el JSON de IFOP, extraemos los campos principales.
-      # Usualmente vienen en un diccionario o lista con la última observación.
-      # Ajustamos de forma segura para leer temperaturas, vientos y presiones.
-      
-      # Si el JSON es una lista o un diccionario con la data:
-      obs = data[0] if isinstance(data, list) else data
-      
-      # Extraer valores según las llaves típicas de estas APIs (temperatura, presion, viento, etc.)
-      temp_val = convertir_numero(obs.get("temperatura") or obs.get("temp") or obs.get("ta"))
+      # Depuración en consola para ver qué claves y datos llegan exactamente
+      print(f"--- DEBUG IFOP [{est['nombre']}] ---")
+      print(texto_raw[:400])
+
+      # Extraemos la observación según si es lista o diccionario
+      if isinstance(data, list):
+        obs = data[-1] if len(data) > 0 else {}
+      elif isinstance(data, dict):
+        if "data" in data and isinstance(data["data"], list):
+          obs = data["data"][-1] if len(data["data"]) > 0 else {}
+        elif "values" in data and isinstance(data["values"], list):
+          obs = data["values"][-1] if len(data["values"]) > 0 else {}
+        else:
+          obs = data
+      else:
+        obs = {}
+
+      def buscar_val(claves):
+        for k in claves:
+          for o_key in obs.keys():
+            if k.lower() in o_key.lower():
+              val = convertir_numero(obs[o_key])
+              if val is not None:
+                return val
+        return None
+
+      temp_val = buscar_val(["temp", "ta", "temperatura"])
       temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
-      
-      pres_val = convertir_numero(obs.get("presion") or obs.get("pressure") or obs.get("qfe"))
+
+      pres_val = buscar_val(["pres", "qfe", "qff", "barom", "p_at"])
       pres = f"{pres_val:.1f} hPa" if pres_val is not None else "--"
-      
-      viento_val = convertir_numero(obs.get("viento_vel") or obs.get("wind_speed") or obs.get("ff"))
+
+      viento_val = buscar_val(["ff", "vel", "viento_vel", "speed", "wind_speed"])
       viento = f"{viento_val:.1f} kt" if viento_val is not None else "--"
-      
-      racha_val = convertir_numero(obs.get("viento_racha") or obs.get("gust") or obs.get("fx"))
+
+      racha_val = buscar_val(["fx", "racha", "gust", "viento_racha"])
       racha = f"{racha_val:.1f} kt" if racha_val is not None else "--"
-      
-      dir_val = obs.get("viento_dir") or obs.get("wind_dir") or obs.get("dd")
+
+      dir_val = None
+      for k in ["dd", "dir", "viento_dir", "wind_dir"]:
+        for o_key in obs.keys():
+          if k.lower() == o_key.lower() or k.lower() in o_key.lower():
+            dir_val = obs[o_key]
+            break
+        if dir_val is not None:
+          break
+
       if isinstance(dir_val, (int, float)):
         dir_viento = grados_a_cardinal(float(dir_val))
       else:
-        dir_viento = formatear_direccion(str(dir_val)) if dir_val else ""
+        dir_viento = formatear_direccion(str(dir_val)) if dir_val is not None else ""
 
-      fecha_str = str(obs.get("fecha") or obs.get("time") or obs.get("timestamp") or "Reciente")
-      
-      # Determinamos si está operativo (asumimos True si responde la API correctamente)
+      fecha_str = "Reciente"
+      for k in ["fecha", "time", "timestamp", "hora", "fch", "date"]:
+        for o_key in obs.keys():
+          if k.lower() in o_key.lower():
+            fecha_str = str(obs[o_key])
+            break
+        if fecha_str != "Reciente":
+          break
+
       return True, "OPERATIVA", fecha_str, temp, pres, viento, dir_viento, racha
 
   except Exception as e:
@@ -735,7 +768,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Integración de endpoints API JSON para Punta Carranza e Isla Mocha [skip"
+                "Actualización extracción flexible JSON IFOP [skip"
                 " ci]"
             ),
         ],
