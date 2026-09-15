@@ -296,7 +296,16 @@ def consultar_directemar(est):
           re.IGNORECASE,
       )
       if not match_fecha:
-        return False, "SIN DATOS VÁLIDOS", "N/D", temp, pres, viento, dir_viento, racha
+        return (
+            False,
+            "SIN DATOS VÁLIDOS",
+            "N/D",
+            temp,
+            pres,
+            viento,
+            dir_viento,
+            racha,
+        )
 
       fecha_str = match_fecha.group(1)
       formato_fecha = (
@@ -348,10 +357,16 @@ def consultar_wunderground_web(est):
       )
 
       pres_inHg = imperial.get("pressure")
-      pres = f"{pres_inHg * 33.86389:.1f} hPa" if pres_inHg is not None else "--"
+      pres = (
+          f"{pres_inHg * 33.86389:.1f} hPa" if pres_inHg is not None else "--"
+      )
 
       viento_mph = imperial.get("windSpeed")
-      viento = f"{viento_mph / 1.15077945:.1f} kt" if viento_mph is not None else "--"
+      viento = (
+          f"{viento_mph / 1.15077945:.1f} kt"
+          if viento_mph is not None
+          else "--"
+      )
 
       gust_mph = imperial.get("windGust")
       racha = (
@@ -384,91 +399,119 @@ def consultar_ifop(est):
   try:
     req = urllib.request.Request(est["api_url"], headers=HEADERS)
     with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-      data = json.loads(response.read().decode("utf-8"))
+      texto_raw = response.read().decode("utf-8")
+      data = json.loads(texto_raw)
 
-      # Buscamos de forma recursiva o en arreglos el último diccionario de datos reales
-      candidatos = []
-      
-      def extraer_diccionarios(obj):
+      # Buscamos recursivamente cualquier diccionario dentro del JSON que contenga datos útiles
+      objetos_candidatos = []
+
+      def buscar_diccionarios(obj):
         if isinstance(obj, list):
           for item in obj:
-            extraer_diccionarios(item)
+            buscar_diccionarios(item)
         elif isinstance(obj, dict):
-          # Si este diccionario tiene pinta de contener datos meteorológicos (tiene varias llaves)
-          if any(k in str(obj).lower() for k in ["temp", "ta", "pres", "ff", "vel", "viento", "val"]):
-            candidatos.append(obj)
+          if any(
+              k in str(obj).lower()
+              for k in ["temp", "valor", "val", "vel", "dir", "pres", "ta", "ff"]
+          ):
+            objetos_candidatos.append(obj)
           for k, v in obj.items():
             if isinstance(v, (list, dict)):
-              extraer_diccionarios(v)
+              buscar_diccionarios(v)
 
-      extraer_diccionarios(data)
+      buscar_diccionarios(data)
 
-      # Si encontramos un candidato válido que no sea solo configuración de gráficos
       obs = {}
-      if candidatos:
-        # Tomamos el último candidato que tenga claves útiles
-        for c in reversed(candidatos):
-          if not any(ign in str(c).lower() for ign in ["color", "purple", "line"]):
-            obs = c
-            break
-        if not obs:
-          obs = candidatos[-1]
+      for cand in reversed(objetos_candidatos):
+        if not any(
+            ign in str(cand).lower()
+            for ign in ["color", "purple", "line", "highcharts"]
+        ):
+          obs = cand
+          break
+      if not obs and objetos_candidatos:
+        obs = objetos_candidatos[-1]
       elif isinstance(data, list) and len(data) > 0:
         obs = data[-1] if isinstance(data[-1], dict) else {}
       elif isinstance(data, dict):
         obs = data
 
-      def buscar_val(claves):
-        for k in claves:
-          for o_key in obs.keys():
-            if k.lower() in o_key.lower():
-              val = convertir_numero(obs[o_key])
+      if not isinstance(obs, dict):
+        return (
+            False,
+            "DATOS NO VÁLIDOS",
+            "Error de estructura",
+            "--",
+            "--",
+            "--",
+            "",
+            "--",
+        )
+
+      def buscar_valor_flexible(claves_busqueda):
+        for clave_b in claves_busqueda:
+          for k, v in obs.items():
+            if clave_b.lower() in k.lower():
+              val = convertir_numero(v)
               if val is not None:
                 return val
         return None
 
-      temp_val = buscar_val(["temp", "ta", "temperatura"])
-      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
+      temp_f = buscar_valor_flexible(["temp", "ta", "temperat", "val_temp"])
+      temp = f"{temp_f:.1f}°C" if temp_f is not None else "--"
 
-      pres_val = buscar_val(["pres", "qfe", "qff", "barom", "p_at"])
-      pres = f"{pres_val:.1f} hPa" if pres_val is not None else "--"
+      pres_f = buscar_valor_flexible(
+          ["pres", "qfe", "qff", "barom", "p_at", "patm"]
+      )
+      pres = f"{pres_f:.1f} hPa" if pres_f is not None else "--"
 
-      viento_val = buscar_val(["ff", "vel", "viento_vel", "speed", "wind_speed"])
-      viento = f"{viento_val:.1f} kt" if viento_val is not None else "--"
+      viento_f = buscar_valor_flexible(
+          ["ff", "vel", "viento_vel", "speed", "intens"]
+      )
+      viento = f"{viento_f:.1f} kt" if viento_f is not None else "--"
 
-      racha_val = buscar_val(["fx", "racha", "gust", "viento_racha"])
-      racha = f"{racha_val:.1f} kt" if racha_val is not None else "--"
+      racha_f = buscar_valor_flexible(["fx", "racha", "gust", "viento_racha"])
+      racha = f"{racha_f:.1f} kt" if racha_f is not None else "--"
 
       dir_val = None
-      for k in ["dd", "dir", "viento_dir", "wind_dir"]:
-        for o_key in obs.keys():
-          if k.lower() in o_key.lower() or k.lower() == o_key.lower():
-            dir_val = obs[o_key]
-            break
-        if dir_val is not None:
+      for k, v in obs.items():
+        if any(
+            d_key in k.lower()
+            for d_key in ["dd", "dir", "direccion", "wind_dir"]
+        ):
+          dir_val = v
           break
 
       if isinstance(dir_val, (int, float)):
         dir_viento = grados_a_cardinal(float(dir_val))
       else:
-        dir_viento = formatear_direccion(str(dir_val)) if dir_val is not None else ""
+        dir_viento = (
+            formatear_direccion(str(dir_val)) if dir_val is not None else ""
+        )
 
       fecha_str = "Reciente"
-      for k in ["fecha", "time", "timestamp", "hora", "fch", "date"]:
-        for o_key in obs.keys():
-          if k.lower() in o_key.lower():
-            val_f = str(obs[o_key])
-            if not any(ign in val_f.lower() for ign in ["color", "purple", "line"]):
-              fecha_str = val_f
-              break
-        if fecha_str != "Reciente":
-          break
+      for k, v in obs.items():
+        if any(
+            f_key in k.lower()
+            for f_key in ["fecha", "time", "timestamp", "hora", "fch", "date"]
+        ):
+          val_f = str(v)
+          if not any(
+              ign in val_f.lower() for ign in ["color", "purple", "line"]
+          ):
+            fecha_str = val_f
+            break
 
-      return True, "OPERATIVA", fecha_str, temp, pres, viento, dir_viento, racha
+      es_valido = (
+          temp_f is not None or viento_f is not None or pres_f is not None
+      )
+      estado_txt = "OPERATIVA" if es_valido else "SIN DATOS VÁLIDOS"
+
+      return es_valido, estado_txt, fecha_str, temp, pres, viento, dir_viento, racha
 
   except Exception as e:
     print(f"Error IFOP [{est['nombre']}]: {e}")
-  
+
   return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "", "--"
 
 
@@ -749,11 +792,13 @@ def ejecutar_monitoreo():
     }
 
   for est_ifop in ESTACIONES_IFOP:
-    ok, estado, ultimo, temp, pres, viento, dir_viento, racha = consultar_ifop(est_ifop)
+    ok, estado, ultimo, temp, pres, viento, dir_viento, racha = consultar_ifop(
+        est_ifop
+    )
     simbolo = "✓" if ok else "X"
     print(
-        f"[{simbolo}] {est_ifop['nombre']} (IFOP API): {estado} | Temp: {temp}, Viento:"
-        f" {dir_viento} {viento}, Racha: {racha}, Pres: {pres}"
+        f"[{simbolo}] {est_ifop['nombre']} (IFOP API): {estado} | Temp:"
+        f" {temp}, Viento: {dir_viento} {viento}, Racha: {racha}, Pres: {pres}"
     )
     if not ok:
       hubo_fallas = True
