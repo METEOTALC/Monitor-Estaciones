@@ -109,7 +109,7 @@ ESTACIONES_FAROS = [
 ]
 
 # ==========================================
-# ESTACIONES IFOP / API JSON (Coordenadas actualizadas)
+# ESTACIONES IFOP / API JSON
 # ==========================================
 ESTACIONES_IFOP = [
     {
@@ -200,7 +200,6 @@ def grados_a_cardinal(grados):
 
 
 def gestionar_historial_presion(nombre_estacion, presion_actual):
-  """Guarda registros y calcula tendencia de 3 horas (±0.2 hPa)."""
   ahora = obtener_hora_chile()
   historial = {}
   if os.path.exists(ARCHIVO_HISTORIAL):
@@ -274,6 +273,7 @@ def consultar_directemar(est):
       temp, pres, viento, dir_viento, racha = "--", "--", "--", "", "--"
       pres_val = None
 
+      # Temperatura
       temp_match = re.search(
           r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
           texto_plano,
@@ -284,6 +284,7 @@ def consultar_directemar(est):
         if val is not None:
           temp = f"{val:.1f}°C"
 
+      # Presión
       pres_match = re.search(
           r"(?:Barometer|Presi[oó]n)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:hPa|mb)?",
           texto_plano,
@@ -295,6 +296,7 @@ def consultar_directemar(est):
           tendencia = gestionar_historial_presion(est["nombre"], pres_val)
           pres = f"{pres_val:.1f} hPa{tendencia}"
 
+      # Búsqueda robusta de Dirección de Viento en Directemar
       bearing_match = re.search(
           r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
           texto_plano,
@@ -308,28 +310,40 @@ def consultar_directemar(est):
         )
       if not bearing_match:
         bearing_match = re.search(
-            r"(?:Direcci[oó]n|Dir)[^\w]*(?:Viento)?[^\w]*([N,S,E,W]{1,3})",
+            r"(?:Direcci[oó]n|Dir)[^\w]*(?:del\s*)?(?:Viento)?[^\w]*([N,S,E,W]{1,3})",
             texto_plano,
             re.IGNORECASE,
         )
+      # Si viene en grados numéricos en Directemar (ej: Direccion Viento 180°)
+      if not bearing_match:
+        deg_match = re.search(
+            r"(?:Direcci[oó]n|Dir|Wind\s*Direction|Bearing)[^\d]*(\d+(?:[.,]\d+)?)\s*°",
+            texto_plano,
+            re.IGNORECASE,
+        )
+        if deg_match:
+          grados_val = convertir_numero(deg_match.group(1))
+          if grados_val is not None:
+            dir_viento = grados_a_cardinal(grados_val)
 
-      if bearing_match:
+      if bearing_match and not dir_viento:
         dir_viento = formatear_direccion(bearing_match.group(1))
 
+      # Búsqueda robusta de Velocidad de Viento
       viento_match = re.search(
-          r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
+          r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
           texto_plano,
           re.IGNORECASE,
       )
       if not viento_match:
         viento_match = re.search(
-            r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
+            r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
             texto_plano,
             re.IGNORECASE,
         )
       if not viento_match:
         viento_match = re.search(
-            r"Viento[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
+            r"Viento[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
             texto_plano,
             re.IGNORECASE,
         )
@@ -339,8 +353,9 @@ def consultar_directemar(est):
         if val is not None:
           viento = f"{val:.1f} kt"
 
+      # Búsqueda robusta de Racha / Ráfaga
       racha_match = re.search(
-          r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha|Ráfaga)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
+          r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha|Ráfaga|Rafaga)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
           texto_plano,
           re.IGNORECASE,
       )
@@ -464,7 +479,7 @@ def consultar_ifop(est):
       data = json.loads(texto_raw)
 
       if isinstance(data, dict):
-        # Función mejorada para buscar claves de forma flexible dentro del JSON de IFOP
+
         def extraer_datos_serie():
           val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d = (
               None,
@@ -488,14 +503,12 @@ def consultar_ifop(est):
                     actual = y_vals[-1]
                     f_act = x_vals[-1] if x_vals and len(x_vals) > 0 else None
 
-                    k_lower = k.lower()
-                    # Temperatura
+                    k_lower = k.lower().strip()
                     if any(
                         sub in k_lower
                         for sub in ["temp", "temperatura", "ta", "t_aire"]
                     ):
                       val_t, fecha_t = actual, f_act
-                    # Presión
                     elif any(
                         sub in k_lower
                         for sub in ["pres", "presion", "barom", "qfe", "qff"]
@@ -505,13 +518,23 @@ def consultar_ifop(est):
                         p_pasado = y_vals[-180]
                       elif len(y_vals) > 1:
                         p_pasado = y_vals[0]
-                    # Viento velocidad
+                    # CORREGIDO: Se evalúa dirección antes para evitar que "viento" intercepte llaves de dirección
                     elif any(
                         sub in k_lower
-                        for sub in ["ff", "viento", "speed", "vel", "intensidad"]
+                        for sub in ["dir_viento", "dd", "dir", "direccion"]
+                    ):
+                      val_d = actual
+                    elif any(
+                        sub in k_lower
+                        for sub in [
+                            "ff",
+                            "viento",
+                            "speed",
+                            "vel",
+                            "intensidad",
+                        ]
                     ):
                       val_v = actual
-                    # Racha / Ráfaga
                     elif any(
                         sub in k_lower
                         for sub in [
@@ -526,12 +549,6 @@ def consultar_ifop(est):
                         ]
                     ):
                       val_r = actual
-                    # Dirección viento
-                    elif any(
-                        sub in k_lower
-                        for sub in ["dir_viento", "dd", "dir", "direccion"]
-                    ):
-                      val_d = actual
 
           return (
               val_t,
@@ -543,9 +560,15 @@ def consultar_ifop(est):
               val_d,
           )
 
-        temp_val, fecha_temp, pres_val, pres_pasado_val, viento_val, racha_val, dir_val = (
-            extraer_datos_serie()
-        )
+        (
+            temp_val,
+            fecha_temp,
+            pres_val,
+            pres_pasado_val,
+            viento_val,
+            racha_val,
+            dir_val,
+        ) = extraer_datos_serie()
 
         temp_f = convertir_numero(temp_val)
         temp = f"{temp_f:.1f}°C" if temp_f is not None else "--"
@@ -572,8 +595,10 @@ def consultar_ifop(est):
         racha_f = convertir_numero(racha_val)
         racha = f"{racha_f:.1f} kt" if racha_f is not None else "--"
 
-        if isinstance(dir_val, (int, float)):
-          dir_viento = grados_a_cardinal(float(dir_val))
+        # CORREGIDO: Soporte robusto para grados numéricos (como número o string numérico) o texto cardinal
+        dir_num = convertir_numero(dir_val)
+        if dir_num is not None:
+          dir_viento = grados_a_cardinal(dir_num)
         else:
           dir_viento = (
               formatear_direccion(str(dir_val)) if dir_val is not None else ""
@@ -918,8 +943,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección de temperatura IFOP y actualización de coordenadas"
-                " [skip ci]"
+                "Corrección en extracción de dirección de viento para"
+                " estaciones IFOP [skip ci]"
             ),
         ],
         capture_output=True,
