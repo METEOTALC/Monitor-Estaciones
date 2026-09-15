@@ -116,15 +116,15 @@ ESTACIONES_IFOP = [
         "nombre": "Faro Punta Carranza",
         "url": "https://giscc.ifop.cl/doma_met/",
         "api_url": "https://giscc.ifop.cl/siom-enoscc//get_est_met/22",
-        "lat": -35.590,
-        "lon": -72.600,
+        "lat": -35.5608333,
+        "lon": -72.6177777,
     },
     {
         "nombre": "Isla Mocha",
         "url": "https://giscc.ifop.cl/doma_met/",
         "api_url": "https://giscc.ifop.cl/siom-enoscc//get_est_met/34",
-        "lat": -38.370,
-        "lon": -73.900,
+        "lat": -38.3849472,
+        "lon": -73.8688523,
     },
 ]
 
@@ -273,9 +273,9 @@ def consultar_directemar(est):
       texto_plano = (
           texto_plano.replace("\xa5", " ")
           .replace("\xa0", " ")
-          .replace("&nbsp;", " ")
-          .replace("&deg;", "°")
-          .replace("&#176;", "°")
+          .replace(" ", " ")
+          .replace("°", "°")
+          .replace("°", "°")
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
