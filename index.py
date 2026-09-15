@@ -151,7 +151,13 @@ def convertir_numero(valor):
   if valor is None:
     return None
   try:
-    return float(str(valor).replace(",", "."))
+    val_str = str(valor).strip()
+    if any(
+        c in val_str.lower()
+        for c in ["color", "purple", "line", "data", "{", "}"]
+    ):
+      return None
+    return float(val_str.replace(",", "."))
   except (ValueError, TypeError):
     return None
 
@@ -159,7 +165,9 @@ def convertir_numero(valor):
 def formatear_direccion(dir_str):
   if not dir_str:
     return ""
-  d = dir_str.upper().strip()
+  d = str(dir_str).upper().strip()
+  if any(c in d.lower() for c in ["color", "purple", "line", "data", "{", "}"]):
+    return ""
   if len(d) == 3:
     return f"{d[0]}/{d[1:]}"
   return d
@@ -376,25 +384,39 @@ def consultar_ifop(est):
   try:
     req = urllib.request.Request(est["api_url"], headers=HEADERS)
     with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-      texto_raw = response.read().decode("utf-8")
-      data = json.loads(texto_raw)
-      
-      # Depuración en consola para ver qué claves y datos llegan exactamente
-      print(f"--- DEBUG IFOP [{est['nombre']}] ---")
-      print(texto_raw[:400])
+      data = json.loads(response.read().decode("utf-8"))
 
-      # Extraemos la observación según si es lista o diccionario
-      if isinstance(data, list):
-        obs = data[-1] if len(data) > 0 else {}
+      # Buscamos de forma recursiva o en arreglos el último diccionario de datos reales
+      candidatos = []
+      
+      def extraer_diccionarios(obj):
+        if isinstance(obj, list):
+          for item in obj:
+            extraer_diccionarios(item)
+        elif isinstance(obj, dict):
+          # Si este diccionario tiene pinta de contener datos meteorológicos (tiene varias llaves)
+          if any(k in str(obj).lower() for k in ["temp", "ta", "pres", "ff", "vel", "viento", "val"]):
+            candidatos.append(obj)
+          for k, v in obj.items():
+            if isinstance(v, (list, dict)):
+              extraer_diccionarios(v)
+
+      extraer_diccionarios(data)
+
+      # Si encontramos un candidato válido que no sea solo configuración de gráficos
+      obs = {}
+      if candidatos:
+        # Tomamos el último candidato que tenga claves útiles
+        for c in reversed(candidatos):
+          if not any(ign in str(c).lower() for ign in ["color", "purple", "line"]):
+            obs = c
+            break
+        if not obs:
+          obs = candidatos[-1]
+      elif isinstance(data, list) and len(data) > 0:
+        obs = data[-1] if isinstance(data[-1], dict) else {}
       elif isinstance(data, dict):
-        if "data" in data and isinstance(data["data"], list):
-          obs = data["data"][-1] if len(data["data"]) > 0 else {}
-        elif "values" in data and isinstance(data["values"], list):
-          obs = data["values"][-1] if len(data["values"]) > 0 else {}
-        else:
-          obs = data
-      else:
-        obs = {}
+        obs = data
 
       def buscar_val(claves):
         for k in claves:
@@ -420,7 +442,7 @@ def consultar_ifop(est):
       dir_val = None
       for k in ["dd", "dir", "viento_dir", "wind_dir"]:
         for o_key in obs.keys():
-          if k.lower() == o_key.lower() or k.lower() in o_key.lower():
+          if k.lower() in o_key.lower() or k.lower() == o_key.lower():
             dir_val = obs[o_key]
             break
         if dir_val is not None:
@@ -435,8 +457,10 @@ def consultar_ifop(est):
       for k in ["fecha", "time", "timestamp", "hora", "fch", "date"]:
         for o_key in obs.keys():
           if k.lower() in o_key.lower():
-            fecha_str = str(obs[o_key])
-            break
+            val_f = str(obs[o_key])
+            if not any(ign in val_f.lower() for ign in ["color", "purple", "line"]):
+              fecha_str = val_f
+              break
         if fecha_str != "Reciente":
           break
 
@@ -768,7 +792,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización extracción flexible JSON IFOP [skip"
+                "Filtrado robusto de metadatos de gráficos en IFOP [skip"
                 " ci]"
             ),
         ],
