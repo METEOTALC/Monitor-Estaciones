@@ -402,45 +402,23 @@ def consultar_ifop(est):
       texto_raw = response.read().decode("utf-8")
       data = json.loads(texto_raw)
 
-      # Buscamos recursivamente cualquier diccionario dentro del JSON que contenga datos útiles
-      objetos_candidatos = []
-
-      def buscar_diccionarios(obj):
-        if isinstance(obj, list):
-          for item in obj:
-            buscar_diccionarios(item)
-        elif isinstance(obj, dict):
-          if any(
-              k in str(obj).lower()
-              for k in ["temp", "valor", "val", "vel", "dir", "pres", "ta", "ff"]
-          ):
-            objetos_candidatos.append(obj)
-          for k, v in obj.items():
-            if isinstance(v, (list, dict)):
-              buscar_diccionarios(v)
-
-      buscar_diccionarios(data)
-
       obs = {}
-      for cand in reversed(objetos_candidatos):
-        if not any(
-            ign in str(cand).lower()
-            for ign in ["color", "purple", "line", "highcharts"]
-        ):
-          obs = cand
-          break
-      if not obs and objetos_candidatos:
-        obs = objetos_candidatos[-1]
-      elif isinstance(data, list) and len(data) > 0:
+      if isinstance(data, list) and len(data) > 0:
         obs = data[-1] if isinstance(data[-1], dict) else {}
       elif isinstance(data, dict):
-        obs = data
+        for k in ["data", "values", "records", "result", "features", "serie"]:
+          if k in data and isinstance(data[k], list) and len(data[k]) > 0:
+            obs = data[k][-1]
+            break
+        if not obs:
+          obs = data
 
       if not isinstance(obs, dict):
+        # Si no es un diccionario válido, mandamos un cacho del texto crudo para verlo en la web
         return (
             False,
             "DATOS NO VÁLIDOS",
-            "Error de estructura",
+            texto_raw[:50],
             "--",
             "--",
             "--",
@@ -448,38 +426,54 @@ def consultar_ifop(est):
             "--",
         )
 
-      def buscar_valor_flexible(claves_busqueda):
-        for clave_b in claves_busqueda:
-          for k, v in obs.items():
-            if clave_b.lower() in k.lower():
-              val = convertir_numero(v)
+      def buscar_valor_estricto(keys):
+        for k in keys:
+          for o_k, o_v in obs.items():
+            if k.lower() == o_k.lower() or k.lower() in o_k.lower():
+              val = convertir_numero(o_v)
               if val is not None:
                 return val
         return None
 
-      temp_f = buscar_valor_flexible(["temp", "ta", "temperat", "val_temp"])
+      temp_f = buscar_valor_estricto([
+          "temp",
+          "ta",
+          "temperatura",
+          "t_aire",
+          "val_temp",
+      ])
       temp = f"{temp_f:.1f}°C" if temp_f is not None else "--"
 
-      pres_f = buscar_valor_flexible(
-          ["pres", "qfe", "qff", "barom", "p_at", "patm"]
-      )
+      pres_f = buscar_valor_estricto([
+          "pres",
+          "qfe",
+          "qff",
+          "barom",
+          "p_at",
+          "patm",
+          "presion",
+      ])
       pres = f"{pres_f:.1f} hPa" if pres_f is not None else "--"
 
-      viento_f = buscar_valor_flexible(
-          ["ff", "vel", "viento_vel", "speed", "intens"]
-      )
+      viento_f = buscar_valor_estricto([
+          "ff",
+          "vel",
+          "viento",
+          "speed",
+          "intens",
+          "vel_viento",
+      ])
       viento = f"{viento_f:.1f} kt" if viento_f is not None else "--"
 
-      racha_f = buscar_valor_flexible(["fx", "racha", "gust", "viento_racha"])
+      racha_f = buscar_valor_estricto(["fx", "racha", "gust", "max_gust"])
       racha = f"{racha_f:.1f} kt" if racha_f is not None else "--"
 
       dir_val = None
-      for k, v in obs.items():
+      for o_k, o_v in obs.items():
         if any(
-            d_key in k.lower()
-            for d_key in ["dd", "dir", "direccion", "wind_dir"]
+            d in o_k.lower() for d in ["dd", "dir", "direction", "wind_dir"]
         ):
-          dir_val = v
+          dir_val = o_v
           break
 
       if isinstance(dir_val, (int, float)):
@@ -490,29 +484,32 @@ def consultar_ifop(est):
         )
 
       fecha_str = "Reciente"
-      for k, v in obs.items():
+      for o_k, o_v in obs.items():
         if any(
-            f_key in k.lower()
-            for f_key in ["fecha", "time", "timestamp", "hora", "fch", "date"]
+            f in o_k.lower()
+            for f in ["fecha", "time", "timestamp", "hora", "fch", "date"]
         ):
-          val_f = str(v)
-          if not any(
-              ign in val_f.lower() for ign in ["color", "purple", "line"]
-          ):
-            fecha_str = val_f
-            break
+          fecha_str = str(o_v)
+          break
 
       es_valido = (
           temp_f is not None or viento_f is not None or pres_f is not None
       )
       estado_txt = "OPERATIVA" if es_valido else "SIN DATOS VÁLIDOS"
 
-      return es_valido, estado_txt, fecha_str, temp, pres, viento, dir_viento, racha
+      return (
+          es_valido,
+          estado_txt,
+          fecha_str,
+          temp,
+          pres,
+          viento,
+          dir_viento,
+          racha,
+      )
 
   except Exception as e:
-    print(f"Error IFOP [{est['nombre']}]: {e}")
-
-  return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "", "--"
+    return False, "SIN CONEXIÓN", str(e)[:30], "--", "--", "--", "", "--"
 
 
 def generar_html(resultados_totales, hay_alerta):
@@ -718,9 +715,9 @@ def generar_html(resultados_totales, hay_alerta):
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([-37.5, -73.2], 7);
-        L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 12, attribution: '© OpenStreetMap contributors'
-        }}).addTo(map);
+        }).addTo(map);
         {markers_js}
     </script>
 </body>
@@ -743,11 +740,6 @@ def ejecutar_monitoreo():
     ok, estado, ultimo, temp, pres, viento, dir_viento, racha = (
         consultar_directemar(est)
     )
-    simbolo = "✓" if ok else "X"
-    print(
-        f"[{simbolo}] {est['nombre']}: {estado} | Temp: {temp}, Viento: {dir_viento}"
-        f" {viento}, Racha: {racha}, Pres: {pres}"
-    )
     if not ok:
       hubo_fallas = True
     resultados_dict[est["nombre"]] = {
@@ -769,11 +761,6 @@ def ejecutar_monitoreo():
     ok, estado, temp, pres, viento, dir_viento, racha, ultimo = (
         consultar_wunderground_web(faro)
     )
-    simbolo = "✓" if ok else "X"
-    print(
-        f"[{simbolo}] {faro['nombre']} (API): {estado} | Temp: {temp}, Viento:"
-        f" {dir_viento} {viento}, Racha: {racha}, Pres: {pres}"
-    )
     if not ok:
       hubo_fallas = True
     resultados_dict[faro["nombre"]] = {
@@ -794,11 +781,6 @@ def ejecutar_monitoreo():
   for est_ifop in ESTACIONES_IFOP:
     ok, estado, ultimo, temp, pres, viento, dir_viento, racha = consultar_ifop(
         est_ifop
-    )
-    simbolo = "✓" if ok else "X"
-    print(
-        f"[{simbolo}] {est_ifop['nombre']} (IFOP API): {estado} | Temp:"
-        f" {temp}, Viento: {dir_viento} {viento}, Racha: {racha}, Pres: {pres}"
     )
     if not ok:
       hubo_fallas = True
@@ -837,7 +819,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Filtrado robusto de metadatos de gráficos en IFOP [skip"
+                "Actualización monitor automático IFOP [skip"
                 " ci]"
             ),
         ],
