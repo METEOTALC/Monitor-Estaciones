@@ -414,7 +414,6 @@ def consultar_ifop(est):
           obs = data
 
       if not isinstance(obs, dict):
-        # Si no es un diccionario válido, mandamos un cacho del texto crudo para verlo en la web
         return (
             False,
             "DATOS NO VÁLIDOS",
@@ -715,9 +714,9 @@ def generar_html(resultados_totales, hay_alerta):
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([-37.5, -73.2], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
             maxZoom: 12, attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        }}).addTo(map);
         {markers_js}
     </script>
 </body>
