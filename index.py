@@ -112,19 +112,19 @@ ESTACIONES_FAROS = [
 ESTACIONES_IFOP = [
     {
         "nombre": "Faro Punta Carranza",
-        "url": "https://siom.ifop.cl/",
+        "url": "https://giscc.ifop.cl/doma_met/",
         "lat": -35.5608333,
         "lon": -72.6177777,
     },
     {
         "nombre": "Isla Mocha",
-        "url": "https://siom.ifop.cl/",
+        "url": "https://giscc.ifop.cl/doma_met/",
         "lat": -38.3849472,
         "lon": -73.8688523,
     },
 ]
 
-# ORDEN EXACTO CORREGIDO
+# ORDEN EXACTO
 ORDEN_ESTACIONES = [
     "Capitanía de Puerto Constitución",
     "Faro Punta Carranza",
@@ -198,9 +198,9 @@ def consultar_directemar(est):
       texto_plano = (
           texto_plano.replace("\xa5", " ")
           .replace("\xa0", " ")
-          .replace("&nbsp;", " ")
-          .replace("&deg;", "°")
-          .replace("&#176;", "°")
+          .replace(" ", " ")
+          .replace("°", "°")
+          .replace("°", "°")
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
@@ -376,7 +376,7 @@ def generar_html(resultados_totales, hay_alerta):
   for r in resultados_totales:
     if r["ok"] == "enlace":
       color = "blue"
-      popup_txt = f"<b>{r['nombre']}</b><br>Plataforma IFOP / SIOM<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
+      popup_txt = f"<b>{r['nombre']}</b><br>Plataforma DOMA Met (IFOP)<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
     else:
       color = "green" if r["ok"] else "red"
       dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
@@ -395,10 +395,10 @@ def generar_html(resultados_totales, hay_alerta):
       icono = "🔵"
       cuerpo_tarjeta = """
                 <div class="card-body-content" style="justify-content: center; padding: 10px 0;">
-                    <span style="font-weight: 700; font-size: 0.85em; color: #0369a1; text-align: center;">🌐 Ver plataforma IFOP / SIOM</span>
+                    <span style="font-weight: 700; font-size: 0.85em; color: #0369a1; text-align: center;">🌐 DOMA Met (IFOP)</span>
                 </div>
             """
-      footer_texto = "Enlace Externo"
+      footer_texto = "Enlace Directo"
     else:
       clase = "ok" if r["ok"] else "error"
       icono = "🔴" if not r["ok"] else "🟢"
@@ -667,7 +667,7 @@ def ejecutar_monitoreo():
     }
 
   for est_ifop in ESTACIONES_IFOP:
-    print(f"[🔗] {est_ifop['nombre']}: Enlace directo IFOP / SIOM")
+    print(f"[🔗] {est_ifop['nombre']}: Enlace directo DOMA Met (IFOP)")
     resultados_dict[est_ifop["nombre"]] = {
         "nombre": est_ifop["nombre"],
         "url": est_ifop["url"],
@@ -675,7 +675,7 @@ def ejecutar_monitoreo():
         "lon": est_ifop["lon"],
         "ok": "enlace",
         "estado": "ENLACE DIRECTO",
-        "ultimo": "Manual / SIOM",
+        "ultimo": "DOMA Met / IFOP",
         "temp": "--",
         "pres": "--",
         "viento": "--",
@@ -703,8 +703,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Orden corregido: Carranza tras Constitucion y Mocha tras Lebu"
-                " [skip ci]"
+                "Actualización de enlaces IFOP a DOMA Met directo y orden"
+                " correcto [skip ci]"
             ),
         ],
         capture_output=True,
