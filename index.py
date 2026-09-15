@@ -113,14 +113,14 @@ ESTACIONES_IFOP = [
     {
         "nombre": "Faro Punta Carranza",
         "url": "https://siom.ifop.cl/",
-        "lat": -36.292990,
-        "lon": -73.872070,
+        "lat": -35.5608333,
+        "lon": -72.6177777,
     },
     {
         "nombre": "Isla Mocha",
         "url": "https://siom.ifop.cl/",
-        "lat": -38.24249,
-        "lon": -74.03687,
+        "lat": -38.3849472,
+        "lon": -73.8688523,
     },
 ]
 
