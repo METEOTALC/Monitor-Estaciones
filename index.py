@@ -41,6 +41,12 @@ ESTACIONES_DIRECTEMAR = [
         "lon": -72.40805555,
     },
     {
+        "nombre": "Capitanía de Puerto Lirquén",
+        "url": "http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm",
+        "lat": -36.7027778,
+        "lon": -72.9775,
+    },
+    {
         "nombre": "Gobernación Marítima de Talcahuano",
         "url": (
             "http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm"
@@ -81,7 +87,7 @@ ESTACIONES_DIRECTEMAR = [
 ]
 
 # ==========================================
-# ESTACIONES FAROS WEATHER UNDERGROUND
+# FAROS WEATHER UNDERGROUND
 # ==========================================
 ESTACIONES_FAROS = [
     {
@@ -98,55 +104,17 @@ ESTACIONES_FAROS = [
         "lat": -36.745,
         "lon": -73.185,
     },
-    {
-        "nombre": "Capitanía de Puerto Lirquén",
-        "url": "http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm",
-        "lat": -36.7027778,
-        "lon": -72.9775,
-    },
 ]
 
-# ==========================================
-# ESTACIONES IFOP (DOMA Met - Conexión Automática WMS)
-# ==========================================
-ESTACIONES_IFOP = [
-    {
-        "nombre": "Faro Punta Carranza",
-        # URL base del proxy detectada en tus herramientas de desarrollador
-        "url_proxy": (
-            "http://giscc.ifop.cl/doma_met/proxy_wms_featureinfo?SERVICE=WMS&REQUEST=GetFeatureInfo&INFO_FORMAT=application%2Fjson&FEATURE_COUNT=1"
-        ),
-        "lat": -35.590,
-        "lon": -72.620,
-        "x": 684,  # Coordenada X mapeada del visor
-        "y": 425,  # Coordenada Y mapeada del visor
-        "url_web": "http://giscc.ifop.cl/doma_met/",
-    },
-    {
-        "nombre": "Faro Isla Mocha",
-        "url_proxy": (
-            "http://giscc.ifop.cl/doma_met/proxy_wms_featureinfo?SERVICE=WMS&REQUEST=GetFeatureInfo&INFO_FORMAT=application%2Fjson&FEATURE_COUNT=1"
-        ),
-        "lat": -38.360,
-        "lon": -73.900,
-        "x": 684,
-        "y": 425,
-        "url_web": "http://giscc.ifop.cl/doma_met/",
-    },
-]
-
-# ORDEN FINAL EXACTO
 ORDEN_ESTACIONES = [
     "Capitanía de Puerto Constitución",
-    "Faro Punta Carranza",
+    "Capitanía de Puerto Lirquén",
     "Faro Isla Quiriquina",
     "Gobernación Marítima de Talcahuano",
     "Faro Punta Hualpén",
-    "Capitanía de Puerto Lirquén",
     "Capitanía de Puerto Coronel",
     "Capitanía de Puerto Lota",
     "Capitanía de Puerto Lebu",
-    "Faro Isla Mocha",
     "Capitanía de Puerto Carahue",
     "Capitanía de Puerto Corral",
 ]
@@ -372,65 +340,7 @@ def consultar_wunderground_web(est):
   except Exception as e:
     print(f"Error WU [{est['nombre']}]: {e}")
 
-  return False, "SIN CONEXIÓN", "--", "--", "--", "--", "", "Error de red"
-
-
-def consultar_ifop(est):
-  try:
-    url_completa = f"{est['url_proxy']}&X={est['x']}&Y={est['y']}"
-    req = urllib.request.Request(url_completa, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
-      data = json.loads(response.read().decode("utf-8"))
-      features = data.get("features", [])
-
-      if not features:
-        return (
-            False,
-            "SIN DATOS",
-            "N/D",
-            "--",
-            "--",
-            "--",
-            "",
-            "--",
-        )
-
-      props = features[0].get("properties", {})
-
-      # Extracción de variables meteorológicas del GeoJSON
-      temp_val = convertir_numero(
-          props.get("temperature", props.get("air_temperature"))
-      )
-      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
-
-      pres_val = convertir_numero(
-          props.get("Mean_sea_level_pressure", props.get("pressure"))
-      )
-      pres = f"{pres_val:.1f} hPa" if pres_val is not None else "--"
-
-      viento_val = convertir_numero(
-          props.get("wind_speed", props.get("speed"))
-      )
-      viento = f"{viento_val:.1f} kt" if viento_val is not None else "--"
-
-      racha_val = convertir_numero(props.get("wind_gust", props.get("gust")))
-      racha = f"{racha_val:.1f} kt" if racha_val is not None else "--"
-
-      dir_val = props.get("wind_direction", props.get("direction"))
-      dir_viento = (
-          grados_a_cardinal(convertir_numero(dir_val))
-          if dir_val is not None
-          else ""
-      )
-
-      if temp == "--" and pres == "--":
-        return False, "DATOS VACÍOS", "N/D", temp, pres, viento, dir_viento, racha
-
-      return True, "OPERATIVA", "En línea", temp, pres, viento, dir_viento, racha
-
-  except Exception as e:
-    print(f"Error IFOP [{est['nombre']}]: {e}")
-    return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "", "--"
+  return False, "SIN CONEXIÓN", "--", "--", "--", "", "--", "Error de red"
 
 
 def generar_html(resultados_totales, hay_alerta):
@@ -440,11 +350,11 @@ def generar_html(resultados_totales, hay_alerta):
   markers_js = ""
   for r in resultados_totales:
     color = "green" if r["ok"] else "red"
-    dir_txt = f" ({r['dir_viento']})" if r.get("dir_viento") else ""
+    dir_txt = f" ({r['dir_viento']})" if r['dir_viento'] else ""
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir Enlace ↗</a>");
+        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
         """
 
   cards_html = ""
@@ -452,7 +362,7 @@ def generar_html(resultados_totales, hay_alerta):
     clase = "ok" if r["ok"] else "error"
     icono = "🔴" if not r["ok"] else "🟢"
 
-    if r.get("dir_viento"):
+    if r["dir_viento"]:
       viento_contenido = (
           f'<span style="display: block; font-size: 0.68em; color: #1d4ed8;'
           f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
@@ -585,6 +495,7 @@ def generar_html(resultados_totales, hay_alerta):
             align-items: center;
         }}
         
+        /* Proporción equilibrada y estiramiento automático idéntico para los 3 elementos */
         .weather-grid-3 {{ 
             display: grid; 
             grid-template-columns: 1fr 0.95fr 1.2fr; 
@@ -650,7 +561,6 @@ def ejecutar_monitoreo():
   resultados_dict = {}
   hubo_fallas = False
 
-  # 1. Directemar
   for est in ESTACIONES_DIRECTEMAR:
     ok, estado, ultimo, temp, pres, viento, dir_viento, racha = (
         consultar_directemar(est)
@@ -677,7 +587,6 @@ def ejecutar_monitoreo():
         "racha": racha,
     }
 
-  # 2. Weather Underground
   for faro in ESTACIONES_FAROS:
     ok, estado, temp, pres, viento, dir_viento, racha, ultimo = (
         consultar_wunderground_web(faro)
@@ -694,33 +603,6 @@ def ejecutar_monitoreo():
         "url": faro["url"],
         "lat": faro["lat"],
         "lon": faro["lon"],
-        "ok": ok,
-        "estado": estado,
-        "ultimo": ultimo,
-        "temp": temp,
-        "pres": pres,
-        "viento": viento,
-        "dir_viento": dir_viento,
-        "racha": racha,
-    }
-
-  # 3. IFOP (Punta Carranza e Isla Mocha)
-  for est_ifop in ESTACIONES_IFOP:
-    ok, estado, ultimo, temp, pres, viento, dir_viento, racha = consultar_ifop(
-        est_ifop
-    )
-    simbolo = "✓" if ok else "X"
-    print(
-        f"[{simbolo}] {est_ifop['nombre']} (IFOP): {estado} | Temp: {temp},"
-        f" Viento: {dir_viento} {viento}, Racha: {racha}, Pres: {pres}"
-    )
-    if not ok:
-      hubo_fallas = True
-    resultados_dict[est_ifop["nombre"]] = {
-        "nombre": est_ifop["nombre"],
-        "url": est_ifop["url_web"],
-        "lat": est_ifop["lat"],
-        "lon": est_ifop["lon"],
         "ok": ok,
         "estado": estado,
         "ultimo": ultimo,
@@ -750,10 +632,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            (
-                "Integra datos en vivo IFOP con formato uniforme y semáforo"
-                " [skip ci]"
-            ),
+            "Alineacion uniforme: misma altura adaptativa para viento, racha y presion manteniendo temperatura intacta [skip ci]",
         ],
         capture_output=True,
         text=True,
