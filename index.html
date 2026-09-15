@@ -56,12 +56,20 @@
             border: 1px solid #f87171;
             border-left: 6px solid #dc2626; 
         }
+        .card.blue { 
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 55%, #7dd3fc 100%); 
+            border: 1px solid #38bdf8;
+            border-left: 6px solid #0284c7; 
+        }
         .card:hover { 
             transform: translateY(-3px); 
             box-shadow: 0 8px 20px rgba(30, 64, 175, 0.2); 
         }
         .card.error:hover {
             box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3); 
+        }
+        .card.blue:hover {
+            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3); 
         }
         
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
@@ -84,7 +92,6 @@
             align-items: center;
         }
         
-        /* Proporción equilibrada y estiramiento automático idéntico para los 3 elementos */
         .weather-grid-3 { 
             display: grid; 
             grid-template-columns: 1fr 0.95fr 1.2fr; 
@@ -116,9 +123,9 @@
 <body class="">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 15-09-2026 12:10:23 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 15-09-2026 12:13:13 (Tolerancia: 12 min)</div>
     
-    <div class="summary">Estaciones Operativas: 10 de 10</div>
+    <div class="summary">Estaciones Operativas: 12 de 10</div>
     <div id="map"></div>
     <div class="grid">
         
@@ -128,6 +135,7 @@
                     <span class="station-name">Capitanía de Puerto Constitución</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 16.6°C</div>
                     <div class="weather-grid-3">
@@ -136,6 +144,7 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1012.7 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 15-09-2026 12:10:00</span>
                     <span class="click-text">Ver ↗</span>
@@ -149,6 +158,7 @@
                     <span class="station-name">Capitanía de Puerto Lirquén</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 16.1°C</div>
                     <div class="weather-grid-3">
@@ -157,8 +167,27 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1013.1 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 15-09-2026 12:10:00</span>
+                    <span class="click-text">Ver ↗</span>
+                </div>
+            </div>
+        </a>
+        
+        <a href="https://siom.ifop.cl/" target="_blank" class="card-link">
+            <div class="card blue">
+                <div class="card-header">
+                    <span class="station-name">Faro Punta Carranza</span>
+                    <span class="status-badge">🔵</span>
+                </div>
+                
+                <div class="card-body-content" style="justify-content: center; padding: 10px 0;">
+                    <span style="font-weight: 700; font-size: 0.85em; color: #0369a1; text-align: center;">🌐 Ver plataforma IFOP / SIOM</span>
+                </div>
+            
+                <div class="card-footer-info">
+                    <span class="time">Enlace Externo</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -170,6 +199,7 @@
                     <span class="station-name">Faro Isla Quiriquina</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 16.7°C</div>
                     <div class="weather-grid-3">
@@ -178,8 +208,9 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1014.6 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-15 12:10:19</span>
+                    <span class="time">Reporte: 2026-09-15 12:13:09</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -191,6 +222,7 @@
                     <span class="station-name">Gobernación Marítima de Talcahuano</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 17.2°C</div>
                     <div class="weather-grid-3">
@@ -199,6 +231,7 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1013.9 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 15-09-2026 12:10:00</span>
                     <span class="click-text">Ver ↗</span>
@@ -212,6 +245,7 @@
                     <span class="station-name">Faro Punta Hualpén</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 13.9°C</div>
                     <div class="weather-grid-3">
@@ -220,6 +254,7 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1013.2 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 2026-09-15 12:10:00</span>
                     <span class="click-text">Ver ↗</span>
@@ -233,6 +268,7 @@
                     <span class="station-name">Capitanía de Puerto Coronel</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 12.8°C</div>
                     <div class="weather-grid-3">
@@ -241,6 +277,7 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1013.0 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 15-09-2026 12:10:00</span>
                     <span class="click-text">Ver ↗</span>
@@ -254,6 +291,7 @@
                     <span class="station-name">Capitanía de Puerto Lota</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 14.2°C</div>
                     <div class="weather-grid-3">
@@ -262,6 +300,7 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1014.2 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 15-09-2026 12:10:00</span>
                     <span class="click-text">Ver ↗</span>
@@ -275,6 +314,7 @@
                     <span class="station-name">Capitanía de Puerto Lebu</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 19.9°C</div>
                     <div class="weather-grid-3">
@@ -283,8 +323,27 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1014.5 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 15-09-2026 12:10:00</span>
+                    <span class="click-text">Ver ↗</span>
+                </div>
+            </div>
+        </a>
+        
+        <a href="https://siom.ifop.cl/" target="_blank" class="card-link">
+            <div class="card blue">
+                <div class="card-header">
+                    <span class="station-name">Isla Mocha</span>
+                    <span class="status-badge">🔵</span>
+                </div>
+                
+                <div class="card-body-content" style="justify-content: center; padding: 10px 0;">
+                    <span style="font-weight: 700; font-size: 0.85em; color: #0369a1; text-align: center;">🌐 Ver plataforma IFOP / SIOM</span>
+                </div>
+            
+                <div class="card-footer-info">
+                    <span class="time">Enlace Externo</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -296,6 +355,7 @@
                     <span class="station-name">Capitanía de Puerto Carahue</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 17.1°C</div>
                     <div class="weather-grid-3">
@@ -304,6 +364,7 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1014.3 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 15-09-2026 12:10:00</span>
                     <span class="click-text">Ver ↗</span>
@@ -317,6 +378,7 @@
                     <span class="station-name">Capitanía de Puerto Corral</span>
                     <span class="status-badge">🟢</span>
                 </div>
+                
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 13.8°C</div>
                     <div class="weather-grid-3">
@@ -325,6 +387,7 @@
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ 1016.8 hPa</span></div>
                     </div>
                 </div>
+            
                 <div class="card-footer-info">
                     <span class="time">Reporte: 15-09-2026 12:10:01</span>
                     <span class="click-text">Ver ↗</span>
@@ -351,9 +414,13 @@
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén</b><br>Estado: OPERATIVA<br>Temp: 16.1°C | Viento: 6.1 kt (N) | Racha: 7.8 kt | Pres: 1013.1 hPa<br>Reporte: 15-09-2026 12:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
+        L.circleMarker([-35.59, -72.6], {
+            color: 'blue', fillColor: 'blue', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Faro Punta Carranza</b><br>Plataforma IFOP / SIOM<br><a href='https://siom.ifop.cl/' target='_blank'>Abrir enlace ↗</a>");
+        
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 16.7°C | Viento: 7.8 kt (S/SE) | Racha: 10.4 kt | Pres: 1014.6 hPa<br>Reporte: 2026-09-15 12:10:19<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 16.7°C | Viento: 7.8 kt (S/SE) | Racha: 10.4 kt | Pres: 1014.6 hPa<br>Reporte: 2026-09-15 12:13:09<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -374,6 +441,10 @@
         L.circleMarker([-37.606, -73.65], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu</b><br>Estado: OPERATIVA<br>Temp: 19.9°C | Viento: 3.8 kt (SE) | Racha: 10.4 kt | Pres: 1014.5 hPa<br>Reporte: 15-09-2026 12:10:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        
+        L.circleMarker([-38.37, -73.9], {
+            color: 'blue', fillColor: 'blue', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Isla Mocha</b><br>Plataforma IFOP / SIOM<br><a href='https://siom.ifop.cl/' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-38.788, -73.397], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
