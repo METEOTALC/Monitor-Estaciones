@@ -113,22 +113,22 @@ ESTACIONES_IFOP = [
     {
         "nombre": "Faro Punta Carranza",
         "url": "https://siom.ifop.cl/",
-        "lat": -35.590,
-        "lon": -72.600,
+        "lat": -36.292990,
+        "lon": -73.872070,
     },
     {
         "nombre": "Isla Mocha",
         "url": "https://siom.ifop.cl/",
-        "lat": -38.370,
-        "lon": -73.900,
+        "lat": -38.24249,
+        "lon": -74.03687,
     },
 ]
 
-# ORDEN EXACTO SOLICITADO
+# ORDEN EXACTO CORREGIDO
 ORDEN_ESTACIONES = [
     "Capitanía de Puerto Constitución",
-    "Capitanía de Puerto Lirquén",
     "Faro Punta Carranza",
+    "Capitanía de Puerto Lirquén",
     "Faro Isla Quiriquina",
     "Gobernación Marítima de Talcahuano",
     "Faro Punta Hualpén",
@@ -702,7 +702,10 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Orden ajustado: Carranza tras Lirquen y Mocha tras Lebu [skip ci]",
+            (
+                "Orden corregido: Carranza tras Constitucion y Mocha tras Lebu"
+                " [skip ci]"
+            ),
         ],
         capture_output=True,
         text=True,
