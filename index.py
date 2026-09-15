@@ -402,109 +402,105 @@ def consultar_ifop(est):
       texto_raw = response.read().decode("utf-8")
       data = json.loads(texto_raw)
 
-      obs = {}
-      if isinstance(data, list) and len(data) > 0:
-        obs = data[-1] if isinstance(data[-1], dict) else {}
-      elif isinstance(data, dict):
-        for k in ["data", "values", "records", "result", "features", "serie"]:
-          if k in data and isinstance(data[k], list) and len(data[k]) > 0:
-            obs = data[k][-1]
+      if isinstance(data, dict):
+
+        def extraer_ultimo_de_serie(nombre_clave):
+          if nombre_clave in data and isinstance(data[nombre_clave], dict):
+            serie = data[nombre_clave]
+            if (
+                "data" in serie
+                and isinstance(serie["data"], list)
+                and len(serie["data"]) > 0
+            ):
+              item_data = serie["data"][0]
+              if (
+                  "y" in item_data
+                  and isinstance(item_data["y"], list)
+                  and len(item_data["y"]) > 0
+              ):
+                return item_data["y"][-1], item_data.get("x", [None])[-1]
+          return None, None
+
+        temp_val, fecha_temp = None, None
+        for k in ["temp", "temperatura", "ta", "t_aire"]:
+          v, f = extraer_ultimo_de_serie(k)
+          if v is not None:
+            temp_val, fecha_temp = v, f
             break
-        if not obs:
-          obs = data
 
-      if not isinstance(obs, dict):
+        pres_val, _ = None, None
+        for k in ["pres", "presion", "barom", "qfe", "qff"]:
+          v, _ = extraer_ultimo_de_serie(k)
+          if v is not None:
+            pres_val = v
+            break
+
+        viento_val, _ = None, None
+        for k in ["ff", "viento", "speed", "vel"]:
+          v, _ = extraer_ultimo_de_serie(k)
+          if v is not None:
+            viento_val = v
+            break
+
+        racha_val, _ = None, None
+        for k in ["fx", "racha", "gust"]:
+          v, _ = extraer_ultimo_de_serie(k)
+          if v is not None:
+            racha_val = v
+            break
+
+        dir_val, _ = None, None
+        for k in ["dir_viento", "dd", "dir"]:
+          v, _ = extraer_ultimo_de_serie(k)
+          if v is not None:
+            dir_val = v
+            break
+
+        temp_f = convertir_numero(temp_val)
+        temp = f"{temp_f:.1f}°C" if temp_f is not None else "--"
+
+        pres_f = convertir_numero(pres_val)
+        pres = f"{pres_f:.1f} hPa" if pres_f is not None else "--"
+
+        viento_f = convertir_numero(viento_val)
+        viento = f"{viento_f:.1f} kt" if viento_f is not None else "--"
+
+        racha_f = convertir_numero(racha_val)
+        racha = f"{racha_f:.1f} kt" if racha_f is not None else "--"
+
+        if isinstance(dir_val, (int, float)):
+          dir_viento = grados_a_cardinal(float(dir_val))
+        else:
+          dir_viento = (
+              formatear_direccion(str(dir_val)) if dir_val is not None else ""
+          )
+
+        fecha_str = str(fecha_temp) if fecha_temp else "Reciente"
+        es_valido = (
+            temp_f is not None or viento_f is not None or pres_f is not None
+        )
+        estado_txt = "OPERATIVA" if es_valido else "SIN DATOS VÁLIDOS"
+
         return (
-            False,
-            "DATOS NO VÁLIDOS",
-            texto_raw[:50],
-            "--",
-            "--",
-            "--",
-            "",
-            "--",
+            es_valido,
+            estado_txt,
+            fecha_str,
+            temp,
+            pres,
+            viento,
+            dir_viento,
+            racha,
         )
-
-      def buscar_valor_estricto(keys):
-        for k in keys:
-          for o_k, o_v in obs.items():
-            if k.lower() == o_k.lower() or k.lower() in o_k.lower():
-              val = convertir_numero(o_v)
-              if val is not None:
-                return val
-        return None
-
-      temp_f = buscar_valor_estricto([
-          "temp",
-          "ta",
-          "temperatura",
-          "t_aire",
-          "val_temp",
-      ])
-      temp = f"{temp_f:.1f}°C" if temp_f is not None else "--"
-
-      pres_f = buscar_valor_estricto([
-          "pres",
-          "qfe",
-          "qff",
-          "barom",
-          "p_at",
-          "patm",
-          "presion",
-      ])
-      pres = f"{pres_f:.1f} hPa" if pres_f is not None else "--"
-
-      viento_f = buscar_valor_estricto([
-          "ff",
-          "vel",
-          "viento",
-          "speed",
-          "intens",
-          "vel_viento",
-      ])
-      viento = f"{viento_f:.1f} kt" if viento_f is not None else "--"
-
-      racha_f = buscar_valor_estricto(["fx", "racha", "gust", "max_gust"])
-      racha = f"{racha_f:.1f} kt" if racha_f is not None else "--"
-
-      dir_val = None
-      for o_k, o_v in obs.items():
-        if any(
-            d in o_k.lower() for d in ["dd", "dir", "direction", "wind_dir"]
-        ):
-          dir_val = o_v
-          break
-
-      if isinstance(dir_val, (int, float)):
-        dir_viento = grados_a_cardinal(float(dir_val))
-      else:
-        dir_viento = (
-            formatear_direccion(str(dir_val)) if dir_val is not None else ""
-        )
-
-      fecha_str = "Reciente"
-      for o_k, o_v in obs.items():
-        if any(
-            f in o_k.lower()
-            for f in ["fecha", "time", "timestamp", "hora", "fch", "date"]
-        ):
-          fecha_str = str(o_v)
-          break
-
-      es_valido = (
-          temp_f is not None or viento_f is not None or pres_f is not None
-      )
-      estado_txt = "OPERATIVA" if es_valido else "SIN DATOS VÁLIDOS"
 
       return (
-          es_valido,
-          estado_txt,
-          fecha_str,
-          temp,
-          pres,
-          viento,
-          dir_viento,
-          racha,
+          False,
+          "DATOS NO VÁLIDOS",
+          "Estructura desconocida",
+          "--",
+          "--",
+          "--",
+          "",
+          "--",
       )
 
   except Exception as e:
