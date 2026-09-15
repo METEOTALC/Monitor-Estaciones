@@ -106,15 +106,36 @@ ESTACIONES_FAROS = [
     },
 ]
 
+# ==========================================
+# ESTACIONES IFOP / ENLACE DIRECTO (AZULES)
+# ==========================================
+ESTACIONES_IFOP = [
+    {
+        "nombre": "Faro Punta Carranza",
+        "url": "https://siom.ifop.cl/",
+        "lat": -35.590,
+        "lon": -72.600,
+    },
+    {
+        "nombre": "Isla Mocha",
+        "url": "https://siom.ifop.cl/",
+        "lat": -38.370,
+        "lon": -73.900,
+    },
+]
+
+# ORDEN EXACTO SOLICITADO
 ORDEN_ESTACIONES = [
     "Capitanía de Puerto Constitución",
     "Capitanía de Puerto Lirquén",
+    "Faro Punta Carranza",
     "Faro Isla Quiriquina",
     "Gobernación Marítima de Talcahuano",
     "Faro Punta Hualpén",
     "Capitanía de Puerto Coronel",
     "Capitanía de Puerto Lota",
     "Capitanía de Puerto Lebu",
+    "Isla Mocha",
     "Capitanía de Puerto Carahue",
     "Capitanía de Puerto Corral",
 ]
@@ -344,46 +365,61 @@ def consultar_wunderground_web(est):
 
 
 def generar_html(resultados_totales, hay_alerta):
-  total_estaciones = len(resultados_totales)
-  operativas = sum(1 for r in resultados_totales if r["ok"])
+  total_estaciones = len(
+      [r for r in resultados_totales if r["ok"] != "enlace"]
+  )
+  operativas = sum(
+      1 for r in resultados_totales if r["ok"] is True or r["ok"] == "enlace"
+  )
 
   markers_js = ""
   for r in resultados_totales:
-    color = "green" if r["ok"] else "red"
-    dir_txt = f" ({r['dir_viento']})" if r['dir_viento'] else ""
+    if r["ok"] == "enlace":
+      color = "blue"
+      popup_txt = f"<b>{r['nombre']}</b><br>Plataforma IFOP / SIOM<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
+    else:
+      color = "green" if r["ok"] else "red"
+      dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
+      popup_txt = f"<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
+
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
-        }}).addTo(map).bindPopup("<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>");
+        }}).addTo(map).bindPopup("{popup_txt}");
         """
 
   cards_html = ""
   for r in resultados_totales:
-    clase = "ok" if r["ok"] else "error"
-    icono = "🔴" if not r["ok"] else "🟢"
-
-    if r["dir_viento"]:
-      viento_contenido = (
-          f'<span style="display: block; font-size: 0.68em; color: #1d4ed8;'
-          f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
-          f'<span style="display: block; font-size: 0.78em;'
-          f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
-      )
-    else:
-      viento_contenido = (
-          '<span style="display: block; font-size: 0.68em; color: transparent;'
-          ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
-          f'<span style="display: block; font-size: 0.78em;'
-          f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
-      )
-
-    cards_html += f"""
-        <a href="{r['url']}" target="_blank" class="card-link">
-            <div class="card {clase}">
-                <div class="card-header">
-                    <span class="station-name">{r['nombre']}</span>
-                    <span class="status-badge">{icono}</span>
+    if r["ok"] == "enlace":
+      clase = "blue"
+      icono = "🔵"
+      cuerpo_tarjeta = """
+                <div class="card-body-content" style="justify-content: center; padding: 10px 0;">
+                    <span style="font-weight: 700; font-size: 0.85em; color: #0369a1; text-align: center;">🌐 Ver plataforma IFOP / SIOM</span>
                 </div>
+            """
+      footer_texto = "Enlace Externo"
+    else:
+      clase = "ok" if r["ok"] else "error"
+      icono = "🔴" if not r["ok"] else "🟢"
+      footer_texto = f"Reporte: {r['ultimo']}"
+
+      if r["dir_viento"]:
+        viento_contenido = (
+            f'<span style="display: block; font-size: 0.68em; color: #1d4ed8;'
+            f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
+            f'<span style="display: block; font-size: 0.78em;'
+            f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
+        )
+      else:
+        viento_contenido = (
+            '<span style="display: block; font-size: 0.68em; color: transparent;'
+            ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
+            f'<span style="display: block; font-size: 0.78em;'
+            f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
+        )
+
+      cuerpo_tarjeta = f"""
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ {r['temp']}</div>
                     <div class="weather-grid-3">
@@ -392,8 +428,18 @@ def generar_html(resultados_totales, hay_alerta):
                         <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ {r['pres']}</span></div>
                     </div>
                 </div>
+            """
+
+    cards_html += f"""
+        <a href="{r['url']}" target="_blank" class="card-link">
+            <div class="card {clase}">
+                <div class="card-header">
+                    <span class="station-name">{r['nombre']}</span>
+                    <span class="status-badge">{icono}</span>
+                </div>
+                {cuerpo_tarjeta}
                 <div class="card-footer-info">
-                    <span class="time">Reporte: {r['ultimo']}</span>
+                    <span class="time">{footer_texto}</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -467,12 +513,20 @@ def generar_html(resultados_totales, hay_alerta):
             border: 1px solid #f87171;
             border-left: 6px solid #dc2626; 
         }}
+        .card.blue {{ 
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 55%, #7dd3fc 100%); 
+            border: 1px solid #38bdf8;
+            border-left: 6px solid #0284c7; 
+        }}
         .card:hover {{ 
             transform: translateY(-3px); 
             box-shadow: 0 8px 20px rgba(30, 64, 175, 0.2); 
         }}
         .card.error:hover {{
             box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3); 
+        }}
+        .card.blue:hover {{
+            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3); 
         }}
         
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }}
@@ -495,7 +549,6 @@ def generar_html(resultados_totales, hay_alerta):
             align-items: center;
         }}
         
-        /* Proporción equilibrada y estiramiento automático idéntico para los 3 elementos */
         .weather-grid-3 {{ 
             display: grid; 
             grid-template-columns: 1fr 0.95fr 1.2fr; 
@@ -613,6 +666,23 @@ def ejecutar_monitoreo():
         "racha": racha,
     }
 
+  for est_ifop in ESTACIONES_IFOP:
+    print(f"[🔗] {est_ifop['nombre']}: Enlace directo IFOP / SIOM")
+    resultados_dict[est_ifop["nombre"]] = {
+        "nombre": est_ifop["nombre"],
+        "url": est_ifop["url"],
+        "lat": est_ifop["lat"],
+        "lon": est_ifop["lon"],
+        "ok": "enlace",
+        "estado": "ENLACE DIRECTO",
+        "ultimo": "Manual / SIOM",
+        "temp": "--",
+        "pres": "--",
+        "viento": "--",
+        "dir_viento": "",
+        "racha": "--",
+    }
+
   resultados_totales = [
       resultados_dict[nombre]
       for nombre in ORDEN_ESTACIONES
@@ -632,7 +702,7 @@ def subir_a_github():
             "git",
             "commit",
             "-m",
-            "Alineacion uniforme: misma altura adaptativa para viento, racha y presion manteniendo temperatura intacta [skip ci]",
+            "Orden ajustado: Carranza tras Lirquen y Mocha tras Lebu [skip ci]",
         ],
         capture_output=True,
         text=True,
