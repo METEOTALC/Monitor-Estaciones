@@ -116,9 +116,9 @@
 <body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 15-09-2026 01:50:20 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 15-09-2026 01:55:21 (Tolerancia: 12 min)</div>
     <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
-    <div class="summary">Estaciones Operativas: 9 de 10</div>
+    <div class="summary">Estaciones Operativas: 8 de 10</div>
     <div id="map"></div>
     <div class="grid">
         
@@ -179,7 +179,7 @@
                     </div>
                 </div>
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-15 01:50:18</span>
+                    <span class="time">Reporte: 2026-09-15 01:55:18</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -291,10 +291,10 @@
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Capitanía de Puerto Carahue</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 <div class="card-body-content">
                     <div class="temp-suelta">🌡️ 8.4°C</div>
@@ -353,7 +353,7 @@
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 13.9°C | Viento: 6.1 kt (E) | Racha: 12.2 kt | Pres: 1017.9 hPa<br>Reporte: 2026-09-15 01:50:18<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 13.9°C | Viento: 6.1 kt (E) | Racha: 12.2 kt | Pres: 1017.9 hPa<br>Reporte: 2026-09-15 01:55:18<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -376,8 +376,8 @@
         }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu</b><br>Estado: OPERATIVA<br>Temp: 13.6°C | Viento: 4.5 kt (S/SE) | Racha: 8.7 kt | Pres: 1019.6 hPa<br>Reporte: 15-09-2026 1:50:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-38.788, -73.397], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Carahue</b><br>Estado: OPERATIVA<br>Temp: 8.4°C | Viento: 2.7 kt (N) | Racha: 5.2 kt | Pres: 1019.8 hPa<br>Reporte: 15-09-2026 1:40:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Carahue</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 8.4°C | Viento: 2.7 kt (N) | Racha: 5.2 kt | Pres: 1019.8 hPa<br>Reporte: 15-09-2026 1:40:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/carahue/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-39.883, -73.433], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
