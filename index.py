@@ -281,7 +281,7 @@ def consultar_directemar(est):
           viento = f"{val:.1f} kt"
 
       racha_match = re.search(
-          r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
+          r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha|Ráfaga)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots)?",
           texto_plano,
           re.IGNORECASE,
       )
@@ -436,21 +436,50 @@ def consultar_ifop(est):
             break
 
         viento_val, _ = None, None
-        for k in ["ff", "viento", "speed", "vel"]:
+        for k in ["ff", "viento", "speed", "vel", "intensidad"]:
           v, _ = extraer_ultimo_de_serie(k)
           if v is not None:
             viento_val = v
             break
 
+        # Búsqueda ampliada y robusta para racha/ráfaga en cualquier clave del JSON
         racha_val, _ = None, None
-        for k in ["fx", "racha", "gust"]:
-          v, _ = extraer_ultimo_de_serie(k)
-          if v is not None:
-            racha_val = v
-            break
+        for k_json in data.keys():
+          k_lower = k_json.lower()
+          if any(
+              sub in k_lower
+              for sub in [
+                  "racha",
+                  "ráfaga",
+                  "rafaga",
+                  "gust",
+                  "max",
+                  "fx",
+                  "vmax",
+                  "vel_max",
+              ]
+          ):
+            v, _ = extraer_ultimo_de_serie(k_json)
+            if v is not None:
+              racha_val = v
+              break
+        if racha_val is None:
+          for k in [
+              "fx",
+              "racha",
+              "ráfaga",
+              "rafaga",
+              "gust",
+              "max_viento",
+              "v_max",
+          ]:
+            v, _ = extraer_ultimo_de_serie(k)
+            if v is not None:
+              racha_val = v
+              break
 
         dir_val, _ = None, None
-        for k in ["dir_viento", "dd", "dir"]:
+        for k in ["dir_viento", "dd", "dir", "direccion"]:
           v, _ = extraer_ultimo_de_serie(k)
           if v is not None:
             dir_val = v
@@ -814,7 +843,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización monitor automático IFOP [skip"
+                "Actualización monitor automático IFOP ráfagas [skip"
                 " ci]"
             ),
         ],
