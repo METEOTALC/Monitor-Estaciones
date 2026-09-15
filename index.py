@@ -109,7 +109,7 @@ ESTACIONES_FAROS = [
 ]
 
 # ==========================================
-# ESTACIONES IFOP / API JSON
+# ESTACIONES IFOP / API JSON (Coordenadas actualizadas)
 # ==========================================
 ESTACIONES_IFOP = [
     {
@@ -214,15 +214,12 @@ def gestionar_historial_presion(nombre_estacion, presion_actual):
     historial[nombre_estacion] = []
 
   registros = historial[nombre_estacion]
-  # Añadir lectura actual con timestamp en segundos
   registros.append({"t": ahora.timestamp(), "p": presion_actual})
 
-  # Limpiar registros más antiguos de 3.5 horas
   limite_tiempo = ahora.timestamp() - (3.5 * 3600)
   registros = [r for r in registros if r["t"] >= limite_tiempo]
   historial[nombre_estacion] = registros
 
-  # Guardar archivo actualizado
   try:
     with open(ARCHIVO_HISTORIAL, "w", encoding="utf-8") as f:
       json.dump(historial, f)
@@ -232,21 +229,16 @@ def gestionar_historial_presion(nombre_estacion, presion_actual):
   if presion_actual is None:
     return ""
 
-  # Buscar el registro más cercano a hace 3 horas (entre 2.5 y 3.5 horas atrás)
   objetivo_t = ahora.timestamp() - (3 * 3600)
-  candidatos = [
-      r for r in registros if abs(r["t"] - objetivo_t) <= (45 * 60)
-  ]  # tolerancia de 45 min
+  candidatos = [r for r in registros if abs(r["t"] - objetivo_t) <= (45 * 60)]
 
   if not candidatos:
-    # Si no hay exacto de 3 horas, tomar el más antiguo disponible si tiene al menos 2 horas
     candidatos_antiguos = [r for r in registros if r["t"] <= objetivo_t + 1800]
     if candidatos_antiguos:
       presion_pasada = candidatos_antiguos[0]["p"]
     else:
       return ""
   else:
-    # Elegir el que esté más cerca de las exactamente 3 horas
     candidatos.sort(key=lambda x: abs(x["t"] - objetivo_t))
     presion_pasada = candidatos[0]["p"]
 
@@ -273,9 +265,9 @@ def consultar_directemar(est):
       texto_plano = (
           texto_plano.replace("\xa5", " ")
           .replace("\xa0", " ")
-          .replace(" ", " ")
-          .replace("°", "°")
-          .replace("°", "°")
+          .replace("&nbsp;", " ")
+          .replace("&deg;", "°")
+          .replace("&#176;", "°")
       )
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
@@ -472,99 +464,88 @@ def consultar_ifop(est):
       data = json.loads(texto_raw)
 
       if isinstance(data, dict):
+        # Función mejorada para buscar claves de forma flexible dentro del JSON de IFOP
+        def extraer_datos_serie():
+          val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d = (
+              None,
+              None,
+              None,
+              None,
+              None,
+              None,
+              None,
+          )
 
-        def extraer_ultimo_y_pasado(nombre_clave):
-          if nombre_clave in data and isinstance(data[nombre_clave], dict):
-            serie = data[nombre_clave]
-            if (
-                "data" in serie
-                and isinstance(serie["data"], list)
-                and len(serie["data"]) > 0
-            ):
-              item_data = serie["data"][0]
-              if (
-                  "y" in item_data
-                  and isinstance(item_data["y"], list)
-                  and len(item_data["y"]) > 0
-              ):
-                y_vals = item_data["y"]
-                x_vals = item_data.get("x", [])
-                val_actual = y_vals[-1]
-                fecha_actual = x_vals[-1] if x_vals else None
+          for k, serie in data.items():
+            if isinstance(serie, dict) and "data" in serie:
+              lista_data = serie["data"]
+              if isinstance(lista_data, list) and len(lista_data) > 0:
+                item_data = lista_data[0]
+                if isinstance(item_data, dict) and "y" in item_data:
+                  y_vals = item_data["y"]
+                  x_vals = item_data.get("x", [])
+                  if isinstance(y_vals, list) and len(y_vals) > 0:
+                    actual = y_vals[-1]
+                    f_act = x_vals[-1] if x_vals and len(x_vals) > 0 else None
 
-                # Buscar valor de hace ~3 horas dentro de la misma serie si existe
-                val_pasado = None
-                if len(y_vals) >= 180:  # Asumiendo datos por minuto
-                  val_pasado = y_vals[-180]
-                elif len(y_vals) > 1:
-                  val_pasado = y_vals[0]
+                    k_lower = k.lower()
+                    # Temperatura
+                    if any(
+                        sub in k_lower
+                        for sub in ["temp", "temperatura", "ta", "t_aire"]
+                    ):
+                      val_t, fecha_t = actual, f_act
+                    # Presión
+                    elif any(
+                        sub in k_lower
+                        for sub in ["pres", "presion", "barom", "qfe", "qff"]
+                    ):
+                      val_p = actual
+                      if len(y_vals) >= 180:
+                        p_pasado = y_vals[-180]
+                      elif len(y_vals) > 1:
+                        p_pasado = y_vals[0]
+                    # Viento velocidad
+                    elif any(
+                        sub in k_lower
+                        for sub in ["ff", "viento", "speed", "vel", "intensidad"]
+                    ):
+                      val_v = actual
+                    # Racha / Ráfaga
+                    elif any(
+                        sub in k_lower
+                        for sub in [
+                            "racha",
+                            "ráfaga",
+                            "rafaga",
+                            "gust",
+                            "max",
+                            "fx",
+                            "vmax",
+                            "vel_max",
+                        ]
+                    ):
+                      val_r = actual
+                    # Dirección viento
+                    elif any(
+                        sub in k_lower
+                        for sub in ["dir_viento", "dd", "dir", "direccion"]
+                    ):
+                      val_d = actual
 
-                return val_actual, fecha_actual, val_pasado
-          return None, None, None
+          return (
+              val_t,
+              fecha_t,
+              val_p,
+              p_pasado,
+              val_v,
+              val_r,
+              val_d,
+          )
 
-        temp_val, fecha_temp = None, None
-        for k in ["temp", "temperatura", "ta", "t_aire"]:
-          v, f, _ = extraer_ultimo_y_pasado(k)
-          if v is not None:
-            temp_val, fecha_temp = v, f
-            break
-
-        pres_val, _, pres_pasado_val = None, None, None
-        for k in ["pres", "presion", "barom", "qfe", "qff"]:
-          v, _, p_pasado = extraer_ultimo_y_pasado(k)
-          if v is not None:
-            pres_val = v
-            pres_pasado_val = p_pasado
-            break
-
-        viento_val, _ = None, None
-        for k in ["ff", "viento", "speed", "vel", "intensidad"]:
-          v, _, _ = extraer_ultimo_y_pasado(k)
-          if v is not None:
-            viento_val = v
-            break
-
-        racha_val, _ = None, None
-        for k_json in data.keys():
-          k_lower = k_json.lower()
-          if any(
-              sub in k_lower
-              for sub in [
-                  "racha",
-                  "ráfaga",
-                  "rafaga",
-                  "gust",
-                  "max",
-                  "fx",
-                  "vmax",
-                  "vel_max",
-              ]
-          ):
-            v, _, _ = extraer_ultimo_y_pasado(k_json)
-            if v is not None:
-              racha_val = v
-              break
-        if racha_val is None:
-          for k in [
-              "fx",
-              "racha",
-              "ráfaga",
-              "rafaga",
-              "gust",
-              "max_viento",
-              "v_max",
-          ]:
-            v, _, _ = extraer_ultimo_y_pasado(k)
-            if v is not None:
-              racha_val = v
-              break
-
-        dir_val, _ = None, None
-        for k in ["dir_viento", "dd", "dir", "direccion"]:
-          v, _, _ = extraer_ultimo_y_pasado(k)
-          if v is not None:
-            dir_val = v
-            break
+        temp_val, fecha_temp, pres_val, pres_pasado_val, viento_val, racha_val, dir_val = (
+            extraer_datos_serie()
+        )
 
         temp_f = convertir_numero(temp_val)
         temp = f"{temp_f:.1f}°C" if temp_f is not None else "--"
@@ -937,7 +918,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Tendencia de presión 3 horas (umbral 0.2 hPa) [skip ci]"
+                "Corrección de temperatura IFOP y actualización de coordenadas"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
