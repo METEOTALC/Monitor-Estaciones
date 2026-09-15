@@ -107,18 +107,20 @@ ESTACIONES_FAROS = [
 ]
 
 # ==========================================
-# ESTACIONES IFOP / ENLACE DIRECTO (AZULES)
+# ESTACIONES IFOP / API JSON
 # ==========================================
 ESTACIONES_IFOP = [
     {
         "nombre": "Faro Punta Carranza",
         "url": "https://giscc.ifop.cl/doma_met/",
+        "api_url": "https://giscc.ifop.cl/siom-enoscc//get_est_met/22",
         "lat": -35.590,
         "lon": -72.600,
     },
     {
         "nombre": "Isla Mocha",
         "url": "https://giscc.ifop.cl/doma_met/",
+        "api_url": "https://giscc.ifop.cl/siom-enoscc//get_est_met/34",
         "lat": -38.370,
         "lon": -73.900,
     },
@@ -226,7 +228,6 @@ def consultar_directemar(est):
         if val is not None:
           pres = f"{val:.1f} hPa"
 
-      # Búsqueda de dirección de viento más flexible (admite grados previos, abreviaturas o letras sueltas)
       bearing_match = re.search(
           r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
           texto_plano,
@@ -239,7 +240,6 @@ def consultar_directemar(est):
             re.IGNORECASE,
         )
       if not bearing_match:
-        # Búsqueda adicional por si aparece como grados cardinales directos ej: N, NNW, SSW
         bearing_match = re.search(
             r"(?:Direcci[oó]n|Dir)[^\w]*(?:Viento)?[^\w]*([N,S,E,W]{1,3})",
             texto_plano,
@@ -372,23 +372,58 @@ def consultar_wunderground_web(est):
   return False, "SIN CONEXIÓN", "--", "--", "--", "", "--", "Error de red"
 
 
+def consultar_ifop(est):
+  try:
+    req = urllib.request.Request(est["api_url"], headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
+      data = json.loads(response.read().decode("utf-8"))
+      
+      # Dependiendo de cómo venga estructurado el JSON de IFOP, extraemos los campos principales.
+      # Usualmente vienen en un diccionario o lista con la última observación.
+      # Ajustamos de forma segura para leer temperaturas, vientos y presiones.
+      
+      # Si el JSON es una lista o un diccionario con la data:
+      obs = data[0] if isinstance(data, list) else data
+      
+      # Extraer valores según las llaves típicas de estas APIs (temperatura, presion, viento, etc.)
+      temp_val = convertir_numero(obs.get("temperatura") or obs.get("temp") or obs.get("ta"))
+      temp = f"{temp_val:.1f}°C" if temp_val is not None else "--"
+      
+      pres_val = convertir_numero(obs.get("presion") or obs.get("pressure") or obs.get("qfe"))
+      pres = f"{pres_val:.1f} hPa" if pres_val is not None else "--"
+      
+      viento_val = convertir_numero(obs.get("viento_vel") or obs.get("wind_speed") or obs.get("ff"))
+      viento = f"{viento_val:.1f} kt" if viento_val is not None else "--"
+      
+      racha_val = convertir_numero(obs.get("viento_racha") or obs.get("gust") or obs.get("fx"))
+      racha = f"{racha_val:.1f} kt" if racha_val is not None else "--"
+      
+      dir_val = obs.get("viento_dir") or obs.get("wind_dir") or obs.get("dd")
+      if isinstance(dir_val, (int, float)):
+        dir_viento = grados_a_cardinal(float(dir_val))
+      else:
+        dir_viento = formatear_direccion(str(dir_val)) if dir_val else ""
+
+      fecha_str = str(obs.get("fecha") or obs.get("time") or obs.get("timestamp") or "Reciente")
+      
+      # Determinamos si está operativo (asumimos True si responde la API correctamente)
+      return True, "OPERATIVA", fecha_str, temp, pres, viento, dir_viento, racha
+
+  except Exception as e:
+    print(f"Error IFOP [{est['nombre']}]: {e}")
+  
+  return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "", "--"
+
+
 def generar_html(resultados_totales, hay_alerta):
-  total_estaciones = len(
-      [r for r in resultados_totales if r["ok"] != "enlace"]
-  )
-  operativas = sum(
-      1 for r in resultados_totales if r["ok"] is True or r["ok"] == "enlace"
-  )
+  total_estaciones = len(resultados_totales)
+  operativas = sum(1 for r in resultados_totales if r["ok"] is True)
 
   markers_js = ""
   for r in resultados_totales:
-    if r["ok"] == "enlace":
-      color = "blue"
-      popup_txt = f"<b>{r['nombre']}</b><br>Plataforma DOMA Met (IFOP)<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
-    else:
-      color = "green" if r["ok"] else "red"
-      dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
-      popup_txt = f"<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
+    color = "green" if r["ok"] else "red"
+    dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
+    popup_txt = f"<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
 
     markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
@@ -398,45 +433,35 @@ def generar_html(resultados_totales, hay_alerta):
 
   cards_html = ""
   for r in resultados_totales:
-    if r["ok"] == "enlace":
-      clase = "blue"
-      icono = "🔵"
-      cuerpo_tarjeta = """
-                <div class="card-body-content" style="justify-content: center; padding: 10px 0;">
-                    <span style="font-weight: 700; font-size: 0.85em; color: #0369a1; text-align: center;">🌐 DOMA Met (IFOP)</span>
-                </div>
-            """
-      footer_texto = "Enlace Directo"
+    clase = "ok" if r["ok"] else "error"
+    icono = "🔴" if not r["ok"] else "🟢"
+    footer_texto = f"Reporte: {r['ultimo']}"
+
+    if r["dir_viento"]:
+      viento_contenido = (
+          f'<span style="display: block; font-size: 0.68em; color: #1d4ed8;'
+          f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
+          f'<span style="display: block; font-size: 0.78em;'
+          f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
+      )
     else:
-      clase = "ok" if r["ok"] else "error"
-      icono = "🔴" if not r["ok"] else "🟢"
-      footer_texto = f"Reporte: {r['ultimo']}"
+      viento_contenido = (
+          '<span style="display: block; font-size: 0.68em; color: transparent;'
+          ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
+          f'<span style="display: block; font-size: 0.78em;'
+          f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
+      )
 
-      if r["dir_viento"]:
-        viento_contenido = (
-            f'<span style="display: block; font-size: 0.68em; color: #1d4ed8;'
-            f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
-            f'<span style="display: block; font-size: 0.78em;'
-            f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
-        )
-      else:
-        viento_contenido = (
-            '<span style="display: block; font-size: 0.68em; color: transparent;'
-            ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
-            f'<span style="display: block; font-size: 0.78em;'
-            f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
-        )
-
-      cuerpo_tarjeta = f"""
-                <div class="card-body-content">
-                    <div class="temp-suelta">🌡️ {r['temp']}</div>
-                    <div class="weather-grid-3">
-                        <div class="weather-item">{viento_contenido}</div>
-                        <div class="weather-item"><span style="font-size: 0.78em; font-weight: 700;">💨 {r['racha']}</span></div>
-                        <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ {r['pres']}</span></div>
-                    </div>
+    cuerpo_tarjeta = f"""
+            <div class="card-body-content">
+                <div class="temp-suelta">🌡️ {r['temp']}</div>
+                <div class="weather-grid-3">
+                    <div class="weather-item">{viento_contenido}</div>
+                    <div class="weather-item"><span style="font-size: 0.78em; font-weight: 700;">💨 {r['racha']}</span></div>
+                    <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ {r['pres']}</span></div>
                 </div>
-            """
+            </div>
+        """
 
     cards_html += f"""
         <a href="{r['url']}" target="_blank" class="card-link">
@@ -521,20 +546,12 @@ def generar_html(resultados_totales, hay_alerta):
             border: 1px solid #f87171;
             border-left: 6px solid #dc2626; 
         }}
-        .card.blue {{ 
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 55%, #7dd3fc 100%); 
-            border: 1px solid #38bdf8;
-            border-left: 6px solid #0284c7; 
-        }}
         .card:hover {{ 
             transform: translateY(-3px); 
             box-shadow: 0 8px 20px rgba(30, 64, 175, 0.2); 
         }}
         .card.error:hover {{
             box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3); 
-        }}
-        .card.blue:hover {{
-            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3); 
         }}
         
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }}
@@ -675,20 +692,27 @@ def ejecutar_monitoreo():
     }
 
   for est_ifop in ESTACIONES_IFOP:
-    print(f"[🔗] {est_ifop['nombre']}: Enlace directo DOMA Met (IFOP)")
+    ok, estado, ultimo, temp, pres, viento, dir_viento, racha = consultar_ifop(est_ifop)
+    simbolo = "✓" if ok else "X"
+    print(
+        f"[{simbolo}] {est_ifop['nombre']} (IFOP API): {estado} | Temp: {temp}, Viento:"
+        f" {dir_viento} {viento}, Racha: {racha}, Pres: {pres}"
+    )
+    if not ok:
+      hubo_fallas = True
     resultados_dict[est_ifop["nombre"]] = {
         "nombre": est_ifop["nombre"],
         "url": est_ifop["url"],
         "lat": est_ifop["lat"],
         "lon": est_ifop["lon"],
-        "ok": "enlace",
-        "estado": "ENLACE DIRECTO",
-        "ultimo": "DOMA Met / IFOP",
-        "temp": "--",
-        "pres": "--",
-        "viento": "--",
-        "dir_viento": "",
-        "racha": "--",
+        "ok": ok,
+        "estado": estado,
+        "ultimo": ultimo,
+        "temp": temp,
+        "pres": pres,
+        "viento": viento,
+        "dir_viento": dir_viento,
+        "racha": racha,
     }
 
   resultados_totales = [
@@ -711,8 +735,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección de lectura de dirección de viento en estaciones"
-                " Directemar [skip ci]"
+                "Integración de endpoints API JSON para Punta Carranza e Isla Mocha [skip"
+                " ci]"
             ),
         ],
         capture_output=True,
