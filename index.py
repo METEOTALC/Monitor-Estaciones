@@ -442,7 +442,6 @@ def consultar_ifop(est):
             viento_val = v
             break
 
-        # Búsqueda ampliada y robusta para racha/ráfaga en cualquier clave del JSON
         racha_val, _ = None, None
         for k_json in data.keys():
           k_lower = k_json.lower()
@@ -560,16 +559,16 @@ def generar_html(resultados_totales, hay_alerta):
 
     if r["dir_viento"]:
       viento_contenido = (
-          f'<span style="display: block; font-size: 0.68em; color: #1d4ed8;'
+          f'<span style="display: block; font-size: 0.65em; color: #1d4ed8;'
           f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
-          f'<span style="display: block; font-size: 0.78em;'
+          f'<span style="display: block; font-size: 0.74em;'
           f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
       )
     else:
       viento_contenido = (
-          '<span style="display: block; font-size: 0.68em; color: transparent;'
+          '<span style="display: block; font-size: 0.65em; color: transparent;'
           ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
-          f'<span style="display: block; font-size: 0.78em;'
+          f'<span style="display: block; font-size: 0.74em;'
           f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
       )
 
@@ -578,8 +577,8 @@ def generar_html(resultados_totales, hay_alerta):
                 <div class="temp-suelta">🌡️ {r['temp']}</div>
                 <div class="weather-grid-3">
                     <div class="weather-item">{viento_contenido}</div>
-                    <div class="weather-item"><span style="font-size: 0.78em; font-weight: 700;">💨 {r['racha']}</span></div>
-                    <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">⏲️ {r['pres']}</span></div>
+                    <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">💨 {r['racha']}</span></div>
+                    <div class="weather-item"><span style="font-size: 0.70em; font-weight: 700;">⏲️ {r['pres']}</span></div>
                 </div>
             </div>
         """
@@ -636,7 +635,7 @@ def generar_html(resultados_totales, hay_alerta):
         
         .grid {{ 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); 
             gap: 15px; 
             max-width: 1200px; 
             margin: 0 auto; 
@@ -646,7 +645,7 @@ def generar_html(resultados_totales, hay_alerta):
         .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
         .card {{ 
             border-radius: 14px; 
-            padding: 10px 12px; 
+            padding: 10px 10px; 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
@@ -676,18 +675,18 @@ def generar_html(resultados_totales, hay_alerta):
         }}
         
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }}
-        .station-name {{ font-weight: bold; font-size: 14px; color: #0f172a; line-height: 1.1; }}
+        .station-name {{ font-weight: bold; font-size: 13.5px; color: #0f172a; line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
         .card-body-content {{
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 5px;
+            gap: 4px;
             margin: 6px 0;
         }}
         .temp-suelta {{
-            font-size: 0.95em;
+            font-size: 0.90em;
             font-weight: 800;
             color: #0f172a;
             white-space: nowrap;
@@ -697,15 +696,15 @@ def generar_html(resultados_totales, hay_alerta):
         
         .weather-grid-3 {{ 
             display: grid; 
-            grid-template-columns: 1fr 0.95fr 1.2fr; 
-            gap: 3px; 
+            grid-template-columns: 1fr 0.95fr 1.15fr; 
+            gap: 2px; 
             flex: 1;
             align-items: stretch; 
         }}
         .weather-item {{ 
             color: #0f172a; 
             background: rgba(255, 255, 255, 0.9); 
-            padding: 4px 2px; 
+            padding: 3px 1px; 
             border-radius: 6px; 
             border: 1px solid rgba(255, 255, 255, 0.95); 
             text-align: center; 
@@ -843,7 +842,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Actualización monitor automático IFOP ráfagas [skip"
+                "Ajuste diseño tarjetas escritorio [skip"
                 " ci]"
             ),
         ],
