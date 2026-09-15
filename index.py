@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import json
+import os
 import re
 import ssl
 import subprocess
@@ -12,6 +13,7 @@ import urllib.request
 # ==========================================
 TOLERANCIA_MINUTOS = 12
 ZONA_CHILE = ZoneInfo("America/Santiago")
+ARCHIVO_HISTORIAL = "historial_presion.json"
 
 HEADERS = {
     "User-Agent": (
@@ -126,7 +128,6 @@ ESTACIONES_IFOP = [
     },
 ]
 
-# ORDEN EXACTO
 ORDEN_ESTACIONES = [
     "Capitanía de Puerto Constitución",
     "Faro Punta Carranza",
@@ -198,6 +199,70 @@ def grados_a_cardinal(grados):
   return formatear_direccion(direcciones[indice])
 
 
+def gestionar_historial_presion(nombre_estacion, presion_actual):
+  """Guarda registros y calcula tendencia de 3 horas (±0.2 hPa)."""
+  ahora = obtener_hora_chile()
+  historial = {}
+  if os.path.exists(ARCHIVO_HISTORIAL):
+    try:
+      with open(ARCHIVO_HISTORIAL, "r", encoding="utf-8") as f:
+        historial = json.load(f)
+    except Exception:
+      historial = {}
+
+  if nombre_estacion not in historial:
+    historial[nombre_estacion] = []
+
+  registros = historial[nombre_estacion]
+  # Añadir lectura actual con timestamp en segundos
+  registros.append({"t": ahora.timestamp(), "p": presion_actual})
+
+  # Limpiar registros más antiguos de 3.5 horas
+  limite_tiempo = ahora.timestamp() - (3.5 * 3600)
+  registros = [r for r in registros if r["t"] >= limite_tiempo]
+  historial[nombre_estacion] = registros
+
+  # Guardar archivo actualizado
+  try:
+    with open(ARCHIVO_HISTORIAL, "w", encoding="utf-8") as f:
+      json.dump(historial, f)
+  except Exception:
+    pass
+
+  if presion_actual is None:
+    return ""
+
+  # Buscar el registro más cercano a hace 3 horas (entre 2.5 y 3.5 horas atrás)
+  objetivo_t = ahora.timestamp() - (3 * 3600)
+  candidatos = [
+      r for r in registros if abs(r["t"] - objetivo_t) <= (45 * 60)
+  ]  # tolerancia de 45 min
+
+  if not candidatos:
+    # Si no hay exacto de 3 horas, tomar el más antiguo disponible si tiene al menos 2 horas
+    candidatos_antiguos = [r for r in registros if r["t"] <= objetivo_t + 1800]
+    if candidatos_antiguos:
+      presion_pasada = candidatos_antiguos[0]["p"]
+    else:
+      return ""
+  else:
+    # Elegir el que esté más cerca de las exactamente 3 horas
+    candidatos.sort(key=lambda x: abs(x["t"] - objetivo_t))
+    presion_pasada = candidatos[0]["p"]
+
+  if presion_pasada is None:
+    return ""
+
+  dif = presion_actual - presion_pasada
+
+  if dif > 0.2:
+    return " ↗"
+  elif dif < -0.2:
+    return " ↘"
+  else:
+    return " ➔"
+
+
 def consultar_directemar(est):
   try:
     req = urllib.request.Request(est["url"], headers=HEADERS)
@@ -215,6 +280,7 @@ def consultar_directemar(est):
       texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
       temp, pres, viento, dir_viento, racha = "--", "--", "--", "", "--"
+      pres_val = None
 
       temp_match = re.search(
           r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
@@ -232,9 +298,10 @@ def consultar_directemar(est):
           re.IGNORECASE,
       )
       if pres_match:
-        val = convertir_numero(pres_match.group(1))
-        if val is not None:
-          pres = f"{val:.1f} hPa"
+        pres_val = convertir_numero(pres_match.group(1))
+        if pres_val is not None:
+          tendencia = gestionar_historial_presion(est["nombre"], pres_val)
+          pres = f"{pres_val:.1f} hPa{tendencia}"
 
       bearing_match = re.search(
           r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
@@ -357,9 +424,11 @@ def consultar_wunderground_web(est):
       )
 
       pres_inHg = imperial.get("pressure")
-      pres = (
-          f"{pres_inHg * 33.86389:.1f} hPa" if pres_inHg is not None else "--"
-      )
+      pres = "--"
+      if pres_inHg is not None:
+        pres_val = pres_inHg * 33.86389
+        tendencia = gestionar_historial_presion(est["nombre"], pres_val)
+        pres = f"{pres_val:.1f} hPa{tendencia}"
 
       viento_mph = imperial.get("windSpeed")
       viento = (
@@ -404,7 +473,7 @@ def consultar_ifop(est):
 
       if isinstance(data, dict):
 
-        def extraer_ultimo_de_serie(nombre_clave):
+        def extraer_ultimo_y_pasado(nombre_clave):
           if nombre_clave in data and isinstance(data[nombre_clave], dict):
             serie = data[nombre_clave]
             if (
@@ -418,26 +487,39 @@ def consultar_ifop(est):
                   and isinstance(item_data["y"], list)
                   and len(item_data["y"]) > 0
               ):
-                return item_data["y"][-1], item_data.get("x", [None])[-1]
-          return None, None
+                y_vals = item_data["y"]
+                x_vals = item_data.get("x", [])
+                val_actual = y_vals[-1]
+                fecha_actual = x_vals[-1] if x_vals else None
+
+                # Buscar valor de hace ~3 horas dentro de la misma serie si existe
+                val_pasado = None
+                if len(y_vals) >= 180:  # Asumiendo datos por minuto
+                  val_pasado = y_vals[-180]
+                elif len(y_vals) > 1:
+                  val_pasado = y_vals[0]
+
+                return val_actual, fecha_actual, val_pasado
+          return None, None, None
 
         temp_val, fecha_temp = None, None
         for k in ["temp", "temperatura", "ta", "t_aire"]:
-          v, f = extraer_ultimo_de_serie(k)
+          v, f, _ = extraer_ultimo_y_pasado(k)
           if v is not None:
             temp_val, fecha_temp = v, f
             break
 
-        pres_val, _ = None, None
+        pres_val, _, pres_pasado_val = None, None, None
         for k in ["pres", "presion", "barom", "qfe", "qff"]:
-          v, _ = extraer_ultimo_de_serie(k)
+          v, _, p_pasado = extraer_ultimo_y_pasado(k)
           if v is not None:
             pres_val = v
+            pres_pasado_val = p_pasado
             break
 
         viento_val, _ = None, None
         for k in ["ff", "viento", "speed", "vel", "intensidad"]:
-          v, _ = extraer_ultimo_de_serie(k)
+          v, _, _ = extraer_ultimo_y_pasado(k)
           if v is not None:
             viento_val = v
             break
@@ -458,7 +540,7 @@ def consultar_ifop(est):
                   "vel_max",
               ]
           ):
-            v, _ = extraer_ultimo_de_serie(k_json)
+            v, _, _ = extraer_ultimo_y_pasado(k_json)
             if v is not None:
               racha_val = v
               break
@@ -472,14 +554,14 @@ def consultar_ifop(est):
               "max_viento",
               "v_max",
           ]:
-            v, _ = extraer_ultimo_de_serie(k)
+            v, _, _ = extraer_ultimo_y_pasado(k)
             if v is not None:
               racha_val = v
               break
 
         dir_val, _ = None, None
         for k in ["dir_viento", "dd", "dir", "direccion"]:
-          v, _ = extraer_ultimo_de_serie(k)
+          v, _, _ = extraer_ultimo_y_pasado(k)
           if v is not None:
             dir_val = v
             break
@@ -488,7 +570,20 @@ def consultar_ifop(est):
         temp = f"{temp_f:.1f}°C" if temp_f is not None else "--"
 
         pres_f = convertir_numero(pres_val)
-        pres = f"{pres_f:.1f} hPa" if pres_f is not None else "--"
+        tendencia_ifop = ""
+        if pres_f is not None:
+          p_pasado_f = convertir_numero(pres_pasado_val)
+          if p_pasado_f is not None:
+            dif = pres_f - p_pasado_f
+            if dif > 0.2:
+              tendencia_ifop = " ↗"
+            elif dif < -0.2:
+              tendencia_ifop = " ↘"
+            else:
+              tendencia_ifop = " ➔"
+          pres = f"{pres_f:.1f} hPa{tendencia_ifop}"
+        else:
+          pres = "--"
 
         viento_f = convertir_numero(viento_val)
         viento = f"{viento_f:.1f} kt" if viento_f is not None else "--"
@@ -569,7 +664,7 @@ def generar_html(resultados_totales, hay_alerta):
           '<span style="display: block; font-size: 0.65em; color: transparent;'
           ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
           f'<span style="display: block; font-size: 0.74em;'
-          f' font-weight: 700; line-height: 1.1;">🌬️ {r["viento"]}</span>'
+          f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
       )
 
     cuerpo_tarjeta = f"""
@@ -842,8 +937,7 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Ajuste diseño tarjetas escritorio [skip"
-                " ci]"
+                "Tendencia de presión 3 horas (umbral 0.2 hPa) [skip ci]"
             ),
         ],
         capture_output=True,
