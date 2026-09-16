@@ -314,7 +314,6 @@ def consultar_directemar(est):
             texto_plano,
             re.IGNORECASE,
         )
-      # Si viene en grados numéricos en Directemar (ej: Direccion Viento 180°)
       if not bearing_match:
         deg_match = re.search(
             r"(?:Direcci[oó]n|Dir|Wind\s*Direction|Bearing)[^\d]*(\d+(?:[.,]\d+)?)\s*°",
@@ -382,6 +381,16 @@ def consultar_directemar(est):
         )
 
       fecha_str = match_fecha.group(1)
+
+      # CORRECCIÓN PARA LA HORA 00: (agrega el cero faltante si viene como "0:00:00")
+      partes_f = fecha_str.split()
+      if len(partes_f) == 2:
+        fecha_p, hora_p = partes_f
+        sub_hora = hora_p.split(":")
+        if len(sub_hora[0]) == 1:
+          sub_hora[0] = "0" + sub_hora[0]
+          fecha_str = f"{fecha_p} {':'.join(sub_hora)}"
+
       formato_fecha = (
           "%d-%m-%Y %H:%M:%S" if fecha_str.count(":") == 2 else "%d-%m-%Y %H:%M"
       )
@@ -518,7 +527,6 @@ def consultar_ifop(est):
                         p_pasado = y_vals[-180]
                       elif len(y_vals) > 1:
                         p_pasado = y_vals[0]
-                    # CORREGIDO: Se evalúa dirección antes para evitar que "viento" intercepte llaves de dirección
                     elif any(
                         sub in k_lower
                         for sub in ["dir_viento", "dd", "dir", "direccion"]
@@ -595,7 +603,6 @@ def consultar_ifop(est):
         racha_f = convertir_numero(racha_val)
         racha = f"{racha_f:.1f} kt" if racha_f is not None else "--"
 
-        # CORREGIDO: Soporte robusto para grados numéricos (como número o string numérico) o texto cardinal
         dir_num = convertir_numero(dir_val)
         if dir_num is not None:
           dir_viento = grados_a_cardinal(dir_num)
@@ -943,8 +950,8 @@ def subir_a_github():
             "commit",
             "-m",
             (
-                "Corrección en extracción de dirección de viento para"
-                " estaciones IFOP [skip ci]"
+                "Corrección de formato de hora 00 a medianoche en Directemar"
+                " [skip ci]"
             ),
         ],
         capture_output=True,
