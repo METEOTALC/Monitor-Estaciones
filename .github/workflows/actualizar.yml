@@ -5,6 +5,9 @@ on:
     types: [actualizar_estaciones]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,6 +29,6 @@ jobs:
       - name: Guardar cambios y actualizar repositorio
         run: |
           git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          git add index.html
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Actualización automática de estaciones" && git push)
+          git config --global user.email "action@github.com"
+          git add index.html historial_presion.json
+          git diff --staged --quiet || (git commit -m "Actualización automática de estaciones y historial [skip ci]" && git push)
