@@ -943,15 +943,18 @@ def ejecutar_monitoreo():
 def subir_a_github():
   try:
     print("Sincronizando cambios con GitHub...")
-    subprocess.run(["git", "add", "index.html"], check=True)
+    # SE MODIFICÓ AQUÍ PARA QUE TAMBIÉN SUBA EL HISTORIAL DE PRESIÓN AL REPOSITORIO
+    subprocess.run(
+        ["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True
+    )
     resultado = subprocess.run(
         [
             "git",
             "commit",
             "-m",
             (
-                "Corrección de formato de hora 00 a medianoche en Directemar"
-                " [skip ci]"
+                "Actualización de datos, corrección medianoche y persistencia"
+                " de historial [skip ci]"
             ),
         ],
         capture_output=True,
