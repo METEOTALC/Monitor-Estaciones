@@ -112,12 +112,12 @@
         .footer-dev { background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }
     </style>
 </head>
-<body class="">
+<body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 23-09-2026 19:00:27 (Tolerancia: 12 min)</div>
-    
-    <div class="summary">Estaciones Operativas: 12 de 12</div>
+    <div class="subtitle">Última verificación: 23-09-2026 19:05:28 (Tolerancia: 12 min)</div>
+    <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
+    <div class="summary">Estaciones Operativas: 11 de 12</div>
     <div id="map"></div>
     <div class="grid">
         
@@ -200,14 +200,14 @@
             <div class="card-body-content">
                 <div class="temp-suelta">🌡️ 12.8°C</div>
                 <div class="weather-grid-3">
-                    <div class="weather-item"><span style="display: block; font-size: 0.65em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ N/NW</span><span style="display: block; font-size: 0.74em; font-weight: 700; line-height: 1.1;">15.6 kt</span></div>
-                    <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">💨 23.5 kt</span></div>
-                    <div class="weather-item"><span style="font-size: 0.70em; font-weight: 700;">⏲️ 1014.9 hPa ↘</span></div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.65em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ N</span><span style="display: block; font-size: 0.74em; font-weight: 700; line-height: 1.1;">19.1 kt</span></div>
+                    <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">💨 26.9 kt</span></div>
+                    <div class="weather-item"><span style="font-size: 0.70em; font-weight: 700;">⏲️ 1015.2 hPa ↘</span></div>
                 </div>
             </div>
         
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-23 19:00:19</span>
+                    <span class="time">Reporte: 2026-09-23 19:05:14</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -237,23 +237,23 @@
         </a>
         
         <a href="https://www.wunderground.com/dashboard/pws/IHUALP1" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Faro Punta Hualpén</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 
             <div class="card-body-content">
-                <div class="temp-suelta">🌡️ 13.3°C</div>
+                <div class="temp-suelta">🌡️ --</div>
                 <div class="weather-grid-3">
-                    <div class="weather-item"><span style="display: block; font-size: 0.65em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ N/NE</span><span style="display: block; font-size: 0.74em; font-weight: 700; line-height: 1.1;">25.2 kt</span></div>
-                    <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">💨 28.7 kt</span></div>
-                    <div class="weather-item"><span style="font-size: 0.70em; font-weight: 700;">⏲️ 1013.2 hPa ↘</span></div>
+                    <div class="weather-item"><span style="display: block; font-size: 0.65em; color: transparent; font-weight: 800; line-height: 1.1; user-select: none;">-</span><span style="display: block; font-size: 0.74em; font-weight: 700; line-height: 1.1;">--</span></div>
+                    <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">💨 --</span></div>
+                    <div class="weather-item"><span style="font-size: 0.70em; font-weight: 700;">⏲️ --</span></div>
                 </div>
             </div>
         
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-23 18:05:00</span>
+                    <span class="time">Reporte: Error de red</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -422,15 +422,15 @@
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Viento: 15.6 kt (N/NW) | Racha: 23.5 kt | Pres: 1014.9 hPa ↘<br>Reporte: 2026-09-23 19:00:19<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Viento: 19.1 kt (N) | Racha: 26.9 kt | Pres: 1015.2 hPa ↘<br>Reporte: 2026-09-23 19:05:14<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
         }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 13.6°C | Viento: 11.5 kt (N/NE) | Racha: 17.4 kt | Pres: 1014.8 hPa ↘<br>Reporte: 23-09-2026 19:00:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 13.3°C | Viento: 25.2 kt (N/NE) | Racha: 28.7 kt | Pres: 1013.2 hPa ↘<br>Reporte: 2026-09-23 18:05:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: SIN CONEXIÓN<br>Temp: -- | Viento: -- | Racha: -- | Pres: --<br>Reporte: Error de red<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
