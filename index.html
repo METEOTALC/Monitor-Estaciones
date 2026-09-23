@@ -112,20 +112,20 @@
         .footer-dev { background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }
     </style>
 </head>
-<body class="">
+<body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 23-09-2026 12:40:30 (Tolerancia: 12 min)</div>
-    
-    <div class="summary">Estaciones Operativas: 12 de 12</div>
+    <div class="subtitle">Última verificación: 23-09-2026 12:45:29 (Tolerancia: 12 min)</div>
+    <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
+    <div class="summary">Estaciones Operativas: 6 de 12</div>
     <div id="map"></div>
     <div class="grid">
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Capitanía de Puerto Constitución</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 
             <div class="card-body-content">
@@ -168,10 +168,10 @@
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Capitanía de Puerto Lirquén</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 
             <div class="card-body-content">
@@ -207,17 +207,17 @@
             </div>
         
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-23 12:40:22</span>
+                    <span class="time">Reporte: 2026-09-23 12:45:17</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Gobernación Marítima de Talcahuano</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 
             <div class="card-body-content">
@@ -260,10 +260,10 @@
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Capitanía de Puerto Coronel</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 
             <div class="card-body-content">
@@ -283,10 +283,10 @@
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/lota/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Capitanía de Puerto Lota</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 
             <div class="card-body-content">
@@ -306,10 +306,10 @@
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Capitanía de Puerto Lebu</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 
             <div class="card-body-content">
@@ -409,40 +409,40 @@
         }).addTo(map);
         
         L.circleMarker([-35.3241667, -72.40805555], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Constitución</b><br>Estado: OPERATIVA<br>Temp: 13.1°C | Viento: 2.1 kt (N/NW) | Racha: 3.5 kt | Pres: 1018.2 hPa ➔<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Constitución</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 13.1°C | Viento: 2.1 kt (N/NW) | Racha: 3.5 kt | Pres: 1018.2 hPa ➔<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-35.5608333, -72.6177777], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
         }).addTo(map).bindPopup("<b>Faro Punta Carranza</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Viento: 9.1 kt (N) | Racha: 10.4 kt | Pres: 1013.2 hPa ↘<br>Reporte: 2026-09-23T11:50:00<br><a href='https://giscc.ifop.cl/doma_met/' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.7027778, -72.9775], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén</b><br>Estado: OPERATIVA<br>Temp: 13.4°C | Viento: 14.0 kt (N/NE) | Racha: 21.7 kt | Pres: 1015.2 hPa ➔<br>Reporte: 23-09-2026 12:30:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 13.4°C | Viento: 14.0 kt (N/NE) | Racha: 21.7 kt | Pres: 1015.2 hPa ➔<br>Reporte: 23-09-2026 12:30:01<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.2°C | Viento: 20.9 kt (N/NW) | Racha: 23.5 kt | Pres: 1016.6 hPa ↗<br>Reporte: 2026-09-23 12:40:22<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.2°C | Viento: 20.9 kt (N/NW) | Racha: 23.5 kt | Pres: 1016.6 hPa ↗<br>Reporte: 2026-09-23 12:45:17<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: OPERATIVA<br>Temp: 13.1°C | Viento: 11.6 kt (N/NE) | Racha: 19.1 kt | Pres: 1015.9 hPa ➔<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Gobernación Marítima de Talcahuano</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 13.1°C | Viento: 11.6 kt (N/NE) | Racha: 19.1 kt | Pres: 1015.9 hPa ➔<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
         }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 13.3°C | Viento: 20.9 kt (N/NE) | Racha: 25.2 kt | Pres: 1014.9 hPa ➔<br>Reporte: 2026-09-23 12:40:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Coronel</b><br>Estado: OPERATIVA<br>Temp: 14.3°C | Viento: 11.2 kt (N) | Racha: 16.5 kt | Pres: 1014.3 hPa ↘<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Coronel</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 14.3°C | Viento: 11.2 kt (N) | Racha: 16.5 kt | Pres: 1014.3 hPa ↘<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/coronel/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.09, -73.15], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lota</b><br>Estado: OPERATIVA<br>Temp: 15.1°C | Viento: 9.2 kt (NE) | Racha: 15.7 kt | Pres: 1015.2 hPa ↘<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lota/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lota</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 15.1°C | Viento: 9.2 kt (NE) | Racha: 15.7 kt | Pres: 1015.2 hPa ↘<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lota/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.606, -73.65], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu</b><br>Estado: OPERATIVA<br>Temp: 15.3°C | Viento: 15.7 kt (N) | Racha: 26.1 kt | Pres: 1014.4 hPa ➔<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lebu</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 15.3°C | Viento: 15.7 kt (N) | Racha: 26.1 kt | Pres: 1014.4 hPa ➔<br>Reporte: 23-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lebu/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-38.3849472, -73.8688523], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
