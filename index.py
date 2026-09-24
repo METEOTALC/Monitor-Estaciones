@@ -113,14 +113,14 @@ ESTACIONES_FAROS = [
 # ==========================================
 ESTACIONES_IFOP = [
     {
-        "nombre": "Faro Punta Carranza",
+        "nombre": "Faro Cabo Carranza",
         "url": "https://giscc.ifop.cl/doma_met/",
         "api_url": "https://giscc.ifop.cl/siom-enoscc//get_est_met/22",
         "lat": -35.5608333,
         "lon": -72.6177777,
     },
     {
-        "nombre": "Isla Mocha",
+        "nombre": "Faro Isla Mocha",
         "url": "https://giscc.ifop.cl/doma_met/",
         "api_url": "https://giscc.ifop.cl/siom-enoscc//get_est_met/34",
         "lat": -38.3849472,
