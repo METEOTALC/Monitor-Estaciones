@@ -280,7 +280,6 @@ def consultar_directemar(est):
             )
             pres_val = None
 
-            # Temperatura
             temp_match = re.search(
                 r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
                 texto_plano,
@@ -291,7 +290,6 @@ def consultar_directemar(est):
                 if val is not None:
                     temp = f"{val:.1f}°C"
 
-            # Presión
             pres_match = re.search(
                 r"(?:Barometer|Presi[oó]n)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:hPa|mb)?",
                 texto_plano,
@@ -303,7 +301,6 @@ def consultar_directemar(est):
                     tendencia = gestionar_historial_presion(est["nombre"], pres_val)
                     pres = f"{pres_val:.1f} hPa{tendencia}"
 
-            # Dirección de Viento
             bearing_match = re.search(
                 r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
                 texto_plano,
@@ -335,7 +332,6 @@ def consultar_directemar(est):
             if bearing_match and not dir_viento:
                 dir_viento = formatear_direccion(bearing_match.group(1))
 
-            # Velocidad de Viento
             viento_match = re.search(
                 r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
                 texto_plano,
@@ -359,7 +355,6 @@ def consultar_directemar(est):
                 if val is not None:
                     viento = f"{val:.1f} kt"
 
-            # Racha / Ráfaga
             racha_match = re.search(
                 r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha|Ráfaga|Rafaga)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
                 texto_plano,
@@ -370,7 +365,6 @@ def consultar_directemar(est):
                 if val is not None:
                     racha = f"{val:.1f} kt"
 
-            # Precipitación Directemar
             pp_match = re.search(
                 r"Rainfall[\s\-_]+today[^\d]*(\d+(?:[.,]\d+)?)",
                 texto_plano,
@@ -406,7 +400,6 @@ def consultar_directemar(est):
                 )
 
             fecha_str = match_fecha.group(1)
-
             partes_f = fecha_str.split()
             if len(partes_f) == 2:
                 fecha_p, hora_p = partes_f
@@ -564,19 +557,33 @@ def consultar_ifop(est):
                                     x_vals = item_data.get("x", [])
                                     if isinstance(y_vals, list) and len(y_vals) > 0:
                                         actual = y_vals[-1]
-                                        f_act = x_vals[-1] if x_vals and len(x_vals) > 0 else None
+                                        f_act = (
+                                            x_vals[-1]
+                                            if x_vals and len(x_vals) > 0
+                                            else None
+                                        )
 
                                         k_lower = k.lower().strip()
-                                        serie_str = str(serie).lower()
 
                                         if any(
                                             sub in k_lower
-                                            for sub in ["temp", "temperatura", "ta", "t_aire"]
+                                            for sub in [
+                                                "temp",
+                                                "temperatura",
+                                                "ta",
+                                                "t_aire",
+                                            ]
                                         ):
                                             val_t, fecha_t = actual, f_act
                                         elif any(
                                             sub in k_lower
-                                            for sub in ["pres", "presion", "barom", "qfe", "qff"]
+                                            for sub in [
+                                                "pres",
+                                                "presion",
+                                                "barom",
+                                                "qfe",
+                                                "qff",
+                                            ]
                                         ):
                                             val_p = actual
                                             if len(y_vals) >= 180:
@@ -585,7 +592,12 @@ def consultar_ifop(est):
                                                 p_pasado = y_vals[0]
                                         elif any(
                                             sub in k_lower
-                                            for sub in ["dir_viento", "dd", "dir", "direccion"]
+                                            for sub in [
+                                                "dir_viento",
+                                                "dd",
+                                                "dir",
+                                                "direccion",
+                                            ]
                                         ):
                                             val_d = actual
                                         elif any(
@@ -613,13 +625,10 @@ def consultar_ifop(est):
                                             ]
                                         ):
                                             val_r = actual
-                                        
-                                        # Búsqueda ampliada que revisa clave y contenido completo (para atrapar "Lluvia (mm)")
-                                        if any(
-                                            sub in k_lower or sub in serie_str
+                                        elif k_lower == "lluvia" or any(
+                                            sub in k_lower
                                             for sub in [
                                                 "precip",
-                                                "lluvia",
                                                 "rain",
                                                 "pp",
                                                 "acumulada",
@@ -1051,7 +1060,7 @@ def subir_a_github():
                 "commit",
                 "-m",
                 (
-                    "Extracción robusta de precipitación para estaciones IFOP"
+                    "Extracción de precipitación usando la clave exacta 'lluvia'"
                     " [skip ci]"
                 ),
             ],
