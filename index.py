@@ -547,6 +547,25 @@ def consultar_ifop(est):
                         None,
                     )
 
+                    # 1. Extracción específica para la lluvia usando la ruta exacta descubierta
+                    if "lluvia" in data and isinstance(data["lluvia"], dict):
+                        lluvia_block = data["lluvia"]
+                        if "data" in lluvia_block and isinstance(
+                            lluvia_block["data"], list
+                        ) and len(lluvia_block["data"]) > 0:
+                            item_lluvia = lluvia_block["data"][0]
+                            if (
+                                isinstance(item_lluvia, dict)
+                                and "y" in item_lluvia
+                            ):
+                                y_lluvia = item_lluvia["y"]
+                                if (
+                                    isinstance(y_lluvia, list)
+                                    and len(y_lluvia) > 0
+                                ):
+                                    val_pp = y_lluvia[-1]
+
+                    # 2. Extracción para el resto de variables (temp, viento, presión, etc.)
                     for k, serie in data.items():
                         if isinstance(serie, dict) and "data" in serie:
                             lista_data = serie["data"]
@@ -625,17 +644,6 @@ def consultar_ifop(est):
                                             ]
                                         ):
                                             val_r = actual
-                                        elif k_lower == "lluvia" or any(
-                                            sub in k_lower
-                                            for sub in [
-                                                "precip",
-                                                "rain",
-                                                "pp",
-                                                "acumulada",
-                                                "precipitacion",
-                                            ]
-                                        ):
-                                            val_pp = actual
 
                     return (
                         val_t,
@@ -1060,7 +1068,7 @@ def subir_a_github():
                 "commit",
                 "-m",
                 (
-                    "Extracción de precipitación usando la clave exacta 'lluvia'"
+                    "Integración de precipitación IFOP desde data['lluvia']['data'][0]['y']"
                     " [skip ci]"
                 ),
             ],
