@@ -361,16 +361,9 @@ def consultar_ifop(est):
             data = json.loads(texto_raw)
 
             if isinstance(data, dict):
-                # IMPRESIÓN DE DEPURACIÓN PARA ISLA MOCHA EN CONSOLA
-                if "Mocha" in est["nombre"]:
-                    print(f"\n[DEBUG IFOP] Estructura de claves recibida para {est['nombre']}:")
-                    for k, v in data.items():
-                        print(f"  -> Clave principal: '{k}'")
-                        if isinstance(v, dict):
-                            print(f"     Sub-claves: {list(v.keys())}")
-
                 def extraer_datos_serie():
                     val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp = None, None, None, None, None, None, None, None
+                    hoy_chile = obtener_hora_chile().date()
                     
                     for k, serie in data.items():
                         if isinstance(serie, dict):
@@ -400,8 +393,30 @@ def consultar_ifop(est):
                                             val_v = actual
                                         elif any(sub in k_lower for sub in ["racha", "ráfaga", "rafaga", "gust", "max", "fx", "vmax", "vel_max"]):
                                             val_r = actual
-                                        elif any(sub in k_lower for sub in ["lluvia", "pp", "precip", "precipitacion", "agua", "acum", "mm"]):
-                                            val_pp = actual
+                                        elif any(sub in k_lower for sub in ["lluvia", "pp", "precip", "precipitacion", "agua", "acum", "mm", "rain"]):
+                                            # CÁLCULO EXACTO DEL ACUMULADO DIARIO (Desde las 00:00 hrs de hoy)
+                                            valores_hoy = []
+                                            if isinstance(x_vals, list) and len(x_vals) == len(y_vals):
+                                                for xv, yv in zip(x_vals, y_vals):
+                                                    if yv is not None and isinstance(yv, (int, float)):
+                                                        try:
+                                                            if isinstance(xv, (int, float)):
+                                                                dt = datetime.fromtimestamp(xv / 1000.0 if xv > 1e11 else xv, tz=ZONA_CHILE)
+                                                            elif isinstance(xv, str):
+                                                                dt = datetime.fromisoformat(xv.replace('Z', '+00:00')).astimezone(ZONA_CHILE)
+                                                            else:
+                                                                dt = None
+                                                            
+                                                            if dt and dt.date() == hoy_chile:
+                                                                valores_hoy.append(yv)
+                                                        except Exception:
+                                                            pass
+                                            
+                                            if valores_hoy:
+                                                val_pp = max(valores_hoy)
+                                            else:
+                                                # Fallback al último registro si no se pudieron procesar las fechas de x
+                                                val_pp = y_vals[-1]
 
                     return val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp
 
@@ -441,8 +456,6 @@ def consultar_ifop(est):
                 fecha_str = str(fecha_temp) if fecha_temp else "Reciente"
                 es_valido = (temp_f is not None or viento_f is not None or pres_f is not None or pp_f is not None)
                 estado_txt = "OPERATIVA" if es_valido else "SIN DATOS VÁLIDOS"
-
-                print(f"-> [IFOP OK] {est['nombre']} | Temp: {temp} | Viento: {viento} | Pres: {pres} | Lluvia: {precipitacion}")
 
                 return es_valido, estado_txt, fecha_str, temp, pres, viento, dir_viento, racha, precipitacion
 
@@ -694,7 +707,7 @@ def subir_a_github():
     try:
         print("Sincronizando cambios con GitHub...")
         subprocess.run(["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True)
-        resultado = subprocess.run(["git", "commit", "-m", "Depuracion y busqueda extendida de precipitacion IFOP [skip ci]"], capture_output=True, text=True)
+        resultado = subprocess.run(["git", "commit", "-m", "Calculo exacto precipitacion diaria IFOP [skip ci]"], capture_output=True, text=True)
         if resultado.returncode != 0:
             if "nothing to commit" in (resultado.stdout + resultado.stderr).lower():
                 print("Sin cambios nuevos para subir.")
