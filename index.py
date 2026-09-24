@@ -370,7 +370,7 @@ def consultar_directemar(est):
                 if val is not None:
                     racha = f"{val:.1f} kt"
 
-            # Precipitación Directemar (Búsqueda ultra robusta para Rainfall today)
+            # Precipitación Directemar
             pp_match = re.search(
                 r"Rainfall[\s\-_]+today[^\d]*(\d+(?:[.,]\d+)?)",
                 texto_plano,
@@ -619,6 +619,7 @@ def consultar_ifop(est):
                                                 "rain",
                                                 "pp",
                                                 "acumulada",
+                                                "precipitacion",
                                             ]
                                         ):
                                             val_pp = actual
@@ -1046,8 +1047,8 @@ def subir_a_github():
                 "commit",
                 "-m",
                 (
-                    "Optimización en la captura de Rainfall today y diseño"
-                    " compacto [skip ci]"
+                    "Corrección en extracción de precipitación para estaciones"
+                    " IFOP [skip ci]"
                 ),
             ],
             capture_output=True,
