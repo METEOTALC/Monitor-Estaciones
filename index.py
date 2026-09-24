@@ -370,12 +370,18 @@ def consultar_directemar(est):
                 if val is not None:
                     racha = f"{val:.1f} kt"
 
-            # Precipitación Directemar (buscando específicamente Rainfall today o variantes)
+            # Precipitación Directemar (Búsqueda ultra robusta para Rainfall today)
             pp_match = re.search(
-                r"(?:Rainfall\s*today|Precipitaci[oó]n|Lluvia|Rain|Precip)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:mm)?",
+                r"Rainfall[\s\-_]+today[^\d]*(\d+(?:[.,]\d+)?)",
                 texto_plano,
                 re.IGNORECASE,
             )
+            if not pp_match:
+                pp_match = re.search(
+                    r"(?:Precipitaci[oó]n|Lluvia|Rain|Precip)[^\d]*(\d+(?:[.,]\d+)?)",
+                    texto_plano,
+                    re.IGNORECASE,
+                )
             if pp_match:
                 val = convertir_numero(pp_match.group(1))
                 if val is not None:
@@ -933,7 +939,7 @@ def generar_html(resultados_totales, hay_alerta):
 
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("✓ index.html actualizado correctamente con Rainfall today.")
+    print("✓ index.html actualizado correctamente.")
 
 
 def ejecutar_monitoreo():
@@ -1040,8 +1046,8 @@ def subir_a_github():
                 "commit",
                 "-m",
                 (
-                    "Captura de Rainfall today y diseño optimizado de tarjetas"
-                    " [skip ci]"
+                    "Optimización en la captura de Rainfall today y diseño"
+                    " compacto [skip ci]"
                 ),
             ],
             capture_output=True,
