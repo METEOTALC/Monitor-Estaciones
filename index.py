@@ -364,14 +364,17 @@ def consultar_ifop(est):
                 def extraer_datos_serie():
                     val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp = None, None, None, None, None, None, None, None
                     
-                    if "lluvia" in data and isinstance(data["lluvia"], dict):
-                        lluvia_block = data["lluvia"]
-                        if "data" in lluvia_block and isinstance(lluvia_block["data"], list) and len(lluvia_block["data"]) > 0:
-                            item_lluvia = lluvia_block["data"][0]
-                            if isinstance(item_lluvia, dict) and "y" in item_lluvia:
-                                y_lluvia = item_lluvia["y"]
-                                if isinstance(y_lluvia, list) and len(y_lluvia) > 0:
-                                    val_pp = y_lluvia[-1]
+                    # Búsqueda ampliada de precipitación en claves de nivel principal
+                    for clave_lluvia in ["lluvia", "pp", "precip", "precipitacion", "agua"]:
+                        if clave_lluvia in data and isinstance(data[clave_lluvia], dict):
+                            lluvia_block = data[clave_lluvia]
+                            if "data" in lluvia_block and isinstance(lluvia_block["data"], list) and len(lluvia_block["data"]) > 0:
+                                item_lluvia = lluvia_block["data"][0]
+                                if isinstance(item_lluvia, dict) and "y" in item_lluvia:
+                                    y_lluvia = item_lluvia["y"]
+                                    if isinstance(y_lluvia, list) and len(y_lluvia) > 0:
+                                        val_pp = y_lluvia[-1]
+                                        break
 
                     for k, serie in data.items():
                         if isinstance(serie, dict) and "data" in serie:
@@ -401,6 +404,9 @@ def consultar_ifop(est):
                                             val_v = actual
                                         elif any(sub in k_lower for sub in ["racha", "ráfaga", "rafaga", "gust", "max", "fx", "vmax", "vel_max"]):
                                             val_r = actual
+                                        elif any(sub in k_lower for sub in ["lluvia", "pp", "precip", "precipitacion", "agua"]):
+                                            if val_pp is None:
+                                                val_pp = actual
 
                     return val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp
 
@@ -693,7 +699,7 @@ def subir_a_github():
     try:
         print("Sincronizando cambios con GitHub...")
         subprocess.run(["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True)
-        resultado = subprocess.run(["git", "commit", "-m", "Integración de precipitación IFOP desde data['lluvia']['data'][0]['y'] [skip ci]"], capture_output=True, text=True)
+        resultado = subprocess.run(["git", "commit", "-m", "Ampliar busqueda de precipitacion en IFOP (Isla Mocha y Cabo Carranza) [skip ci]"], capture_output=True, text=True)
         if resultado.returncode != 0:
             if "nothing to commit" in (resultado.stdout + resultado.stderr).lower():
                 print("Sin cambios nuevos para subir.")
