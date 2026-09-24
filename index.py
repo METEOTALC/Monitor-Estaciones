@@ -270,7 +270,14 @@ def consultar_directemar(est):
             )
             texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
 
-            temp, pres, viento, dir_viento, racha = "--", "--", "--", "", "--"
+            temp, pres, viento, dir_viento, racha, precipitacion = (
+                "--",
+                "--",
+                "--",
+                "",
+                "--",
+                "--",
+            )
             pres_val = None
 
             # Temperatura
@@ -296,7 +303,7 @@ def consultar_directemar(est):
                     tendencia = gestionar_historial_presion(est["nombre"], pres_val)
                     pres = f"{pres_val:.1f} hPa{tendencia}"
 
-            # Búsqueda robusta de Dirección de Viento en Directemar
+            # Dirección de Viento
             bearing_match = re.search(
                 r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
                 texto_plano,
@@ -328,7 +335,7 @@ def consultar_directemar(est):
             if bearing_match and not dir_viento:
                 dir_viento = formatear_direccion(bearing_match.group(1))
 
-            # Búsqueda robusta de Velocidad de Viento
+            # Velocidad de Viento
             viento_match = re.search(
                 r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
                 texto_plano,
@@ -352,7 +359,7 @@ def consultar_directemar(est):
                 if val is not None:
                     viento = f"{val:.1f} kt"
 
-            # Búsqueda robusta de Racha / Ráfaga
+            # Racha / Ráfaga
             racha_match = re.search(
                 r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha|Ráfaga|Rafaga)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
                 texto_plano,
@@ -362,6 +369,17 @@ def consultar_directemar(est):
                 val = convertir_numero(racha_match.group(1))
                 if val is not None:
                     racha = f"{val:.1f} kt"
+
+            # Precipitación Directemar (buscando específicamente Rainfall today o variantes)
+            pp_match = re.search(
+                r"(?:Rainfall\s*today|Precipitaci[oó]n|Lluvia|Rain|Precip)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:mm)?",
+                texto_plano,
+                re.IGNORECASE,
+            )
+            if pp_match:
+                val = convertir_numero(pp_match.group(1))
+                if val is not None:
+                    precipitacion = f"{val:.1f} mm"
 
             match_fecha = re.search(
                 r"(?:Page\s+updated|Actualizado)\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)",
@@ -378,11 +396,11 @@ def consultar_directemar(est):
                     viento,
                     dir_viento,
                     racha,
+                    precipitacion,
                 )
 
             fecha_str = match_fecha.group(1)
 
-            # CORRECCIÓN PARA LA HORA 00: (agrega el cero faltante si viene como "0:00:00")
             partes_f = fecha_str.split()
             if len(partes_f) == 2:
                 fecha_p, hora_p = partes_f
@@ -402,7 +420,17 @@ def consultar_directemar(est):
             )
 
             if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
-                return True, "OPERATIVA", fecha_str, temp, pres, viento, dir_viento, racha
+                return (
+                    True,
+                    "OPERATIVA",
+                    fecha_str,
+                    temp,
+                    pres,
+                    viento,
+                    dir_viento,
+                    racha,
+                    precipitacion,
+                )
             else:
                 return (
                     False,
@@ -413,11 +441,22 @@ def consultar_directemar(est):
                     viento,
                     dir_viento,
                     racha,
+                    precipitacion,
                 )
 
     except Exception as e:
         print(f"Error Directemar {est['nombre']}: {e}")
-        return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "", "--"
+        return (
+            False,
+            "SIN CONEXIÓN",
+            "Error de red",
+            "--",
+            "--",
+            "--",
+            "",
+            "--",
+            "--",
+        )
 
 
 def consultar_wunderground_web(est):
@@ -463,6 +502,13 @@ def consultar_wunderground_web(est):
             wind_dir_deg = obs.get("winddir")
             dir_viento = grados_a_cardinal(wind_dir_deg)
 
+            precip_in = imperial.get("precipTotal", 0.0)
+            if precip_in is not None:
+                precip_mm = precip_in * 25.4
+                precipitacion = f"{precip_mm:.1f} mm"
+            else:
+                precipitacion = "0.0 mm"
+
             obs_time = obs.get("obsTimeLocal", "Reciente")
             return (
                 True,
@@ -472,12 +518,13 @@ def consultar_wunderground_web(est):
                 viento,
                 dir_viento,
                 racha,
+                precipitacion,
                 str(obs_time),
             )
     except Exception as e:
         print(f"Error WU [{est['nombre']}]: {e}")
 
-    return False, "SIN CONEXIÓN", "--", "--", "--", "", "--", "Error de red"
+    return False, "SIN CONEXIÓN", "--", "--", "--", "", "--", "--", "Error de red"
 
 
 def consultar_ifop(est):
@@ -490,7 +537,8 @@ def consultar_ifop(est):
             if isinstance(data, dict):
 
                 def extraer_datos_serie():
-                    val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d = (
+                    val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp = (
+                        None,
                         None,
                         None,
                         None,
@@ -557,6 +605,17 @@ def consultar_ifop(est):
                                             ]
                                         ):
                                             val_r = actual
+                                        elif any(
+                                            sub in k_lower
+                                            for sub in [
+                                                "precip",
+                                                "lluvia",
+                                                "rain",
+                                                "pp",
+                                                "acumulada",
+                                            ]
+                                        ):
+                                            val_pp = actual
 
                     return (
                         val_t,
@@ -566,6 +625,7 @@ def consultar_ifop(est):
                         val_v,
                         val_r,
                         val_d,
+                        val_pp,
                     )
 
                 (
@@ -576,6 +636,7 @@ def consultar_ifop(est):
                     viento_val,
                     racha_val,
                     dir_val,
+                    pp_val,
                 ) = extraer_datos_serie()
 
                 temp_f = convertir_numero(temp_val)
@@ -603,6 +664,9 @@ def consultar_ifop(est):
                 racha_f = convertir_numero(racha_val)
                 racha = f"{racha_f:.1f} kt" if racha_f is not None else "--"
 
+                pp_f = convertir_numero(pp_val)
+                precipitacion = f"{pp_f:.1f} mm" if pp_f is not None else "--"
+
                 dir_num = convertir_numero(dir_val)
                 if dir_num is not None:
                     dir_viento = grados_a_cardinal(dir_num)
@@ -626,6 +690,7 @@ def consultar_ifop(est):
                     viento,
                     dir_viento,
                     racha,
+                    precipitacion,
                 )
 
             return (
@@ -637,10 +702,21 @@ def consultar_ifop(est):
                 "--",
                 "",
                 "--",
+                "--",
             )
 
     except Exception as e:
-        return False, "SIN CONEXIÓN", str(e)[:30], "--", "--", "--", "", "--"
+        return (
+            False,
+            "SIN CONEXIÓN",
+            str(e)[:30],
+            "--",
+            "--",
+            "--",
+            "",
+            "--",
+            "--",
+        )
 
 
 def generar_html(resultados_totales, hay_alerta):
@@ -650,8 +726,8 @@ def generar_html(resultados_totales, hay_alerta):
     markers_js = ""
     for r in resultados_totales:
         color = "green" if r["ok"] else "red"
-        dir_txt = f" ({r['dir_viento']})" if r['dir_viento'] else ""
-        popup_txt = f"<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
+        dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
+        popup_txt = f"<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']} | Lluvia: {r['precipitacion']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
 
         markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
@@ -667,26 +743,29 @@ def generar_html(resultados_totales, hay_alerta):
 
         if r["dir_viento"]:
             viento_contenido = (
-                f'<span style="display: block; font-size: 0.65em; color: #1d4ed8;'
+                f'<span style="display: block; font-size: 0.58em; color: #1d4ed8;'
                 f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
-                f'<span style="display: block; font-size: 0.74em;'
+                f'<span style="display: block; font-size: 0.72em;'
                 f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
             )
         else:
             viento_contenido = (
-                '<span style="display: block; font-size: 0.65em; color: transparent;'
+                '<span style="display: block; font-size: 0.58em; color: transparent;'
                 ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
-                f'<span style="display: block; font-size: 0.74em;'
+                f'<span style="display: block; font-size: 0.72em;'
                 f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
             )
 
         cuerpo_tarjeta = f"""
             <div class="card-body-content">
-                <div class="temp-suelta">🌡️ {r['temp']}</div>
-                <div class="weather-grid-3">
-                    <div class="weather-item">{viento_contenido}</div>
-                    <div class="weather-item"><span style="font-size: 0.74em; font-weight: 700;">💨 {r['racha']}</span></div>
-                    <div class="weather-item"><span style="font-size: 0.70em; font-weight: 700;">⏲️ {r['pres']}</span></div>
+                <div class="row-top">
+                    <div class="item-box temp-box">🌡️ {r['temp']}</div>
+                    <div class="item-box">{viento_contenido}</div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: #1d4ed8; font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">{r['racha']}</span></div>
+                </div>
+                <div class="row-bottom">
+                    <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ {r['pres']}</span></div>
+                    <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">🌧️ {r['precipitacion']}</span></div>
                 </div>
             </div>
         """
@@ -788,39 +867,37 @@ def generar_html(resultados_totales, hay_alerta):
         
         .card-body-content {{
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
             gap: 4px;
-            margin: 6px 0;
+            margin: 4px 0;
         }}
-        .temp-suelta {{
-            font-size: 0.90em;
-            font-weight: 800;
-            color: #0f172a;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
+        .row-top, .row-bottom {{
+            display: grid;
+            gap: 4px;
+        }}
+        .row-top {{
+            grid-template-columns: 1.1fr 1fr 1fr;
+        }}
+        .row-bottom {{
+            grid-template-columns: 1fr 1fr;
         }}
         
-        .weather-grid-3 {{ 
-            display: grid; 
-            grid-template-columns: 1fr 0.95fr 1.15fr; 
-            gap: 2px; 
-            flex: 1;
-            align-items: stretch; 
+        .item-box {{
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 2px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            white-space: nowrap;
         }}
-        .weather-item {{ 
-            color: #0f172a; 
-            background: rgba(255, 255, 255, 0.9); 
-            padding: 3px 1px; 
-            border-radius: 6px; 
-            border: 1px solid rgba(255, 255, 255, 0.95); 
-            text-align: center; 
-            white-space: nowrap; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
+        .temp-box {{
+            font-size: 0.85em;
+            font-weight: 800;
+            color: #0f172a;
         }}
         
         .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
@@ -856,7 +933,7 @@ def generar_html(resultados_totales, hay_alerta):
 
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("✓ index.html actualizado correctamente.")
+    print("✓ index.html actualizado correctamente con Rainfall today.")
 
 
 def ejecutar_monitoreo():
@@ -868,7 +945,7 @@ def ejecutar_monitoreo():
     hubo_fallas = False
 
     for est in ESTACIONES_DIRECTEMAR:
-        ok, estado, ultimo, temp, pres, viento, dir_viento, racha = (
+        ok, estado, ultimo, temp, pres, viento, dir_viento, racha, precipitacion = (
             consultar_directemar(est)
         )
         if not ok:
@@ -886,10 +963,11 @@ def ejecutar_monitoreo():
             "viento": viento,
             "dir_viento": dir_viento,
             "racha": racha,
+            "precipitacion": precipitacion,
         }
 
     for faro in ESTACIONES_FAROS:
-        ok, estado, temp, pres, viento, dir_viento, racha, ultimo = (
+        ok, estado, temp, pres, viento, dir_viento, racha, precipitacion, ultimo = (
             consultar_wunderground_web(faro)
         )
         if not ok:
@@ -907,12 +985,21 @@ def ejecutar_monitoreo():
             "viento": viento,
             "dir_viento": dir_viento,
             "racha": racha,
+            "precipitacion": precipitacion,
         }
 
     for est_ifop in ESTACIONES_IFOP:
-        ok, estado, ultimo, temp, pres, viento, dir_viento, racha = consultar_ifop(
-            est_ifop
-        )
+        (
+            ok,
+            estado,
+            ultimo,
+            temp,
+            pres,
+            viento,
+            dir_viento,
+            racha,
+            precipitacion,
+        ) = consultar_ifop(est_ifop)
         if not ok:
             hubo_fallas = True
         resultados_dict[est_ifop["nombre"]] = {
@@ -928,6 +1015,7 @@ def ejecutar_monitoreo():
             "viento": viento,
             "dir_viento": dir_viento,
             "racha": racha,
+            "precipitacion": precipitacion,
         }
 
     resultados_totales = [
@@ -952,8 +1040,8 @@ def subir_a_github():
                 "commit",
                 "-m",
                 (
-                    "Actualización de datos, corrección de nombres IFOP y persistencia"
-                    " de historial [skip ci]"
+                    "Captura de Rainfall today y diseño optimizado de tarjetas"
+                    " [skip ci]"
                 ),
             ],
             capture_output=True,
