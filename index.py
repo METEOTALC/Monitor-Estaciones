@@ -361,24 +361,22 @@ def consultar_ifop(est):
             data = json.loads(texto_raw)
 
             if isinstance(data, dict):
+                # IMPRESIÓN DE DEPURACIÓN PARA ISLA MOCHA EN CONSOLA
+                if "Mocha" in est["nombre"]:
+                    print(f"\n[DEBUG IFOP] Estructura de claves recibida para {est['nombre']}:")
+                    for k, v in data.items():
+                        print(f"  -> Clave principal: '{k}'")
+                        if isinstance(v, dict):
+                            print(f"     Sub-claves: {list(v.keys())}")
+
                 def extraer_datos_serie():
                     val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp = None, None, None, None, None, None, None, None
                     
-                    # Búsqueda ampliada de precipitación en claves de nivel principal
-                    for clave_lluvia in ["lluvia", "pp", "precip", "precipitacion", "agua"]:
-                        if clave_lluvia in data and isinstance(data[clave_lluvia], dict):
-                            lluvia_block = data[clave_lluvia]
-                            if "data" in lluvia_block and isinstance(lluvia_block["data"], list) and len(lluvia_block["data"]) > 0:
-                                item_lluvia = lluvia_block["data"][0]
-                                if isinstance(item_lluvia, dict) and "y" in item_lluvia:
-                                    y_lluvia = item_lluvia["y"]
-                                    if isinstance(y_lluvia, list) and len(y_lluvia) > 0:
-                                        val_pp = y_lluvia[-1]
-                                        break
-
                     for k, serie in data.items():
-                        if isinstance(serie, dict) and "data" in serie:
-                            lista_data = serie["data"]
+                        if isinstance(serie, dict):
+                            k_lower = k.lower().strip()
+                            lista_data = serie.get("data", [])
+                            
                             if isinstance(lista_data, list) and len(lista_data) > 0:
                                 item_data = lista_data[0]
                                 if isinstance(item_data, dict) and "y" in item_data:
@@ -387,8 +385,6 @@ def consultar_ifop(est):
                                     if isinstance(y_vals, list) and len(y_vals) > 0:
                                         actual = y_vals[-1]
                                         f_act = x_vals[-1] if x_vals and len(x_vals) > 0 else None
-                                        
-                                        k_lower = k.lower().strip()
                                         
                                         if any(sub in k_lower for sub in ["temp", "temperatura", "ta", "t_aire"]):
                                             val_t, fecha_t = actual, f_act
@@ -404,9 +400,8 @@ def consultar_ifop(est):
                                             val_v = actual
                                         elif any(sub in k_lower for sub in ["racha", "ráfaga", "rafaga", "gust", "max", "fx", "vmax", "vel_max"]):
                                             val_r = actual
-                                        elif any(sub in k_lower for sub in ["lluvia", "pp", "precip", "precipitacion", "agua"]):
-                                            if val_pp is None:
-                                                val_pp = actual
+                                        elif any(sub in k_lower for sub in ["lluvia", "pp", "precip", "precipitacion", "agua", "acum", "mm"]):
+                                            val_pp = actual
 
                     return val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp
 
@@ -699,7 +694,7 @@ def subir_a_github():
     try:
         print("Sincronizando cambios con GitHub...")
         subprocess.run(["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True)
-        resultado = subprocess.run(["git", "commit", "-m", "Ampliar busqueda de precipitacion en IFOP (Isla Mocha y Cabo Carranza) [skip ci]"], capture_output=True, text=True)
+        resultado = subprocess.run(["git", "commit", "-m", "Depuracion y busqueda extendida de precipitacion IFOP [skip ci]"], capture_output=True, text=True)
         if resultado.returncode != 0:
             if "nothing to commit" in (resultado.stdout + resultado.stderr).lower():
                 print("Sin cambios nuevos para subir.")
