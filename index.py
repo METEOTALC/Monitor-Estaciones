@@ -567,6 +567,8 @@ def consultar_ifop(est):
                                         f_act = x_vals[-1] if x_vals and len(x_vals) > 0 else None
 
                                         k_lower = k.lower().strip()
+                                        serie_str = str(serie).lower()
+
                                         if any(
                                             sub in k_lower
                                             for sub in ["temp", "temperatura", "ta", "t_aire"]
@@ -611,8 +613,10 @@ def consultar_ifop(est):
                                             ]
                                         ):
                                             val_r = actual
-                                        elif any(
-                                            sub in k_lower
+                                        
+                                        # Búsqueda ampliada que revisa clave y contenido completo (para atrapar "Lluvia (mm)")
+                                        if any(
+                                            sub in k_lower or sub in serie_str
                                             for sub in [
                                                 "precip",
                                                 "lluvia",
@@ -1047,8 +1051,8 @@ def subir_a_github():
                 "commit",
                 "-m",
                 (
-                    "Corrección en extracción de precipitación para estaciones"
-                    " IFOP [skip ci]"
+                    "Extracción robusta de precipitación para estaciones IFOP"
+                    " [skip ci]"
                 ),
             ],
             capture_output=True,
