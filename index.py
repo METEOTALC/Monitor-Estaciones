@@ -16,13 +16,8 @@ ZONA_CHILE = ZoneInfo("America/Santiago")
 ARCHIVO_HISTORIAL = "historial_presion.json"
 
 HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
-        " like Gecko) Chrome/122.0.0.0 Safari/537.36"
-    ),
-    "Accept": (
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-    ),
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "Accept-Language": "es-ES,es;q=0.9",
 }
 
@@ -36,9 +31,7 @@ ctx.verify_mode = ssl.CERT_NONE
 ESTACIONES_DIRECTEMAR = [
     {
         "nombre": "Capitanía de Puerto Constitución",
-        "url": (
-            "http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm"
-        ),
+        "url": "http://web.directemar.cl/met/jturno/estaciones/constitucion/index.htm",
         "lat": -35.3241667,
         "lon": -72.40805555,
     },
@@ -50,9 +43,7 @@ ESTACIONES_DIRECTEMAR = [
     },
     {
         "nombre": "Gobernación Marítima de Talcahuano",
-        "url": (
-            "http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm"
-        ),
+        "url": "http://web.directemar.cl/met/jturno/estaciones/talcahuano/index.htm",
         "lat": -36.712,
         "lon": -73.115,
     },
@@ -143,25 +134,19 @@ ORDEN_ESTACIONES = [
     "Capitanía de Puerto Corral",
 ]
 
-
 def obtener_hora_chile():
     return datetime.now(ZONA_CHILE)
-
 
 def convertir_numero(valor):
     if valor is None:
         return None
     try:
         val_str = str(valor).strip()
-        if any(
-            c in val_str.lower()
-            for c in ["color", "purple", "line", "data", "{", "}"]
-        ):
+        if any(c in val_str.lower() for c in ["color", "purple", "line", "data", "{", "}"]):
             return None
         return float(val_str.replace(",", "."))
     except (ValueError, TypeError):
         return None
-
 
 def formatear_direccion(dir_str):
     if not dir_str:
@@ -173,31 +158,12 @@ def formatear_direccion(dir_str):
         return f"{d[0]}/{d[1:]}"
     return d
 
-
 def grados_a_cardinal(grados):
     if grados is None:
         return "N/D"
-    direcciones = [
-        "N",
-        "NNE",
-        "NE",
-        "ENE",
-        "E",
-        "ESE",
-        "SE",
-        "SSE",
-        "S",
-        "SSW",
-        "SW",
-        "WSW",
-        "W",
-        "WNW",
-        "NW",
-        "NNW",
-    ]
+    direcciones = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
     indice = int((grados + 11.25) / 22.5) % 16
     return formatear_direccion(direcciones[indice])
-
 
 def gestionar_historial_presion(nombre_estacion, presion_actual):
     ahora = obtener_hora_chile()
@@ -253,77 +219,39 @@ def gestionar_historial_presion(nombre_estacion, presion_actual):
     else:
         return " ➔"
 
-
 def consultar_directemar(est):
     try:
         req = urllib.request.Request(est["url"], headers=HEADERS)
         with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
             html = response.read().decode("utf-8", errors="ignore")
+            
+            texto_plano = re.sub(r'<[^>]+>', ' ', html)
+            texto_plano = texto_plano.replace('\xa5', ' ').replace('\xa0', ' ').replace('&nbsp;', ' ').replace('&deg;', '°').replace('&#176;', '°')
+            texto_plano = re.sub(r'\s+', ' ', texto_plano).strip()
 
-            texto_plano = re.sub(r"<[^>]+>", " ", html)
-            texto_plano = (
-                texto_plano.replace("\xa5", " ")
-                .replace("\xa0", " ")
-                .replace("&nbsp;", " ")
-                .replace("&deg;", "°")
-                .replace("&#176;", "°")
-            )
-            texto_plano = re.sub(r"\s+", " ", texto_plano).strip()
-
-            temp, pres, viento, dir_viento, racha, precipitacion = (
-                "--",
-                "--",
-                "--",
-                "",
-                "--",
-                "--",
-            )
+            temp, pres, viento, dir_viento, racha, precipitacion = "--", "--", "--", "", "--", "--"
             pres_val = None
 
-            temp_match = re.search(
-                r"(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)",
-                texto_plano,
-                re.IGNORECASE,
-            )
+            temp_match = re.search(r'(?:Temperatura|Temperature)\s*[:]?\s*([\-]?\d+(?:[.,]\d+)?)', texto_plano, re.IGNORECASE)
             if temp_match:
                 val = convertir_numero(temp_match.group(1))
                 if val is not None:
                     temp = f"{val:.1f}°C"
 
-            pres_match = re.search(
-                r"(?:Barometer|Presi[oó]n)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:hPa|mb)?",
-                texto_plano,
-                re.IGNORECASE,
-            )
+            pres_match = re.search(r'(?:Barometer|Presi[oó]n)[^\d]*([\-]?\d+(?:[.,]\d+)?)\s*(?:hPa|mb)?', texto_plano, re.IGNORECASE)
             if pres_match:
                 pres_val = convertir_numero(pres_match.group(1))
                 if pres_val is not None:
                     tendencia = gestionar_historial_presion(est["nombre"], pres_val)
                     pres = f"{pres_val:.1f} hPa{tendencia}"
 
-            bearing_match = re.search(
-                r"Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})",
-                texto_plano,
-                re.IGNORECASE,
-            )
+            bearing_match = re.search(r'Wind\s*Bearing[^\d]*\d+(?:[.,]\d+)?\s*°?\s*([N,S,E,W]{1,3})', texto_plano, re.IGNORECASE)
             if not bearing_match:
-                bearing_match = re.search(
-                    r"(?:Direcci[oó]n\s*Viento|Wind\s*Direction)[^\w]*([N,S,E,W]{1,3})",
-                    texto_plano,
-                    re.IGNORECASE,
-                )
+                bearing_match = re.search(r'(?:Direcci[oó]n\s*Viento|Wind\s*Direction)[^\w]*([N,S,E,W]{1,3})', texto_plano, re.IGNORECASE)
             if not bearing_match:
-                bearing_match = re.search(
-                    r"(?:Direcci[oó]n|Dir)[^\w]*(?:del\s*)?(?:Viento)?[^\w]*([N,S,E,W]{1,3})",
-                    texto_plano,
-                    re.IGNORECASE,
-                )
+                bearing_match = re.search(r'(?:Direcci[oó]n|Dir)[^\w]*(?:del\s*)?(?:Viento)?[^\w]*([N,S,E,W]{1,3})', texto_plano, re.IGNORECASE)
             if not bearing_match:
-                deg_match = re.search(
-                    r"(?:Direcci[oó]n|Dir|Wind\s*Direction|Bearing)[^\d]*(\d+(?:[.,]\d+)?)\s*°",
-                    texto_plano,
-                    re.IGNORECASE,
-                )
+                deg_match = re.search(r'(?:Direcci[oó]n|Dir|Wind\s*Direction|Bearing)[^\d]*(\d+(?:[.,]\d+)?)\s*°', texto_plano, re.IGNORECASE)
                 if deg_match:
                     grados_val = convertir_numero(deg_match.group(1))
                     if grados_val is not None:
@@ -332,72 +260,34 @@ def consultar_directemar(est):
             if bearing_match and not dir_viento:
                 dir_viento = formatear_direccion(bearing_match.group(1))
 
-            viento_match = re.search(
-                r"Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
-                texto_plano,
-                re.IGNORECASE,
-            )
+            viento_match = re.search(r'Wind\s*Speed\s*\(avg\)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?', texto_plano, re.IGNORECASE)
             if not viento_match:
-                viento_match = re.search(
-                    r"Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
-                    texto_plano,
-                    re.IGNORECASE,
-                )
+                viento_match = re.search(r'Wind\s*Speed[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?', texto_plano, re.IGNORECASE)
             if not viento_match:
-                viento_match = re.search(
-                    r"Viento[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
-                    texto_plano,
-                    re.IGNORECASE,
-                )
-
+                viento_match = re.search(r'Viento[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?', texto_plano, re.IGNORECASE)
+            
             if viento_match:
                 val = convertir_numero(viento_match.group(1))
                 if val is not None:
                     viento = f"{val:.1f} kt"
 
-            racha_match = re.search(
-                r"(?:Wind\s*Speed\s*\(gust\)|Gust|Racha|Ráfaga|Rafaga)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?",
-                texto_plano,
-                re.IGNORECASE,
-            )
+            racha_match = re.search(r'(?:Wind\s*Speed\s*\(gust\)|Gust|Racha|Ráfaga|Rafaga)[^\d]*(\d+(?:[.,]\d+)?)\s*(?:kts|kt|knots|nudos)?', texto_plano, re.IGNORECASE)
             if racha_match:
                 val = convertir_numero(racha_match.group(1))
                 if val is not None:
                     racha = f"{val:.1f} kt"
 
-            pp_match = re.search(
-                r"Rainfall[\s\-_]+today[^\d]*(\d+(?:[.,]\d+)?)",
-                texto_plano,
-                re.IGNORECASE,
-            )
+            pp_match = re.search(r'Rainfall[\s\-_]+today[^\d]*(\d+(?:[.,]\d+)?)', texto_plano, re.IGNORECASE)
             if not pp_match:
-                pp_match = re.search(
-                    r"(?:Precipitaci[oó]n|Lluvia|Rain|Precip)[^\d]*(\d+(?:[.,]\d+)?)",
-                    texto_plano,
-                    re.IGNORECASE,
-                )
+                pp_match = re.search(r'(?:Precipitaci[oó]n|Lluvia|Rain|Precip)[^\d]*(\d+(?:[.,]\d+)?)', texto_plano, re.IGNORECASE)
             if pp_match:
                 val = convertir_numero(pp_match.group(1))
                 if val is not None:
                     precipitacion = f"{val:.1f} mm"
 
-            match_fecha = re.search(
-                r"(?:Page\s+updated|Actualizado)\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)",
-                texto_plano,
-                re.IGNORECASE,
-            )
+            match_fecha = re.search(r'(?:Page\s+updated|Actualizado)\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)', texto_plano, re.IGNORECASE)
             if not match_fecha:
-                return (
-                    False,
-                    "SIN DATOS VÁLIDOS",
-                    "N/D",
-                    temp,
-                    pres,
-                    viento,
-                    dir_viento,
-                    racha,
-                    precipitacion,
-                )
+                return False, "SIN DATOS VÁLIDOS", "N/D", temp, pres, viento, dir_viento, racha, precipitacion
 
             fecha_str = match_fecha.group(1)
             partes_f = fecha_str.split()
@@ -408,62 +298,22 @@ def consultar_directemar(est):
                     sub_hora[0] = "0" + sub_hora[0]
                     fecha_str = f"{fecha_p} {':'.join(sub_hora)}"
 
-            formato_fecha = (
-                "%d-%m-%Y %H:%M:%S" if fecha_str.count(":") == 2 else "%d-%m-%Y %H:%M"
-            )
-            fecha_estacion = datetime.strptime(fecha_str, formato_fecha).replace(
-                tzinfo=ZONA_CHILE
-            )
-            dif_min = abs(
-                (obtener_hora_chile() - fecha_estacion).total_seconds() / 60
-            )
+            formato_fecha = "%d-%m-%Y %H:%M:%S" if fecha_str.count(":") == 2 else "%d-%m-%Y %H:%M"
+            fecha_estacion = datetime.strptime(fecha_str, formato_fecha).replace(tzinfo=ZONA_CHILE)
+            dif_min = abs((obtener_hora_chile() - fecha_estacion).total_seconds() / 60)
 
             if dif_min <= TOLERANCIA_MINUTOS or (170 <= dif_min <= 200):
-                return (
-                    True,
-                    "OPERATIVA",
-                    fecha_str,
-                    temp,
-                    pres,
-                    viento,
-                    dir_viento,
-                    racha,
-                    precipitacion,
-                )
+                return True, "OPERATIVA", fecha_str, temp, pres, viento, dir_viento, racha, precipitacion
             else:
-                return (
-                    False,
-                    f"DESACTUALIZADA ({int(dif_min)} min)",
-                    fecha_str,
-                    temp,
-                    pres,
-                    viento,
-                    dir_viento,
-                    racha,
-                    precipitacion,
-                )
+                return False, f"DESACTUALIZADA ({int(dif_min)} min)", fecha_str, temp, pres, viento, dir_viento, racha, precipitacion
 
     except Exception as e:
         print(f"Error Directemar {est['nombre']}: {e}")
-        return (
-            False,
-            "SIN CONEXIÓN",
-            "Error de red",
-            "--",
-            "--",
-            "--",
-            "",
-            "--",
-            "--",
-        )
-
+        return False, "SIN CONEXIÓN", "Error de red", "--", "--", "--", "", "--", "--"
 
 def consultar_wunderground_web(est):
     try:
-        api_url = (
-            f"https://api.weather.com/v2/pws/observations/current"
-            f"?stationId={est['id']}&format=json&units=e&apiKey=e1f10a1e78da46f5b10a1e78da96f525"
-        )
+        api_url = f"https://api.weather.com/v2/pws/observations/current?stationId={est['id']}&format=json&units=e&apiKey=e1f10a1e78da46f5b10a1e78da96f525"
         req = urllib.request.Request(api_url, headers=HEADERS)
         with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
             data = json.loads(response.read().decode("utf-8"))
@@ -471,11 +321,7 @@ def consultar_wunderground_web(est):
             imperial = obs["imperial"]
 
             temp_f = imperial.get("temp")
-            temp = (
-                f"{(temp_f - 32.0) * 5.0 / 9.0:.1f}°C"
-                if temp_f is not None
-                else "--"
-            )
+            temp = f"{(temp_f - 32.0) * 5.0 / 9.0:.1f}°C" if temp_f is not None else "--"
 
             pres_inHg = imperial.get("pressure")
             pres = "--"
@@ -485,18 +331,10 @@ def consultar_wunderground_web(est):
                 pres = f"{pres_val:.1f} hPa{tendencia}"
 
             viento_mph = imperial.get("windSpeed")
-            viento = (
-                f"{viento_mph / 1.15077945:.1f} kt"
-                if viento_mph is not None
-                else "--"
-            )
+            viento = f"{viento_mph / 1.15077945:.1f} kt" if viento_mph is not None else "--"
 
             gust_mph = imperial.get("windGust")
-            racha = (
-                f"{gust_mph / 1.15077945:.1f} kt"
-                if gust_mph is not None
-                else "--"
-            )
+            racha = f"{gust_mph / 1.15077945:.1f} kt" if gust_mph is not None else "--"
 
             wind_dir_deg = obs.get("winddir")
             dir_viento = grados_a_cardinal(wind_dir_deg)
@@ -509,22 +347,11 @@ def consultar_wunderground_web(est):
                 precipitacion = "0.0 mm"
 
             obs_time = obs.get("obsTimeLocal", "Reciente")
-            return (
-                True,
-                "OPERATIVA",
-                temp,
-                pres,
-                viento,
-                dir_viento,
-                racha,
-                precipitacion,
-                str(obs_time),
-            )
+            return True, "OPERATIVA", temp, pres, viento, dir_viento, racha, precipitacion, str(obs_time)
     except Exception as e:
         print(f"Error WU [{est['nombre']}]: {e}")
-
+        
     return False, "SIN CONEXIÓN", "--", "--", "--", "", "--", "--", "Error de red"
-
 
 def consultar_ifop(est):
     try:
@@ -534,38 +361,18 @@ def consultar_ifop(est):
             data = json.loads(texto_raw)
 
             if isinstance(data, dict):
-
                 def extraer_datos_serie():
-                    val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp = (
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    )
-
-                    # 1. Extracción específica para la lluvia usando la ruta exacta descubierta
+                    val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp = None, None, None, None, None, None, None, None
+                    
                     if "lluvia" in data and isinstance(data["lluvia"], dict):
                         lluvia_block = data["lluvia"]
-                        if "data" in lluvia_block and isinstance(
-                            lluvia_block["data"], list
-                        ) and len(lluvia_block["data"]) > 0:
+                        if "data" in lluvia_block and isinstance(lluvia_block["data"], list) and len(lluvia_block["data"]) > 0:
                             item_lluvia = lluvia_block["data"][0]
-                            if (
-                                isinstance(item_lluvia, dict)
-                                and "y" in item_lluvia
-                            ):
+                            if isinstance(item_lluvia, dict) and "y" in item_lluvia:
                                 y_lluvia = item_lluvia["y"]
-                                if (
-                                    isinstance(y_lluvia, list)
-                                    and len(y_lluvia) > 0
-                                ):
+                                if isinstance(y_lluvia, list) and len(y_lluvia) > 0:
                                     val_pp = y_lluvia[-1]
 
-                    # 2. Extracción para el resto de variables (temp, viento, presión, etc.)
                     for k, serie in data.items():
                         if isinstance(serie, dict) and "data" in serie:
                             lista_data = serie["data"]
@@ -576,96 +383,28 @@ def consultar_ifop(est):
                                     x_vals = item_data.get("x", [])
                                     if isinstance(y_vals, list) and len(y_vals) > 0:
                                         actual = y_vals[-1]
-                                        f_act = (
-                                            x_vals[-1]
-                                            if x_vals and len(x_vals) > 0
-                                            else None
-                                        )
-
+                                        f_act = x_vals[-1] if x_vals and len(x_vals) > 0 else None
+                                        
                                         k_lower = k.lower().strip()
-
-                                        if any(
-                                            sub in k_lower
-                                            for sub in [
-                                                "temp",
-                                                "temperatura",
-                                                "ta",
-                                                "t_aire",
-                                            ]
-                                        ):
+                                        
+                                        if any(sub in k_lower for sub in ["temp", "temperatura", "ta", "t_aire"]):
                                             val_t, fecha_t = actual, f_act
-                                        elif any(
-                                            sub in k_lower
-                                            for sub in [
-                                                "pres",
-                                                "presion",
-                                                "barom",
-                                                "qfe",
-                                                "qff",
-                                            ]
-                                        ):
+                                        elif any(sub in k_lower for sub in ["pres", "presion", "barom", "qfe", "qff"]):
                                             val_p = actual
                                             if len(y_vals) >= 180:
                                                 p_pasado = y_vals[-180]
                                             elif len(y_vals) > 1:
                                                 p_pasado = y_vals[0]
-                                        elif any(
-                                            sub in k_lower
-                                            for sub in [
-                                                "dir_viento",
-                                                "dd",
-                                                "dir",
-                                                "direccion",
-                                            ]
-                                        ):
+                                        elif any(sub in k_lower for sub in ["dir_viento", "dd", "dir", "direccion"]):
                                             val_d = actual
-                                        elif any(
-                                            sub in k_lower
-                                            for sub in [
-                                                "ff",
-                                                "viento",
-                                                "speed",
-                                                "vel",
-                                                "intensidad",
-                                            ]
-                                        ):
+                                        elif any(sub in k_lower for sub in ["ff", "viento", "speed", "vel", "intensidad"]):
                                             val_v = actual
-                                        elif any(
-                                            sub in k_lower
-                                            for sub in [
-                                                "racha",
-                                                "ráfaga",
-                                                "rafaga",
-                                                "gust",
-                                                "max",
-                                                "fx",
-                                                "vmax",
-                                                "vel_max",
-                                            ]
-                                        ):
+                                        elif any(sub in k_lower for sub in ["racha", "ráfaga", "rafaga", "gust", "max", "fx", "vmax", "vel_max"]):
                                             val_r = actual
 
-                    return (
-                        val_t,
-                        fecha_t,
-                        val_p,
-                        p_pasado,
-                        val_v,
-                        val_r,
-                        val_d,
-                        val_pp,
-                    )
+                    return val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp
 
-                (
-                    temp_val,
-                    fecha_temp,
-                    pres_val,
-                    pres_pasado_val,
-                    viento_val,
-                    racha_val,
-                    dir_val,
-                    pp_val,
-                ) = extraer_datos_serie()
+                temp_val, fecha_temp, pres_val, pres_pasado_val, viento_val, racha_val, dir_val, pp_val = extraer_datos_serie()
 
                 temp_f = convertir_numero(temp_val)
                 temp = f"{temp_f:.1f}°C" if temp_f is not None else "--"
@@ -676,12 +415,9 @@ def consultar_ifop(est):
                     p_pasado_f = convertir_numero(pres_pasado_val)
                     if p_pasado_f is not None:
                         dif = pres_f - p_pasado_f
-                        if dif > 0.2:
-                            tendencia_ifop = " ↗"
-                        elif dif < -0.2:
-                            tendencia_ifop = " ↘"
-                        else:
-                            tendencia_ifop = " ➔"
+                        if dif > 0.2: tendencia_ifop = " ↗"
+                        elif dif < -0.2: tendencia_ifop = " ↘"
+                        else: tendencia_ifop = " ➔"
                     pres = f"{pres_f:.1f} hPa{tendencia_ifop}"
                 else:
                     pres = "--"
@@ -699,64 +435,32 @@ def consultar_ifop(est):
                 if dir_num is not None:
                     dir_viento = grados_a_cardinal(dir_num)
                 else:
-                    dir_viento = (
-                        formatear_direccion(str(dir_val)) if dir_val is not None else ""
-                    )
+                    dir_viento = formatear_direccion(str(dir_val)) if dir_val is not None else ""
 
                 fecha_str = str(fecha_temp) if fecha_temp else "Reciente"
-                es_valido = (
-                    temp_f is not None or viento_f is not None or pres_f is not None
-                )
+                es_valido = (temp_f is not None or viento_f is not None or pres_f is not None or pp_f is not None)
                 estado_txt = "OPERATIVA" if es_valido else "SIN DATOS VÁLIDOS"
 
-                return (
-                    es_valido,
-                    estado_txt,
-                    fecha_str,
-                    temp,
-                    pres,
-                    viento,
-                    dir_viento,
-                    racha,
-                    precipitacion,
-                )
+                print(f"-> [IFOP OK] {est['nombre']} | Temp: {temp} | Viento: {viento} | Pres: {pres} | Lluvia: {precipitacion}")
 
-            return (
-                False,
-                "DATOS NO VÁLIDOS",
-                "Estructura desconocida",
-                "--",
-                "--",
-                "--",
-                "",
-                "--",
-                "--",
-            )
+                return es_valido, estado_txt, fecha_str, temp, pres, viento, dir_viento, racha, precipitacion
+
+            return False, "DATOS NO VÁLIDOS", "Estructura desconocida", "--", "--", "--", "", "--", "--"
 
     except Exception as e:
-        return (
-            False,
-            "SIN CONEXIÓN",
-            str(e)[:30],
-            "--",
-            "--",
-            "--",
-            "",
-            "--",
-            "--",
-        )
-
+        print(f"Error IFOP [{est['nombre']}]: {e}")
+        return False, "SIN CONEXIÓN", str(e)[:30], "--", "--", "--", "", "--", "--"
 
 def generar_html(resultados_totales, hay_alerta):
     total_estaciones = len(resultados_totales)
-    operativas = sum(1 for r in resultados_totales if r["ok"] is True)
+    operativas = sum(1 for r in resultados_totales if r['ok'] is True)
 
     markers_js = ""
     for r in resultados_totales:
-        color = "green" if r["ok"] else "red"
-        dir_txt = f" ({r['dir_viento']})" if r["dir_viento"] else ""
+        color = "green" if r['ok'] else "red"
+        dir_txt = f" ({r['dir_viento']})" if r['dir_viento'] else ""
         popup_txt = f"<b>{r['nombre']}</b><br>Estado: {r['estado']}<br>Temp: {r['temp']} | Viento: {r['viento']}{dir_txt} | Racha: {r['racha']} | Pres: {r['pres']} | Lluvia: {r['precipitacion']}<br>Reporte: {r['ultimo']}<br><a href='{r['url']}' target='_blank'>Abrir enlace ↗</a>"
-
+        
         markers_js += f"""
         L.circleMarker([{r['lat']}, {r['lon']}], {{
             color: '{color}', fillColor: '{color}', fillOpacity: 0.8, radius: 9
@@ -765,24 +469,14 @@ def generar_html(resultados_totales, hay_alerta):
 
     cards_html = ""
     for r in resultados_totales:
-        clase = "ok" if r["ok"] else "error"
-        icono = "🔴" if not r["ok"] else "🟢"
+        clase = "ok" if r['ok'] else "error"
+        icono = "🔴" if not r['ok'] else "🟢"
         footer_texto = f"Reporte: {r['ultimo']}"
 
-        if r["dir_viento"]:
-            viento_contenido = (
-                f'<span style="display: block; font-size: 0.58em; color: #1d4ed8;'
-                f' font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span>'
-                f'<span style="display: block; font-size: 0.72em;'
-                f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
-            )
+        if r['dir_viento']:
+            viento_contenido = f'<span style="display: block; font-size: 0.58em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
         else:
-            viento_contenido = (
-                '<span style="display: block; font-size: 0.58em; color: transparent;'
-                ' font-weight: 800; line-height: 1.1; user-select: none;">-</span>'
-                f'<span style="display: block; font-size: 0.72em;'
-                f' font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
-            )
+            viento_contenido = f'<span style="display: block; font-size: 0.58em; color: transparent; font-weight: 800; line-height: 1.1; user-select: none;">-</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
 
         cuerpo_tarjeta = f"""
             <div class="card-body-content">
@@ -815,12 +509,7 @@ def generar_html(resultados_totales, hay_alerta):
         """
 
     alerta_class = "alerta-activa" if hay_alerta else ""
-    alerta_banner = (
-        '<div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O'
-        " DESACTUALIZADAS! ⚠️</div>"
-        if hay_alerta
-        else ""
-    )
+    alerta_banner = '<div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>' if hay_alerta else ""
     hora_actual_chile = obtener_hora_chile().strftime("%d-%m-%Y %H:%M:%S")
 
     html = f"""<!DOCTYPE html>
@@ -963,118 +652,48 @@ def generar_html(resultados_totales, hay_alerta):
         f.write(html)
     print("✓ index.html actualizado correctamente.")
 
-
 def ejecutar_monitoreo():
-    print(
-        f"\n--- [{obtener_hora_chile().strftime('%H:%M:%S')}] Verificando litoral"
-        " ---"
-    )
+    print(f"\n--- [{obtener_hora_chile().strftime('%H:%M:%S')}] Verificando litoral ---")
     resultados_dict = {}
     hubo_fallas = False
 
     for est in ESTACIONES_DIRECTEMAR:
-        ok, estado, ultimo, temp, pres, viento, dir_viento, racha, precipitacion = (
-            consultar_directemar(est)
-        )
-        if not ok:
-            hubo_fallas = True
+        ok, estado, ultimo, temp, pres, viento, dir_viento, racha, precipitacion = consultar_directemar(est)
+        if not ok: hubo_fallas = True
         resultados_dict[est["nombre"]] = {
-            "nombre": est["nombre"],
-            "url": est["url"],
-            "lat": est["lat"],
-            "lon": est["lon"],
-            "ok": ok,
-            "estado": estado,
-            "ultimo": ultimo,
-            "temp": temp,
-            "pres": pres,
-            "viento": viento,
-            "dir_viento": dir_viento,
-            "racha": racha,
-            "precipitacion": precipitacion,
+            "nombre": est["nombre"], "url": est["url"], "lat": est["lat"], "lon": est["lon"],
+            "ok": ok, "estado": estado, "ultimo": ultimo, "temp": temp, "pres": pres,
+            "viento": viento, "dir_viento": dir_viento, "racha": racha, "precipitacion": precipitacion
         }
 
     for faro in ESTACIONES_FAROS:
-        ok, estado, temp, pres, viento, dir_viento, racha, precipitacion, ultimo = (
-            consultar_wunderground_web(faro)
-        )
-        if not ok:
-            hubo_fallas = True
+        ok, estado, temp, pres, viento, dir_viento, racha, precipitacion, ultimo = consultar_wunderground_web(faro)
+        if not ok: hubo_fallas = True
         resultados_dict[faro["nombre"]] = {
-            "nombre": faro["nombre"],
-            "url": faro["url"],
-            "lat": faro["lat"],
-            "lon": faro["lon"],
-            "ok": ok,
-            "estado": estado,
-            "ultimo": ultimo,
-            "temp": temp,
-            "pres": pres,
-            "viento": viento,
-            "dir_viento": dir_viento,
-            "racha": racha,
-            "precipitacion": precipitacion,
+            "nombre": faro["nombre"], "url": faro["url"], "lat": faro["lat"], "lon": faro["lon"],
+            "ok": ok, "estado": estado, "ultimo": ultimo, "temp": temp, "pres": pres,
+            "viento": viento, "dir_viento": dir_viento, "racha": racha, "precipitacion": precipitacion
         }
 
     for est_ifop in ESTACIONES_IFOP:
-        (
-            ok,
-            estado,
-            ultimo,
-            temp,
-            pres,
-            viento,
-            dir_viento,
-            racha,
-            precipitacion,
-        ) = consultar_ifop(est_ifop)
-        if not ok:
-            hubo_fallas = True
+        ok, estado, ultimo, temp, pres, viento, dir_viento, racha, precipitacion = consultar_ifop(est_ifop)
+        if not ok: hubo_fallas = True
         resultados_dict[est_ifop["nombre"]] = {
-            "nombre": est_ifop["nombre"],
-            "url": est_ifop["url"],
-            "lat": est_ifop["lat"],
-            "lon": est_ifop["lon"],
-            "ok": ok,
-            "estado": estado,
-            "ultimo": ultimo,
-            "temp": temp,
-            "pres": pres,
-            "viento": viento,
-            "dir_viento": dir_viento,
-            "racha": racha,
-            "precipitacion": precipitacion,
+            "nombre": est_ifop["nombre"], "url": est_ifop["url"], "lat": est_ifop["lat"], "lon": est_ifop["lon"],
+            "ok": ok, "estado": estado, "ultimo": ultimo, "temp": temp, "pres": pres,
+            "viento": viento, "dir_viento": dir_viento, "racha": racha, "precipitacion": precipitacion
         }
 
-    resultados_totales = [
-        resultados_dict[nombre]
-        for nombre in ORDEN_ESTACIONES
-        if nombre in resultados_dict
-    ]
-
+    resultados_totales = [resultados_dict[nombre] for nombre in ORDEN_ESTACIONES if nombre in resultados_dict]
+    
     generar_html(resultados_totales, hubo_fallas)
     subir_a_github()
-
 
 def subir_a_github():
     try:
         print("Sincronizando cambios con GitHub...")
-        subprocess.run(
-            ["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True
-        )
-        resultado = subprocess.run(
-            [
-                "git",
-                "commit",
-                "-m",
-                (
-                    "Integración de precipitación IFOP desde data['lluvia']['data'][0]['y']"
-                    " [skip ci]"
-                ),
-            ],
-            capture_output=True,
-            text=True,
-        )
+        subprocess.run(["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True)
+        resultado = subprocess.run(["git", "commit", "-m", "Integración de precipitación IFOP desde data['lluvia']['data'][0]['y'] [skip ci]"], capture_output=True, text=True)
         if resultado.returncode != 0:
             if "nothing to commit" in (resultado.stdout + resultado.stderr).lower():
                 print("Sin cambios nuevos para subir.")
@@ -1083,7 +702,6 @@ def subir_a_github():
         print("✓ Sincronización completada con éxito.")
     except subprocess.CalledProcessError as e:
         print(f"Error al sincronizar con Git: {e}")
-
 
 if __name__ == "__main__":
     ejecutar_monitoreo()
