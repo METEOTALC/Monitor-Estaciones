@@ -113,9 +113,9 @@
 <body class="alerta-activa">
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 25-09-2026 12:40:26 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 25-09-2026 12:45:28 (Tolerancia: 12 min)</div>
     <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
-    <div class="summary">Estaciones Operativas: 11 de 12</div>
+    <div class="summary">Estaciones Operativas: 10 de 12</div>
     <div id="map"></div>
     <div class="grid">
         
@@ -172,10 +172,10 @@
         </a>
         
         <a href="http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm" target="_blank" class="card-link">
-            <div class="card ok">
+            <div class="card error">
                 <div class="card-header">
                     <span class="station-name">Capitanía de Puerto Lirquén</span>
-                    <span class="status-badge">🟢</span>
+                    <span class="status-badge">🔴</span>
                 </div>
                 
             <div class="card-body-content">
@@ -217,7 +217,7 @@
             </div>
         
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-25 12:40:15</span>
+                    <span class="time">Reporte: 2026-09-25 12:45:20</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -269,7 +269,7 @@
             </div>
         
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-25 12:40:00</span>
+                    <span class="time">Reporte: 2026-09-25 12:45:00</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -451,12 +451,12 @@
         }).addTo(map).bindPopup("<b>Faro Cabo Carranza</b><br>Estado: OPERATIVA<br>Temp: 13.5°C | Viento: 13.0 kt (N) | Racha: 14.9 kt | Pres: 1011.8 hPa ↗ | Lluvia: 0.2 mm<br>Reporte: 2026-09-25T11:50:00<br><a href='https://giscc.ifop.cl/doma_met/' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.7027778, -72.9775], {
-            color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén</b><br>Estado: OPERATIVA<br>Temp: 13.9°C | Viento: 5.0 kt (N) | Racha: 8.7 kt | Pres: 1015.6 hPa ↗ | Lluvia: 0.1 mm<br>Reporte: 25-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
+            color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Lirquén</b><br>Estado: DESACTUALIZADA (15 min)<br>Temp: 13.9°C | Viento: 5.0 kt (N) | Racha: 8.7 kt | Pres: 1015.6 hPa ↗ | Lluvia: 0.1 mm<br>Reporte: 25-09-2026 12:30:00<br><a href='http://web.directemar.cl/met/jturno/estaciones/lirquen/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 13.3°C | Viento: 5.2 kt (N) | Racha: 8.7 kt | Pres: 1016.6 hPa ↗ | Lluvia: 0.5 mm<br>Reporte: 2026-09-25 12:40:15<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 13.3°C | Viento: 5.2 kt (N) | Racha: 8.7 kt | Pres: 1016.6 hPa ↗ | Lluvia: 0.5 mm<br>Reporte: 2026-09-25 12:45:20<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -464,7 +464,7 @@
         
         L.circleMarker([-36.745, -73.185], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 13.3°C | Viento: 5.2 kt (NE) | Racha: 5.2 kt | Pres: 1014.9 hPa ↗ | Lluvia: 0.3 mm<br>Reporte: 2026-09-25 12:40:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Punta Hualpén</b><br>Estado: OPERATIVA<br>Temp: 13.3°C | Viento: 5.2 kt (NE) | Racha: 5.2 kt | Pres: 1014.9 hPa ↗ | Lluvia: 0.3 mm<br>Reporte: 2026-09-25 12:45:00<br><a href='https://www.wunderground.com/dashboard/pws/IHUALP1' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-37.02, -73.15], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -488,7 +488,7 @@
         
         L.circleMarker([-39.883, -73.433], {
             color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral</b><br>Estado: DESACTUALIZADA (1304 min)<br>Temp: 0.0°C | Viento: 0.0 kt (N) | Racha: 0.0 kt | Pres: 1005.8 hPa ➔ | Lluvia: 0.0 mm<br>Reporte: 24-09-2026 14:55:47<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral</b><br>Estado: DESACTUALIZADA (1309 min)<br>Temp: 0.0°C | Viento: 0.0 kt (N) | Racha: 0.0 kt | Pres: 1005.8 hPa ➔ | Lluvia: 0.0 mm<br>Reporte: 24-09-2026 14:55:47<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
     </script>
 </body>
