@@ -687,52 +687,71 @@ def generar_html(resultados_totales, hay_alerta):
         
         .footer-dev {{ background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }}
         
-        /* Botón Modo Oscuro Flotante */
-        .dark-mode-toggle {{
+        /* Contenedor flotante para los botones circulares minimalistas */
+        .floating-controls {{
             position: fixed;
-            top: 15px;
-            right: 15px;
-            background: var(--summary-bg);
-            color: var(--text-color);
-            border: 1px solid var(--summary-border);
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
             z-index: 1000;
-            transition: all 0.2s ease;
-        }}
-        .dark-mode-toggle:hover {{
-            transform: scale(1.05);
         }}
 
-        /* Botón Cambio Unidad Viento Flotante */
-        .wind-unit-toggle {{
-            position: fixed;
-            top: 60px;
-            right: 15px;
+        /* Botones Circulares Compactos */
+        .icon-btn {{
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             background: var(--summary-bg);
             color: var(--text-color);
             border: 1px solid var(--summary-border);
-            padding: 8px 12px;
-            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
+            font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            z-index: 1000;
             transition: all 0.2s ease;
+            padding: 0;
         }}
-        .wind-unit-toggle:hover {{
-            transform: scale(1.05);
+        
+        .icon-btn:hover {{
+            transform: scale(1.1);
+        }}
+
+        .wind-unit-btn {{
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }}
+
+        /* Ajustes para móviles */
+        @media (max-width: 600px) {{
+            h1 {{
+                padding-right: 45px;
+                font-size: 19px;
+            }}
+            .floating-controls {{
+                top: 8px;
+                right: 8px;
+            }}
+            .icon-btn {{
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }}
+            .wind-unit-btn {{
+                font-size: 10px;
+            }}
         }}
     </style>
 </head>
 <body class="{alerta_class}">
-    <button class="dark-mode-toggle" onclick="toggleDarkMode()" id="darkModeBtn">🌙 Modo Oscuro</button>
-    <button class="wind-unit-toggle" onclick="toggleWindUnit()" id="windUnitBtn">🌬️ Cambiar a k/hr</button>
+    <div class="floating-controls">
+        <button class="icon-btn" onclick="toggleDarkMode()" id="darkModeBtn" title="Cambiar Modo Oscuro/Claro">🌙</button>
+        <button class="icon-btn wind-unit-btn" onclick="toggleWindUnit()" id="windUnitBtn" title="Cambiar Unidad de Viento">kt</button>
+    </div>
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
     <div class="subtitle">Última verificación: {hora_actual_chile} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
@@ -763,7 +782,7 @@ def generar_html(resultados_totales, hay_alerta):
 
         function updateButtonText(isDark) {{
             const btn = document.getElementById('darkModeBtn');
-            btn.innerHTML = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+            if (btn) btn.innerHTML = isDark ? '☀️' : '🌙';
         }}
 
         if (localStorage.getItem('darkMode') === 'enabled') {{
@@ -782,7 +801,7 @@ def generar_html(resultados_totales, hay_alerta):
 
         function updateWindDisplay() {{
             const btn = document.getElementById('windUnitBtn');
-            if (btn) btn.innerHTML = windInKnots ? '🌬️ Cambiar a k/hr' : '🌬️ Cambiar a nudos';
+            if (btn) btn.innerHTML = windInKnots ? 'kt' : 'kmh';
 
             const itemBoxes = document.querySelectorAll('.card-body-content .item-box');
             itemBoxes.forEach(box => {{
@@ -857,7 +876,7 @@ def subir_a_github():
     try:
         print("Sincronizando cambios con GitHub...")
         subprocess.run(["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True)
-        resultado = subprocess.run(["git", "commit", "-m", "Boton modo oscuro y bloqueo de parpadeo nocturno [skip ci]"], capture_output=True, text=True)
+        resultado = subprocess.run(["git", "commit", "-m", "Botones circulares compactos y unidad de viento [skip ci]"], capture_output=True, text=True)
         if resultado.returncode != 0:
             if "nothing to commit" in (resultado.stdout + resultado.stderr).lower():
                 print("Sin cambios nuevos para subir.")
