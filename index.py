@@ -592,7 +592,6 @@ def generar_html(resultados_totales, hay_alerta):
         }}
         body.alerta-activa {{ animation: parpadeoFondo 1.5s infinite; }}
         
-        /* BLOQUEO: Si el modo oscuro está activo, se anula por completo el parpadeo de color de pantalla pero el banner sigue intacto */
         body.dark-mode.alerta-activa {{ 
             animation: none !important; 
             background-color: #121212 !important; 
@@ -708,10 +707,32 @@ def generar_html(resultados_totales, hay_alerta):
         .dark-mode-toggle:hover {{
             transform: scale(1.05);
         }}
+
+        /* Botón Cambio Unidad Viento Flotante */
+        .wind-unit-toggle {{
+            position: fixed;
+            top: 60px;
+            right: 15px;
+            background: var(--summary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--summary-border);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transition: all 0.2s ease;
+        }}
+        .wind-unit-toggle:hover {{
+            transform: scale(1.05);
+        }}
     </style>
 </head>
 <body class="{alerta_class}">
     <button class="dark-mode-toggle" onclick="toggleDarkMode()" id="darkModeBtn">🌙 Modo Oscuro</button>
+    <button class="wind-unit-toggle" onclick="toggleWindUnit()" id="windUnitBtn">🌬️ Cambiar a k/hr</button>
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
     <div class="subtitle">Última verificación: {hora_actual_chile} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
@@ -745,10 +766,47 @@ def generar_html(resultados_totales, hay_alerta):
             btn.innerHTML = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
         }}
 
-        // Cargar preferencia guardada al iniciar
         if (localStorage.getItem('darkMode') === 'enabled') {{
             document.body.classList.add('dark-mode');
             updateButtonText(true);
+        }}
+
+        // Lógica para alternar unidades de viento (kt <-> k/hr) con persistencia
+        let windInKnots = true;
+
+        function toggleWindUnit() {{
+            windInKnots = !windInKnots;
+            localStorage.setItem('windUnit', windInKnots ? 'kt' : 'khr');
+            updateWindDisplay();
+        }}
+
+        function updateWindDisplay() {{
+            const btn = document.getElementById('windUnitBtn');
+            if (btn) btn.innerHTML = windInKnots ? '🌬️ Cambiar a k/hr' : '🌬️ Cambiar a nudos';
+
+            const itemBoxes = document.querySelectorAll('.card-body-content .item-box');
+            itemBoxes.forEach(box => {{
+                let text = box.innerHTML;
+                if (text.includes('kt') || text.includes('k/hr')) {{
+                    box.innerHTML = text.replace(/([\d.,]+)\s*(kt|k\/hr)/gi, (match, p1, p2) => {{
+                        let num = parseFloat(p1.replace(',', '.'));
+                        if (isNaN(num)) return match;
+                        if (!windInKnots && p2.toLowerCase() === 'kt') {{
+                            let converted = (num * 1.852).toFixed(1).replace('.', ',');
+                            return `${{converted}} k/hr`;
+                        }} else if (windInKnots && p2.toLowerCase() !== 'kt') {{
+                            let converted = (num / 1.852).toFixed(1).replace('.', ',');
+                            return `${{converted}} kt`;
+                        }}
+                        return match;
+                    }});
+                }}
+            }});
+        }}
+
+        if (localStorage.getItem('windUnit') === 'khr') {{
+            windInKnots = false;
+            setTimeout(updateWindDisplay, 100);
         }}
     </script>
 </body>
