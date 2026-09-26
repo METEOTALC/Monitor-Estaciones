@@ -11,73 +11,52 @@
             --bg-color: #f4f6f9;
             --text-color: #1e293b;
             --h1-color: #0f2942;
-            --sub-line2: #1e40af;
-            --subtitle: #64748b;
+            --sub2-color: #1e40af;
+            --sub-color: #64748b;
             --summary-bg: #ffffff;
-            --summary-text: #0f2942;
             --summary-border: #cbd5e1;
+            --summary-text: #0f2942;
             --card-ok-bg: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%);
             --card-ok-border: #94a3b8;
             --card-error-bg: linear-gradient(135deg, #fee2e2 0%, #fecaca 55%, #f87171 100%);
             --card-error-border: #f87171;
-            --station-name: #0f172a;
-            --item-box-bg: rgba(255, 255, 255, 0.9);
-            --item-box-border: rgba(255, 255, 255, 0.95);
-            --temp-color: #0f172a;
+            --station-name-color: #0f172a;
+            --item-bg: rgba(255, 255, 255, 0.9);
+            --item-border: rgba(255, 255, 255, 0.95);
+            --item-text: #0f172a;
             --time-color: #334155;
             --click-color: #1d4ed8;
+            --wind-color: #1d4ed8;
             --footer-border: rgba(255, 255, 255, 0.4);
-            --color-wind-label: #1d4ed8;
-            --map-border: #cbd5e1;
         }
 
-        [data-theme="dark"] {
-            --bg-color: #0b0f19;
-            --text-color: #f1f5f9;
-            --h1-color: #60a5fa;
-            --sub-line2: #93c5fd;
-            --subtitle: #94a3b8;
-            --summary-bg: #1e293b;
-            --summary-text: #f8fafc;
-            --summary-border: #334155;
-            --card-ok-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 55%, #020617 100%);
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --h1-color: #ffffff;
+            --sub2-color: #60a5fa;
+            --sub-color: #94a3b8;
+            --summary-bg: #1e1e1e;
+            --summary-border: #333333;
+            --summary-text: #ffffff;
+            --card-ok-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             --card-ok-border: #334155;
-            --card-error-bg: linear-gradient(135deg, #450a0a 0%, #7f1d1d 55%, #991b1b 100%);
+            --card-error-bg: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
             --card-error-border: #991b1b;
-            --station-name: #f8fafc;
-            --item-box-bg: rgba(15, 23, 42, 0.85);
-            --item-box-border: rgba(51, 65, 85, 0.9);
-            --temp-color: #f8fafc;
+            --station-name-color: #f8fafc;
+            --item-bg: rgba(30, 41, 59, 0.85);
+            --item-border: rgba(51, 65, 85, 0.8);
+            --item-text: #f1f5f9;
             --time-color: #cbd5e1;
             --click-color: #60a5fa;
+            --wind-color: #60a5fa;
             --footer-border: rgba(255, 255, 255, 0.1);
-            --color-wind-label: #60a5fa;
-            --map-border: #334155;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 15px; margin: 0; transition: background-color 0.5s ease, color 0.5s ease; }
-        
-        .theme-toggle {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background: var(--summary-bg);
-            color: var(--text-color);
-            border: 1px solid var(--summary-border);
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            z-index: 1000;
-            transition: all 0.2s ease;
-        }
-        .theme-toggle:hover { transform: scale(1.05); }
-
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 15px; margin: 0; transition: background-color 0.3s ease, color 0.3s ease; }
         h1 { text-align: center; color: var(--h1-color); margin-bottom: 0; font-size: 22px; line-height: 1.2; font-weight: 700; }
-        .subtitle-line2 { text-align: center; color: var(--sub-line2); margin-bottom: 6px; font-size: 16px; font-weight: bold; }
-        .subtitle { text-align: center; color: var(--subtitle); margin-bottom: 12px; font-size: 12px; }
+        .subtitle-line2 { text-align: center; color: var(--sub2-color); margin-bottom: 6px; font-size: 16px; font-weight: bold; }
+        .subtitle { text-align: center; color: var(--sub-color); margin-bottom: 12px; font-size: 12px; }
         .summary { text-align: center; font-weight: bold; margin-bottom: 15px; color: var(--summary-text); font-size: 14px; background: var(--summary-bg); padding: 6px 16px; border-radius: 20px; max-width: 280px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid var(--summary-border); }
         
         @keyframes parpadeoFondo { 
@@ -86,9 +65,15 @@
             100% { background-color: var(--bg-color); } 
         }
         body.alerta-activa { animation: parpadeoFondo 1.5s infinite; }
+        
+        /* BLOQUEO: Si el modo oscuro está activo, se anula por completo el parpadeo de color de pantalla pero el banner sigue intacto */
+        body.dark-mode.alerta-activa { 
+            animation: none !important; 
+            background-color: #121212 !important; 
+        }
 
         .banner-alerta { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
-        #map { height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid var(--map-border); }
+        #map { height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid var(--summary-border); }
         
         .grid { 
             display: grid; 
@@ -132,7 +117,7 @@
         }
         
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-        .station-name { font-weight: bold; font-size: 13.5px; color: var(--station-name); line-height: 1.1; }
+        .station-name { font-weight: bold; font-size: 13.5px; color: var(--station-name-color); line-height: 1.1; }
         .status-badge { font-size: 11px; }
         
         .card-body-content {
@@ -153,21 +138,22 @@
         }
         
         .item-box {
-            background: var(--item-box-bg);
+            background: var(--item-bg);
             padding: 4px 2px;
             border-radius: 6px;
-            border: 1px solid var(--item-box-border);
+            border: 1px solid var(--item-border);
             text-align: center;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             white-space: nowrap;
+            color: var(--item-text);
         }
         .temp-box {
             font-size: 0.85em;
             font-weight: 800;
-            color: var(--temp-color);
+            color: var(--item-text);
         }
         
         .card-footer-info { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid var(--footer-border); padding-top: 3px; }
@@ -175,14 +161,34 @@
         .click-text { font-size: 0.68em; color: var(--click-color); font-weight: bold; font-style: italic; }
         
         .footer-dev { background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }
+        
+        /* Botón Modo Oscuro Flotante */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: var(--summary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--summary-border);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transition: all 0.2s ease;
+        }
+        .dark-mode-toggle:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="alerta-activa">
-    <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">🌙 Modo Oscuro</button>
-
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" id="darkModeBtn">🌙 Modo Oscuro</button>
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 26-09-2026 04:00:28 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 26-09-2026 04:04:47 (Tolerancia: 12 min)</div>
     <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
     <div class="summary">Estaciones Operativas: 11 de 12</div>
     <div id="map"></div>
@@ -198,8 +204,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 12.6°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ S/SE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.7 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">1.7 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ S/SE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.7 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">1.7 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1015.0 hPa ↘</span></div>
@@ -224,8 +230,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 13.6°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ SW</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.2 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.9 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ SW</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.2 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.9 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1011.4 hPa ↗</span></div>
@@ -250,8 +256,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 13.2°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ NE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">2.3 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">5.2 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ NE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">2.3 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">5.2 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1014.7 hPa ↘</span></div>
@@ -276,17 +282,17 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 12.8°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ N</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">4.3 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">4.3 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ N/NW</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">7.0 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">9.6 kt</span></div>
                 </div>
                 <div class="row-bottom">
-                    <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1016.3 hPa ↘</span></div>
+                    <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1015.9 hPa ↘</span></div>
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">🌧️ 0.0 mm</span></div>
                 </div>
             </div>
         
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-26 04:00:20</span>
+                    <span class="time">Reporte: 2026-09-26 04:04:40</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -302,8 +308,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 12.9°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ N</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.0 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.0 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ N</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.0 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.0 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1015.9 hPa ↘</span></div>
@@ -328,8 +334,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 13.3°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ E</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.5 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">6.1 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ E</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.5 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">6.1 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1014.2 hPa ↘</span></div>
@@ -354,8 +360,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 12.4°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ E/NE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">2.9 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">7.8 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ E/NE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">2.9 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">7.8 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1014.3 hPa ↘</span></div>
@@ -380,8 +386,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 11.1°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ E/NE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">2.6 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.5 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ E/NE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">2.6 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.5 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1015.0 hPa ↘</span></div>
@@ -406,8 +412,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 14.2°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ NE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">2.8 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">5.2 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ NE</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">2.8 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">5.2 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1015.7 hPa ↘</span></div>
@@ -432,8 +438,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 12.8°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ N</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">5.7 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">7.3 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ N</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">5.7 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">7.3 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1012.0 hPa ➔</span></div>
@@ -458,8 +464,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 13.3°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ W/NW</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.6 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">7.8 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ W/NW</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">3.6 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">7.8 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1013.0 hPa ↘</span></div>
@@ -484,8 +490,8 @@
             <div class="card-body-content">
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ 0.0°C</div>
-                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ N</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.0 kt</span></div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.0 kt</span></div>
+                    <div class="item-box"><span style="display: block; font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; line-height: 1.1;">🌬️ N</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.0 kt</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--wind-color, #1d4ed8); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">0.0 kt</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ 1005.8 hPa ➔</span></div>
@@ -525,7 +531,7 @@
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Viento: 4.3 kt (N) | Racha: 4.3 kt | Pres: 1016.3 hPa ↘ | Lluvia: 0.0 mm<br>Reporte: 2026-09-26 04:00:20<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Viento: 7.0 kt (N/NW) | Racha: 9.6 kt | Pres: 1015.9 hPa ↘ | Lluvia: 0.0 mm<br>Reporte: 2026-09-26 04:04:40<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -557,31 +563,27 @@
         
         L.circleMarker([-39.883, -73.433], {
             color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral</b><br>Estado: DESACTUALIZADA (2224 min)<br>Temp: 0.0°C | Viento: 0.0 kt (N) | Racha: 0.0 kt | Pres: 1005.8 hPa ➔ | Lluvia: 0.0 mm<br>Reporte: 24-09-2026 14:55:47<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral</b><br>Estado: DESACTUALIZADA (2228 min)<br>Temp: 0.0°C | Viento: 0.0 kt (N) | Racha: 0.0 kt | Pres: 1005.8 hPa ➔ | Lluvia: 0.0 mm<br>Reporte: 24-09-2026 14:55:47<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
 
-        function toggleTheme() {
-            const htmlTag = document.documentElement;
-            const btn = document.getElementById('themeToggleBtn');
-            if (htmlTag.getAttribute('data-theme') === 'dark') {
-                htmlTag.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-                btn.innerHTML = '🌙 Modo Oscuro';
-            } else {
-                htmlTag.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                btn.innerHTML = '☀️ Modo Claro';
-            }
+        // Lógica del Botón de Modo Oscuro con persistencia en localStorage
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+            updateButtonText(isDark);
         }
 
-        (function() {
-            const savedTheme = localStorage.getItem('theme');
-            const btn = document.getElementById('themeToggleBtn');
-            if (savedTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                if (btn) btn.innerHTML = '☀️ Modo Claro';
-            }
-        })();
+        function updateButtonText(isDark) {
+            const btn = document.getElementById('darkModeBtn');
+            btn.innerHTML = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+        }
+
+        // Cargar preferencia guardada al iniciar
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            updateButtonText(true);
+        }
     </script>
 </body>
 </html>
