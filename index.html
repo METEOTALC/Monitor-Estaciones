@@ -161,55 +161,74 @@
         
         .footer-dev { background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }
         
-        /* Botón Modo Oscuro Flotante */
-        .dark-mode-toggle {
+        /* Contenedor flotante para los botones circulares minimalistas */
+        .floating-controls {
             position: fixed;
-            top: 15px;
-            right: 15px;
-            background: var(--summary-bg);
-            color: var(--text-color);
-            border: 1px solid var(--summary-border);
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
             z-index: 1000;
-            transition: all 0.2s ease;
-        }
-        .dark-mode-toggle:hover {
-            transform: scale(1.05);
         }
 
-        /* Botón Cambio Unidad Viento Flotante */
-        .wind-unit-toggle {
-            position: fixed;
-            top: 60px;
-            right: 15px;
+        /* Botones Circulares Compactos */
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             background: var(--summary-bg);
             color: var(--text-color);
             border: 1px solid var(--summary-border);
-            padding: 8px 12px;
-            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
+            font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            z-index: 1000;
             transition: all 0.2s ease;
+            padding: 0;
         }
-        .wind-unit-toggle:hover {
-            transform: scale(1.05);
+        
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .wind-unit-btn {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        /* Ajustes para móviles */
+        @media (max-width: 600px) {
+            h1 {
+                padding-right: 45px;
+                font-size: 19px;
+            }
+            .floating-controls {
+                top: 8px;
+                right: 8px;
+            }
+            .icon-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+            .wind-unit-btn {
+                font-size: 10px;
+            }
         }
     </style>
 </head>
 <body class="alerta-activa">
-    <button class="dark-mode-toggle" onclick="toggleDarkMode()" id="darkModeBtn">🌙 Modo Oscuro</button>
-    <button class="wind-unit-toggle" onclick="toggleWindUnit()" id="windUnitBtn">🌬️ Cambiar a k/hr</button>
+    <div class="floating-controls">
+        <button class="icon-btn" onclick="toggleDarkMode()" id="darkModeBtn" title="Cambiar Modo Oscuro/Claro">🌙</button>
+        <button class="icon-btn wind-unit-btn" onclick="toggleWindUnit()" id="windUnitBtn" title="Cambiar Unidad de Viento">kt</button>
+    </div>
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
-    <div class="subtitle">Última verificación: 26-09-2026 09:10:22 (Tolerancia: 12 min)</div>
+    <div class="subtitle">Última verificación: 26-09-2026 09:12:47 (Tolerancia: 12 min)</div>
     <div class="banner-alerta">⚠️ ¡ATENCIÓN: HAY ESTACIONES CON FALLAS O DESACTUALIZADAS! ⚠️</div>
     <div class="summary">Estaciones Operativas: 11 de 12</div>
     <div id="map"></div>
@@ -313,7 +332,7 @@
             </div>
         
                 <div class="card-footer-info">
-                    <span class="time">Reporte: 2026-09-26 09:10:18</span>
+                    <span class="time">Reporte: 2026-09-26 09:12:38</span>
                     <span class="click-text">Ver ↗</span>
                 </div>
             </div>
@@ -552,7 +571,7 @@
         
         L.circleMarker([-36.607, -73.049], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Viento: 0.9 kt (NW) | Racha: 2.6 kt | Pres: 1016.6 hPa ↗ | Lluvia: 0.3 mm<br>Reporte: 2026-09-26 09:10:18<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Faro Isla Quiriquina</b><br>Estado: OPERATIVA<br>Temp: 12.8°C | Viento: 0.9 kt (NW) | Racha: 2.6 kt | Pres: 1016.6 hPa ↗ | Lluvia: 0.3 mm<br>Reporte: 2026-09-26 09:12:38<br><a href='https://www.wunderground.com/dashboard/pws/ITALCA20' target='_blank'>Abrir enlace ↗</a>");
         
         L.circleMarker([-36.712, -73.115], {
             color: 'green', fillColor: 'green', fillOpacity: 0.8, radius: 9
@@ -584,7 +603,7 @@
         
         L.circleMarker([-39.883, -73.433], {
             color: 'red', fillColor: 'red', fillOpacity: 0.8, radius: 9
-        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral</b><br>Estado: DESACTUALIZADA (2534 min)<br>Temp: 0.0°C | Viento: 0.0 kt (N) | Racha: 0.0 kt | Pres: 1005.8 hPa ➔ | Lluvia: 0.0 mm<br>Reporte: 24-09-2026 14:55:47<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
+        }).addTo(map).bindPopup("<b>Capitanía de Puerto Corral</b><br>Estado: DESACTUALIZADA (2536 min)<br>Temp: 0.0°C | Viento: 0.0 kt (N) | Racha: 0.0 kt | Pres: 1005.8 hPa ➔ | Lluvia: 0.0 mm<br>Reporte: 24-09-2026 14:55:47<br><a href='http://web.directemar.cl/met/jturno/estaciones/corral/index.htm' target='_blank'>Abrir enlace ↗</a>");
         
 
         // Lógica del Botón de Modo Oscuro con persistencia en localStorage
@@ -597,7 +616,7 @@
 
         function updateButtonText(isDark) {
             const btn = document.getElementById('darkModeBtn');
-            btn.innerHTML = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+            if (btn) btn.innerHTML = isDark ? '☀️' : '🌙';
         }
 
         if (localStorage.getItem('darkMode') === 'enabled') {
@@ -616,7 +635,7 @@
 
         function updateWindDisplay() {
             const btn = document.getElementById('windUnitBtn');
-            if (btn) btn.innerHTML = windInKnots ? '🌬️ Cambiar a k/hr' : '🌬️ Cambiar a nudos';
+            if (btn) btn.innerHTML = windInKnots ? 'kt' : 'kmh';
 
             const itemBoxes = document.querySelectorAll('.card-body-content .item-box');
             itemBoxes.forEach(box => {
