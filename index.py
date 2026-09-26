@@ -394,7 +394,6 @@ def consultar_ifop(est):
                                         elif any(sub in k_lower for sub in ["racha", "ráfaga", "rafaga", "gust", "max", "fx", "vmax", "vel_max"]):
                                             val_r = actual
                                         elif any(sub in k_lower for sub in ["lluvia", "pp", "precip", "precipitacion", "agua", "acum", "mm", "rain"]):
-                                            # CÁLCULO EXACTO DEL ACUMULADO DIARIO (Desde las 00:00 hrs de hoy)
                                             valores_hoy = []
                                             if isinstance(x_vals, list) and len(x_vals) == len(y_vals):
                                                 for xv, yv in zip(x_vals, y_vals):
@@ -415,7 +414,6 @@ def consultar_ifop(est):
                                             if valores_hoy:
                                                 val_pp = max(valores_hoy)
                                             else:
-                                                # Fallback al último registro si no se pudieron procesar las fechas de x
                                                 val_pp = y_vals[-1]
 
                     return val_t, fecha_t, val_p, p_pasado, val_v, val_r, val_d, val_pp
@@ -488,7 +486,7 @@ def generar_html(resultados_totales, hay_alerta):
         footer_texto = f"Reporte: {r['ultimo']}"
 
         if r['dir_viento']:
-            viento_contenido = f'<span style="display: block; font-size: 0.58em; color: #1d4ed8; font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
+            viento_contenido = f'<span style="display: block; font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; line-height: 1.1;">🌬️ {r["dir_viento"]}</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
         else:
             viento_contenido = f'<span style="display: block; font-size: 0.58em; color: transparent; font-weight: 800; line-height: 1.1; user-select: none;">-</span><span style="display: block; font-size: 0.72em; font-weight: 700; line-height: 1.1;">{r["viento"]}</span>'
 
@@ -497,7 +495,7 @@ def generar_html(resultados_totales, hay_alerta):
                 <div class="row-top">
                     <div class="item-box temp-box">🌡️ {r['temp']}</div>
                     <div class="item-box">{viento_contenido}</div>
-                    <div class="item-box"><span style="font-size: 0.58em; color: #1d4ed8; font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">{r['racha']}</span></div>
+                    <div class="item-box"><span style="font-size: 0.58em; color: var(--color-wind-label); font-weight: 800; display: block; line-height: 1.1;">💨 RACHA</span><span style="font-size: 0.72em; font-weight: 700; line-height: 1.1;">{r['racha']}</span></div>
                 </div>
                 <div class="row-bottom">
                     <div class="item-box"><span style="font-size: 0.68em; font-weight: 700;">⏲️ {r['pres']}</span></div>
@@ -535,21 +533,88 @@ def generar_html(resultados_totales, hay_alerta):
     <title>Monitor de Estaciones Automáticas</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #1e293b; padding: 15px; margin: 0; transition: background-color 0.5s ease; }}
-        h1 {{ text-align: center; color: #0f2942; margin-bottom: 0; font-size: 22px; line-height: 1.2; font-weight: 700; }}
-        .subtitle-line2 {{ text-align: center; color: #1e40af; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
-        .subtitle {{ text-align: center; color: #64748b; margin-bottom: 12px; font-size: 12px; }}
-        .summary {{ text-align: center; font-weight: bold; margin-bottom: 15px; color: #0f2942; font-size: 14px; background: #ffffff; padding: 6px 16px; border-radius: 20px; max-width: 280px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #cbd5e1; }}
+        :root {{
+            --bg-color: #f4f6f9;
+            --text-color: #1e293b;
+            --h1-color: #0f2942;
+            --sub-line2: #1e40af;
+            --subtitle: #64748b;
+            --summary-bg: #ffffff;
+            --summary-text: #0f2942;
+            --summary-border: #cbd5e1;
+            --card-ok-bg: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%);
+            --card-ok-border: #94a3b8;
+            --card-error-bg: linear-gradient(135deg, #fee2e2 0%, #fecaca 55%, #f87171 100%);
+            --card-error-border: #f87171;
+            --station-name: #0f172a;
+            --item-box-bg: rgba(255, 255, 255, 0.9);
+            --item-box-border: rgba(255, 255, 255, 0.95);
+            --temp-color: #0f172a;
+            --time-color: #334155;
+            --click-color: #1d4ed8;
+            --footer-border: rgba(255, 255, 255, 0.4);
+            --color-wind-label: #1d4ed8;
+            --map-border: #cbd5e1;
+        }}
+
+        [data-theme="dark"] {{
+            --bg-color: #0b0f19;
+            --text-color: #f1f5f9;
+            --h1-color: #60a5fa;
+            --sub-line2: #93c5fd;
+            --subtitle: #94a3b8;
+            --summary-bg: #1e293b;
+            --summary-text: #f8fafc;
+            --summary-border: #334155;
+            --card-ok-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 55%, #020617 100%);
+            --card-ok-border: #334155;
+            --card-error-bg: linear-gradient(135deg, #450a0a 0%, #7f1d1d 55%, #991b1b 100%);
+            --card-error-border: #991b1b;
+            --station-name: #f8fafc;
+            --item-box-bg: rgba(15, 23, 42, 0.85);
+            --item-box-border: rgba(51, 65, 85, 0.9);
+            --temp-color: #f8fafc;
+            --time-color: #cbd5e1;
+            --click-color: #60a5fa;
+            --footer-border: rgba(255, 255, 255, 0.1);
+            --color-wind-label: #60a5fa;
+            --map-border: #334155;
+        }}
+
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 15px; margin: 0; transition: background-color 0.5s ease, color 0.5s ease; }}
+        
+        .theme-toggle {{
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: var(--summary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--summary-border);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: all 0.2s ease;
+        }}
+        .theme-toggle:hover {{ transform: scale(1.05); }}
+
+        h1 {{ text-align: center; color: var(--h1-color); margin-bottom: 0; font-size: 22px; line-height: 1.2; font-weight: 700; }}
+        .subtitle-line2 {{ text-align: center; color: var(--sub-line2); margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
+        .subtitle {{ text-align: center; color: var(--subtitle); margin-bottom: 12px; font-size: 12px; }}
+        .summary {{ text-align: center; font-weight: bold; margin-bottom: 15px; color: var(--summary-text); font-size: 14px; background: var(--summary-bg); padding: 6px 16px; border-radius: 20px; max-width: 280px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid var(--summary-border); }}
         
         @keyframes parpadeoFondo {{ 
-            0% {{ background-color: #f4f6f9; }} 
+            0% {{ background-color: var(--bg-color); }} 
             50% {{ background-color: #fca5a5; }} 
-            100% {{ background-color: #f4f6f9; }} 
+            100% {{ background-color: var(--bg-color); }} 
         }}
         body.alerta-activa {{ animation: parpadeoFondo 1.5s infinite; }}
 
         .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
-        #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }}
+        #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid var(--map-border); }}
         
         .grid {{ 
             display: grid; 
@@ -575,13 +640,13 @@ def generar_html(resultados_totales, hay_alerta):
             box-sizing: border-box;
         }}
         .card.ok {{ 
-            background: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%); 
-            border: 1px solid #94a3b8;
+            background: var(--card-ok-bg); 
+            border: 1px solid var(--card-ok-border);
             border-left: 6px solid #16a34a; 
         }}
         .card.error {{ 
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 55%, #f87171 100%); 
-            border: 1px solid #f87171;
+            background: var(--card-error-bg); 
+            border: 1px solid var(--card-error-border);
             border-left: 6px solid #dc2626; 
         }}
         .card:hover {{ 
@@ -593,7 +658,7 @@ def generar_html(resultados_totales, hay_alerta):
         }}
         
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }}
-        .station-name {{ font-weight: bold; font-size: 13.5px; color: #0f172a; line-height: 1.1; }}
+        .station-name {{ font-weight: bold; font-size: 13.5px; color: var(--station-name); line-height: 1.1; }}
         .status-badge {{ font-size: 11px; }}
         
         .card-body-content {{
@@ -614,10 +679,10 @@ def generar_html(resultados_totales, hay_alerta):
         }}
         
         .item-box {{
-            background: rgba(255, 255, 255, 0.9);
+            background: var(--item-box-bg);
             padding: 4px 2px;
             border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.95);
+            border: 1px solid var(--item-box-border);
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -628,17 +693,19 @@ def generar_html(resultados_totales, hay_alerta):
         .temp-box {{
             font-size: 0.85em;
             font-weight: 800;
-            color: #0f172a;
+            color: var(--temp-color);
         }}
         
-        .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(255, 255, 255, 0.4); padding-top: 3px; }}
-        .time {{ font-size: 0.68em; color: #334155; }}
-        .click-text {{ font-size: 0.68em; color: #1d4ed8; font-weight: bold; font-style: italic; }}
+        .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid var(--footer-border); padding-top: 3px; }}
+        .time {{ font-size: 0.68em; color: var(--time-color); }}
+        .click-text {{ font-size: 0.68em; color: var(--click-color); font-weight: bold; font-style: italic; }}
         
         .footer-dev {{ background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }}
     </style>
 </head>
 <body class="{alerta_class}">
+    <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">🌙 Modo Oscuro</button>
+
     <h1>Monitor de Estaciones Automáticas</h1>
     <div class="subtitle-line2">Centro Zonal de Meteorología Marina de Talcahuano</div>
     <div class="subtitle">Última verificación: {hora_actual_chile} (Tolerancia: {TOLERANCIA_MINUTOS} min)</div>
@@ -658,6 +725,29 @@ def generar_html(resultados_totales, hay_alerta):
             maxZoom: 12, attribution: '© OpenStreetMap contributors'
         }}).addTo(map);
         {markers_js}
+
+        function toggleTheme() {{
+            const htmlTag = document.documentElement;
+            const btn = document.getElementById('themeToggleBtn');
+            if (htmlTag.getAttribute('data-theme') === 'dark') {{
+                htmlTag.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                btn.innerHTML = '🌙 Modo Oscuro';
+            }} else {{
+                htmlTag.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                btn.innerHTML = '☀️ Modo Claro';
+            }}
+        }}
+
+        (function() {{
+            const savedTheme = localStorage.getItem('theme');
+            const btn = document.getElementById('themeToggleBtn');
+            if (savedTheme === 'dark') {{
+                document.documentElement.setAttribute('data-theme', 'dark');
+                if (btn) btn.innerHTML = '☀️ Modo Claro';
+            }}
+        }})();
     </script>
 </body>
 </html>"""
@@ -707,7 +797,7 @@ def subir_a_github():
     try:
         print("Sincronizando cambios con GitHub...")
         subprocess.run(["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True)
-        resultado = subprocess.run(["git", "commit", "-m", "Calculo exacto precipitacion diaria IFOP [skip ci]"], capture_output=True, text=True)
+        resultado = subprocess.run(["git", "commit", "-m", "Agregar modo oscuro al monitor [skip ci]"], capture_output=True, text=True)
         if resultado.returncode != 0:
             if "nothing to commit" in (resultado.stdout + resultado.stderr).lower():
                 print("Sin cambios nuevos para subir.")
