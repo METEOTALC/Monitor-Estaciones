@@ -3,7 +3,173 @@ import json
 import ssl
 from datetime import datetime
 import pytz
+html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Monitor de Estaciones Automáticas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {{
+            --bg-color: #f4f6f9;
+            --text-color: #1e293b;
+            --h1-color: #0f2942;
+            --card-bg-ok: linear-gradient(135deg, #dbeafe 0%, #cbd5e1 55%, #94a3b8 100%);
+            --card-border-ok: #94a3b8;
+            --card-bg-error: linear-gradient(135deg, #fee2e2 0%, #fecaca 55%, #f87171 100%);
+            --card-border-error: #f87171;
+            --item-bg: rgba(255, 255, 255, 0.9);
+            --item-text: #0f172a;
+            --summary-bg: #ffffff;
+            --summary-border: #cbd5e1;
+            --summary-text: #0f2942;
+        }}
 
+        [data-theme="dark"] {{
+            --bg-color: #0b0f19;
+            --text-color: #f8fafc;
+            --h1-color: #38bdf8;
+            --card-bg-ok: linear-gradient(135deg, #1e293b 0%, #0f172a 55%, #020617 100%);
+            --card-border-ok: #334155;
+            --card-bg-error: linear-gradient(135deg, #450a0a 0%, #291515 55%, #1a0505 100%);
+            --card-border-error: #7f1d1d;
+            --item-bg: rgba(15, 23, 42, 0.85);
+            --item-text: #f8fafc;
+            --summary-bg: #1e293b;
+            --summary-border: #334155;
+            --summary-text: #38bdf8;
+        }}
+
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 15px; margin: 0; transition: background-color 0.4s ease, color 0.4s ease; }}
+        h1 {{ text-align: center; color: var(--h1-color); margin-bottom: 0; font-size: 22px; line-height: 1.2; font-weight: 700; }}
+        .subtitle-line2 {{ text-align: center; color: #1e40af; margin-bottom: 6px; font-size: 16px; font-weight: bold; }}
+        [data-theme="dark"] .subtitle-line2 {{ color: #60a5fa; }}
+        .subtitle {{ text-align: center; color: #64748b; margin-bottom: 12px; font-size: 12px; }}
+        [data-theme="dark"] .subtitle {{ color: #94a3b8; }}
+        
+        .summary {{ text-align: center; font-weight: bold; margin-bottom: 15px; color: var(--summary-text); font-size: 14px; background: var(--summary-bg); padding: 6px 16px; border-radius: 20px; max-width: 280px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid var(--summary-border); }}
+        
+        @keyframes parpadeoFondo {{ 
+            0% {{ background-color: var(--bg-color); }} 
+            50% {{ background-color: #fca5a5; }} 
+            100% {{ background-color: var(--bg-color); }} 
+        }}
+        body.alerta-activa {{ animation: parpadeoFondo 1.5s infinite; }}
+
+        .banner-alerta {{ background: linear-gradient(135deg, #ef4444, #dc2626); color: white; text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }}
+        #map {{ height: 350px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid var(--summary-border); }}
+        
+        .grid {{ 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); 
+            gap: 15px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            align-items: stretch; 
+        }}
+        
+        .card-link {{ text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }}
+        .card {{ 
+            border-radius: 14px; 
+            padding: 10px 10px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%; 
+            box-sizing: border-box;
+        }}
+        .card.ok {{ 
+            background: var(--card-bg-ok); 
+            border: 1px solid var(--card-border-ok);
+            border-left: 6px solid #16a34a; 
+        }}
+        .card.error {{ 
+            background: var(--card-bg-error); 
+            border: 1px solid var(--card-border-error);
+            border-left: 6px solid #dc2626; 
+        }}
+        .card:hover {{ 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.2); 
+        }}
+        
+        .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }}
+        .station-name {{ font-weight: bold; font-size: 13.5px; color: var(--item-text); line-height: 1.1; }}
+        .status-badge {{ font-size: 11px; }}
+        
+        .card-body-content {{
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin: 4px 0;
+        }}
+        .row-top, .row-bottom {{
+            display: grid;
+            gap: 4px;
+        }}
+        .row-top {{
+            grid-template-columns: 1.1fr 1fr 1fr;
+        }}
+        .row-bottom {{
+            grid-template-columns: 1fr 1fr;
+        }}
+        
+        .item-box {{
+            background: var(--item-bg);
+            padding: 4px 2px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            white-space: nowrap;
+            color: var(--item-text);
+        }}
+        .temp-box {{
+            font-size: 0.85em;
+            font-weight: 800;
+            color: var(--item-text);
+        }}
+        
+        .card-footer-info {{ display: flex; justify-content: space-between; align-items: center; margin-top: 2px; border-top: 1px solid rgba(150, 150, 150, 0.3); padding-top: 3px; }}
+        .time {{ font-size: 0.68em; color: var(--text-color); opacity: 0.8; }}
+        .click-text {{ font-size: 0.68em; color: #38bdf8; font-weight: bold; font-style: italic; }}
+        
+        /* Botón Flotante de Modo Nocturno */
+        .theme-toggle-btn {{
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #0f2942, #1e3a8a);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.2s ease;
+        }}
+        .theme-toggle-btn:hover {{
+            transform: scale(1.05);
+        }}
+
+        .footer-dev {{ background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }}
+    </style>
+</head>
 # Configuración de zona horaria y seguridad SSL
 ZONA_CHILE = pytz.timezone("America/Santiago")
 ctx = ssl.create_default_context()
