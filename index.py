@@ -687,7 +687,6 @@ def generar_html(resultados_totales, hay_alerta):
         
         .footer-dev {{ background: linear-gradient(135deg, #0f2942, #1e3a8a); color: #f8fafc; text-align: center; font-weight: 600; padding: 10px 24px; border-radius: 30px; margin: 30px auto 15px auto; display: table; font-size: 13px; box-shadow: 0 4px 12px rgba(15, 41, 66, 0.2); border: 1px solid rgba(255,255,255,0.15); }}
         
-        /* Contenedor flotante para los botones circulares minimalistas */
         .floating-controls {{
             position: fixed;
             top: 10px;
@@ -698,7 +697,6 @@ def generar_html(resultados_totales, hay_alerta):
             z-index: 1000;
         }}
 
-        /* Botones Circulares Compactos */
         .icon-btn {{
             width: 36px;
             height: 36px;
@@ -726,7 +724,6 @@ def generar_html(resultados_totales, hay_alerta):
             letter-spacing: -0.5px;
         }}
 
-        /* Ajustes para móviles */
         @media (max-width: 600px) {{
             h1 {{
                 padding-right: 45px;
@@ -772,7 +769,6 @@ def generar_html(resultados_totales, hay_alerta):
         }}).addTo(map);
         {markers_js}
 
-        // Lógica del Botón de Modo Oscuro con persistencia en localStorage
         function toggleDarkMode() {{
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
@@ -790,7 +786,6 @@ def generar_html(resultados_totales, hay_alerta):
             updateButtonText(true);
         }}
 
-        // Lógica para alternar unidades de viento (kt <-> k/hr) con persistencia
         let windInKnots = true;
 
         function toggleWindUnit() {{
@@ -835,6 +830,18 @@ def generar_html(resultados_totales, hay_alerta):
         f.write(html)
     print("✓ index.html actualizado correctamente.")
 
+def generar_json_esp32(resultados_totales):
+    # Guardamos los estados de las 12 estaciones completas en orden
+    estados_12_estaciones = [r['ok'] for r in resultados_totales]
+    
+    data_json = {
+        "estaciones": estados_12_estaciones
+    }
+    
+    with open("estado_leds.json", "w", encoding="utf-8") as f:
+        json.dump(data_json, f)
+    print("✓ estado_leds.json generado con las 12 estaciones.")
+
 def ejecutar_monitoreo():
     print(f"\n--- [{obtener_hora_chile().strftime('%H:%M:%S')}] Verificando litoral ---")
     resultados_dict = {}
@@ -870,13 +877,14 @@ def ejecutar_monitoreo():
     resultados_totales = [resultados_dict[nombre] for nombre in ORDEN_ESTACIONES if nombre in resultados_dict]
     
     generar_html(resultados_totales, hubo_fallas)
+    generar_json_esp32(resultados_totales)
     subir_a_github()
 
 def subir_a_github():
     try:
         print("Sincronizando cambios con GitHub...")
-        subprocess.run(["git", "add", "index.html", ARCHIVO_HISTORIAL], check=True)
-        resultado = subprocess.run(["git", "commit", "-m", "Botones circulares compactos y unidad de viento [skip ci]"], capture_output=True, text=True)
+        subprocess.run(["git", "add", "index.html", "estado_leds.json", ARCHIVO_HISTORIAL], check=True)
+        resultado = subprocess.run(["git", "commit", "-m", "Actualizar index y JSON de estaciones para ESP32 [skip ci]"], capture_output=True, text=True)
         if resultado.returncode != 0:
             if "nothing to commit" in (resultado.stdout + resultado.stderr).lower():
                 print("Sin cambios nuevos para subir.")
